@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: renovator-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-renovator}
+      POSTGRES_USER: ${POSTGRES_USER:-renovator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-renovator123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-renovator}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.5.2
+    container_name: renovator-keycloak
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-renovator}
+      KC_DB_USERNAME: ${POSTGRES_USER:-renovator}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-renovator123}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    command: start-dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    container_name: renovator-backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-4000}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB:-renovator}
+      DATABASE_USER: ${POSTGRES_USER:-renovator}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-renovator123}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-renovator}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-renovator-app}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    volumes:
+      - ./packages/backend/src:/app/src
+    command: npm run dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+    container_name: renovator-frontend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+      VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://localhost:8080}
+      VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-renovator}
+      VITE_KEYCLOAK_CLIENT_ID: ${VITE_KEYCLOAK_CLIENT_ID:-renovator-app}
+      VITE_SENTRY_DSN: ${VITE_SENTRY_DSN}
+      VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-development}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./packages/frontend/src:/app/src
+    command: npm run dev
+
+volumes:
+  postgres_data:

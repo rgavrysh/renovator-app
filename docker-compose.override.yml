@@ -1,0 +1,15 @@
+# Override file for local development
+# This file is automatically merged with docker-compose.yml
+
+services:
+  backend:
+    volumes:
+      - ./packages/backend/src:/app/packages/backend/src
+      - /app/node_modules
+      - /app/packages/backend/node_modules
+
+  frontend:
+    volumes:
+      - ./packages/frontend/src:/app/packages/frontend/src
+      - /app/node_modules
+      - /app/packages/frontend/node_modules
