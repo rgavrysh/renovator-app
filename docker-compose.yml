@@ -29,9 +29,12 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
-    command: start-dev
+      KEYCLOAK_IMPORT: /opt/keycloak/data/import/renovator-realm.json
+    command: start-dev --import-realm
     ports:
       - "8080:8080"
+    volumes:
+      - ./keycloak/renovator-realm.json:/opt/keycloak/data/import/renovator-realm.json:ro
     depends_on:
       postgres:
         condition: service_healthy
