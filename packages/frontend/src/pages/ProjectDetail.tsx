@@ -9,7 +9,8 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
 import { Divider } from '../components/ui/Divider';
-import { MilestoneList } from '../components/MilestoneList';
+import { MilestoneList, type Milestone, MilestoneStatus } from '../components/MilestoneList';
+import { MilestoneForm } from '../components/MilestoneForm';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
@@ -35,26 +36,6 @@ enum ProjectStatus {
   ON_HOLD = 'on_hold',
   COMPLETED = 'completed',
   ARCHIVED = 'archived',
-}
-
-interface Milestone {
-  id: string;
-  projectId: string;
-  name: string;
-  description?: string;
-  targetDate: string;
-  completedDate?: string;
-  status: MilestoneStatus;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-enum MilestoneStatus {
-  NOT_STARTED = 'not_started',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  OVERDUE = 'overdue',
 }
 
 interface Task {
@@ -109,6 +90,8 @@ export const ProjectDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [isMilestoneFormOpen, setIsMilestoneFormOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | undefined>(undefined);
 
   useEffect(() => {
     if (id) {
@@ -176,6 +159,39 @@ export const ProjectDetail: React.FC = () => {
 
   const handleEdit = () => {
     navigate(`/projects/${id}/edit`);
+  };
+
+  const handleCreateMilestone = () => {
+    setEditingMilestone(undefined);
+    setIsMilestoneFormOpen(true);
+  };
+
+  const handleEditMilestone = (milestone: Milestone) => {
+    setEditingMilestone(milestone);
+    setIsMilestoneFormOpen(true);
+  };
+
+  const handleMilestoneFormClose = () => {
+    setIsMilestoneFormOpen(false);
+    setEditingMilestone(undefined);
+  };
+
+  const handleMilestoneFormSuccess = () => {
+    // Reload project data to get updated milestones
+    loadProjectData();
+  };
+
+  const handleCompleteMilestone = async (milestone: Milestone) => {
+    try {
+      // Call the complete milestone API endpoint
+      await apiClient.post(`/api/milestones/${milestone.id}/complete`);
+      
+      // Reload project data to get updated milestones and recalculated progress
+      await loadProjectData();
+    } catch (err: any) {
+      console.error('Error completing milestone:', err);
+      setError(err.message || 'Failed to complete milestone. Please try again.');
+    }
   };
 
   const getStatusBadgeVariant = (status: ProjectStatus) => {
@@ -482,13 +498,27 @@ export const ProjectDetail: React.FC = () => {
               <CardHeader
                 title="Timeline & Milestones"
                 action={
-                  <div className="text-sm text-gray-600">
-                    Progress: {progress}%
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleCreateMilestone}
+                    >
+                      Add Milestone
+                    </Button>
+                    <div className="text-sm text-gray-600">
+                      Progress: {progress}%
+                    </div>
                   </div>
                 }
               />
               <CardContent>
-                <MilestoneList milestones={milestones} showProgress={true} />
+                <MilestoneList 
+                  milestones={milestones} 
+                  showProgress={true}
+                  onEdit={handleEditMilestone}
+                  onComplete={handleCompleteMilestone}
+                />
               </CardContent>
             </Card>
 
@@ -644,6 +674,17 @@ export const ProjectDetail: React.FC = () => {
             </Card>
           </div>
         </div>
+
+        {/* Milestone Form Modal */}
+        {id && (
+          <MilestoneForm
+            isOpen={isMilestoneFormOpen}
+            onClose={handleMilestoneFormClose}
+            onSuccess={handleMilestoneFormSuccess}
+            projectId={id}
+            milestone={editingMilestone}
+          />
+        )}
       </Container>
     </PageLayout>
   );

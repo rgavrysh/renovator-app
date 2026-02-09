@@ -22,14 +22,18 @@ export enum MilestoneStatus {
   OVERDUE = 'overdue',
 }
 
-interface MilestoneListProps {
+export interface MilestoneListProps {
   milestones: Milestone[];
   showProgress?: boolean;
+  onEdit?: (milestone: Milestone) => void;
+  onComplete?: (milestone: Milestone) => void;
 }
 
 export const MilestoneList: React.FC<MilestoneListProps> = ({
   milestones,
   showProgress = true,
+  onEdit,
+  onComplete,
 }) => {
   // Sort milestones in chronological order by target date
   const sortedMilestones = [...milestones].sort((a, b) => {
@@ -185,6 +189,43 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                     <span className="font-medium text-red-600">⚠ Overdue</span>
                   )}
                 </div>
+              </div>
+              
+              {/* Action buttons */}
+              <div className="ml-3 flex items-center gap-2">
+                {/* Complete button - only show if not completed */}
+                {onComplete && milestone.status !== MilestoneStatus.COMPLETED && (
+                  <button
+                    onClick={() => onComplete(milestone)}
+                    className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors"
+                    title="Mark as complete"
+                  >
+                    Complete
+                  </button>
+                )}
+                
+                {/* Edit button */}
+                {onEdit && (
+                  <button
+                    onClick={() => onEdit(milestone)}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                    title="Edit milestone"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { MilestoneList, Milestone, MilestoneStatus } from './MilestoneList';
 
 describe('MilestoneList', () => {
@@ -149,5 +150,45 @@ describe('MilestoneList', () => {
     // Check for red background styling on overdue milestone
     const overdueContainer = container.querySelector('.bg-red-50');
     expect(overdueContainer).toBeInTheDocument();
+  });
+
+  it('should show complete button for non-completed milestones when onComplete is provided', () => {
+    const onComplete = vi.fn();
+    render(<MilestoneList milestones={mockMilestones} onComplete={onComplete} />);
+    
+    // Should show complete button for non-completed milestones
+    const completeButtons = screen.getAllByText('Complete');
+    expect(completeButtons.length).toBe(2); // 2 non-completed milestones
+  });
+
+  it('should not show complete button for completed milestones', () => {
+    const onComplete = vi.fn();
+    const completedMilestones: Milestone[] = mockMilestones.map((m) => ({
+      ...m,
+      status: MilestoneStatus.COMPLETED,
+    }));
+
+    render(<MilestoneList milestones={completedMilestones} onComplete={onComplete} />);
+    
+    // Should not show any complete buttons
+    expect(screen.queryByText('Complete')).not.toBeInTheDocument();
+  });
+
+  it('should call onComplete when complete button is clicked', async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn();
+    render(<MilestoneList milestones={mockMilestones} onComplete={onComplete} />);
+    
+    const completeButtons = screen.getAllByText('Complete');
+    await user.click(completeButtons[0]);
+    
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith(mockMilestones[1]); // Second milestone (in progress)
+  });
+
+  it('should not show complete button when onComplete is not provided', () => {
+    render(<MilestoneList milestones={mockMilestones} />);
+    
+    expect(screen.queryByText('Complete')).not.toBeInTheDocument();
   });
 });
