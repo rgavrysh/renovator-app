@@ -90,7 +90,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 4: Active Projects Visibility**
     - **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5**
   
-  - [ ] 5.3 Create REST API endpoints for projects
+  - [x] 5.3 Create REST API endpoints for projects
     - POST /api/projects - Create project
     - GET /api/projects - List projects
     - GET /api/projects/:id - Get project
@@ -101,7 +101,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
 - [ ] 6. Timeline and Milestone Backend Implementation
-  - [ ] 6.1 Create MilestoneService with CRUD operations
+  - [x] 6.1 Create MilestoneService with CRUD operations
     - Implement create, update, delete milestone methods
     - Implement progress calculation
     - Implement overdue detection
@@ -114,7 +114,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 8: Overdue Milestone Detection**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5**
   
-  - [ ] 6.3 Create REST API endpoints for milestones
+  - [x] 6.3 Create REST API endpoints for milestones
     - POST /api/projects/:projectId/milestones - Create milestone
     - GET /api/projects/:projectId/milestones - List milestones
     - PUT /api/milestones/:id - Update milestone
@@ -123,13 +123,13 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
 - [ ] 7. Task Management Backend Implementation
-  - [ ] 7.1 Create WorkItemTemplateService
+  - [x] 7.1 Create WorkItemTemplateService
     - Implement CRUD for work item templates
     - Seed database with default templates by category
     - Implement template retrieval by category
     - _Requirements: 3.3, 3.4, 3.5, 3.7_
   
-  - [ ] 7.2 Create TaskService with CRUD operations
+  - [x] 7.2 Create TaskService with CRUD operations
     - Implement create, update, delete task methods
     - Implement bulk task creation from templates
     - Implement task filtering
@@ -147,7 +147,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 17: Task Cost Aggregation**
     - **Validates: Requirements 3.1-3.12**
   
-  - [ ] 7.4 Create REST API endpoints for tasks
+  - [x] 7.4 Create REST API endpoints for tasks
     - POST /api/projects/:projectId/tasks - Create task
     - POST /api/projects/:projectId/tasks/bulk - Bulk create from templates
     - GET /api/projects/:projectId/tasks - List/filter tasks
@@ -158,7 +158,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - POST /api/work-items - Create custom template
     - _Requirements: 3.1, 3.3, 3.4, 3.6, 3.7, 3.8, 3.10_
 
-- [ ] 8. Checkpoint - Ensure core project features work
+- [x] 8. Checkpoint - Ensure core project features work
   - Test project, milestone, and task creation
   - Verify filtering and search functionality
   - Ensure all tests pass
@@ -166,7 +166,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
 
 
 - [ ] 9. Budget Management Backend Implementation
-  - [ ] 9.1 Create BudgetService with CRUD operations
+  - [x] 9.1 Create BudgetService with CRUD operations
     - Implement budget and budget item CRUD
     - Implement variance calculations
     - Implement budget alert detection
@@ -180,7 +180,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 21: Budget Alert Threshold**
     - **Validates: Requirements 4.1-4.7**
   
-  - [ ] 9.3 Create REST API endpoints for budgets
+  - [x] 9.3 Create REST API endpoints for budgets
     - POST /api/projects/:projectId/budget - Create budget
     - GET /api/projects/:projectId/budget - Get budget
     - POST /api/budgets/:budgetId/items - Add budget item
@@ -190,20 +190,20 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
 - [ ] 10. Document and Photo Management Backend Implementation
-  - [ ] 10.1 Set up file storage service
+  - [x] 10.1 Set up file storage service
     - Configure cloud storage (AWS S3 or similar)
     - Implement file upload with presigned URLs
     - Implement file deletion
     - _Requirements: 5.1, 5.2, 5.6_
   
-  - [ ] 10.2 Create DocumentService
+  - [x] 10.2 Create DocumentService
     - Implement document upload with metadata
     - Implement document search and filtering
     - Implement soft delete (trash)
     - Implement document categorization
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.7_
   
-  - [ ] 10.3 Create PhotoService
+  - [x] 10.3 Create PhotoService
     - Implement photo upload with EXIF extraction
     - Implement thumbnail generation
     - Implement batch upload
@@ -221,7 +221,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 29: Photo Thumbnail Generation**
     - **Validates: Requirements 5.1-5.7, 6.1-6.7**
   
-  - [ ] 10.5 Create REST API endpoints for documents and photos
+  - [x] 10.5 Create REST API endpoints for documents and photos
     - POST /api/projects/:projectId/documents - Upload document
     - GET /api/projects/:projectId/documents - List documents
     - GET /api/documents/:id - Get document
@@ -232,11 +232,11 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - _Requirements: 5.1, 5.2, 5.4, 5.5, 5.7, 6.1, 6.2, 6.4, 6.6_
 
 - [ ] 11. Resource Management Backend Implementation
-  - [ ] 11.1 Create SupplierService
+  - [x] 11.1 Create SupplierService
     - Implement supplier CRUD operations
     - _Requirements: 7.4_
   
-  - [ ] 11.2 Create ResourceService
+  - [x] 11.2 Create ResourceService
     - Implement resource CRUD operations
     - Implement status transitions (ordered, received)
     - Implement overdue delivery detection
@@ -250,7 +250,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 33: Overdue Delivery Detection**
     - **Validates: Requirements 7.1-7.7**
   
-  - [ ] 11.4 Create REST API endpoints for resources
+  - [x] 11.4 Create REST API endpoints for resources
     - POST /api/projects/:projectId/resources - Create resource
     - GET /api/projects/:projectId/resources - List resources
     - PUT /api/resources/:id - Update resource
@@ -261,7 +261,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - GET /api/suppliers - List suppliers
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 12. Checkpoint - Ensure all backend features work
+- [x] 12. Checkpoint - Ensure all backend features work
   - Test budget, document, photo, and resource management
   - Verify all calculations and aggregations
   - Ensure all tests pass

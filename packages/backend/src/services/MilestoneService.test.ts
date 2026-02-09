@@ -6,6 +6,7 @@ import { Milestone, MilestoneStatus } from '../entities/Milestone';
 import { Project, ProjectStatus } from '../entities/Project';
 import { Task, TaskStatus, TaskPriority } from '../entities/Task';
 import { User } from '../entities/User';
+import { Supplier } from '../entities/Supplier';
 
 describe('MilestoneService', () => {
   let milestoneService: MilestoneService;
@@ -30,6 +31,7 @@ describe('MilestoneService', () => {
     await AppDataSource.createQueryBuilder().delete().from(Task).execute();
     await AppDataSource.createQueryBuilder().delete().from(Milestone).execute();
     await AppDataSource.createQueryBuilder().delete().from(Project).execute();
+    await AppDataSource.createQueryBuilder().delete().from(Supplier).execute();
     await AppDataSource.createQueryBuilder().delete().from(User).execute();
 
     // Create test user

@@ -4,6 +4,7 @@ import { SessionService } from './SessionService';
 import { Session } from '../entities/Session';
 import { User } from '../entities/User';
 import { Project } from '../entities/Project';
+import { Supplier } from '../entities/Supplier';
 import { OAuthTokens } from './AuthService';
 
 describe('SessionService', () => {
@@ -24,6 +25,7 @@ describe('SessionService', () => {
     const projectRepository = AppDataSource.getRepository(Project);
     const sessionRepository = AppDataSource.getRepository(Session);
     const userRepository = AppDataSource.getRepository(User);
+    const supplierRepository = AppDataSource.getRepository(Supplier);
     
     const projects = await projectRepository.find();
     if (projects.length > 0) {
@@ -33,6 +35,11 @@ describe('SessionService', () => {
     const sessions = await sessionRepository.find();
     if (sessions.length > 0) {
       await sessionRepository.remove(sessions);
+    }
+    
+    const suppliers = await supplierRepository.find();
+    if (suppliers.length > 0) {
+      await supplierRepository.remove(suppliers);
     }
     
     const users = await userRepository.find();

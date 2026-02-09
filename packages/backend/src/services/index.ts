@@ -8,6 +8,8 @@ export { BudgetService } from './BudgetService';
 export { FileStorageService } from './FileStorageService';
 export { DocumentService } from './DocumentService';
 export { PhotoService } from './PhotoService';
+export { SupplierService } from './SupplierService';
+export { ResourceService } from './ResourceService';
 export type { OAuthTokens, TokenValidationResult, UserInfo } from './AuthService';
 export type {
   CreateProjectInput,
@@ -49,3 +51,13 @@ export type {
   PhotoMetadata,
   PhotoFilters,
 } from './PhotoService';
+export type {
+  CreateSupplierInput,
+  UpdateSupplierInput,
+} from './SupplierService';
+export type {
+  CreateResourceInput,
+  UpdateResourceInput,
+  ResourceFilters,
+  ResourcesByStatus,
+} from './ResourceService';
