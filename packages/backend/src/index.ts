@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import config from './config';
 import { initSentry, Sentry } from './utils/sentry';
 import { initializeDatabase } from './config/database';
+import { authenticate } from './middleware';
 
 // Initialize Sentry
 initSentry();
@@ -16,9 +17,14 @@ app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
+// Health check endpoint (public)
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Example protected route
+app.get('/api/me', authenticate, (req: Request, res: Response) => {
+  res.json({ user: req.user });
 });
 
 // API routes will be added here
@@ -27,7 +33,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use(Sentry.Handlers.errorHandler());
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: any) => {
+app.use((err: Error, _req: Request, res: Response, _next: any) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });

@@ -40,7 +40,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Configure redirect URIs and scopes
     - _Requirements: 8.1_
   
-  - [ ] 3.2 Implement OAuth 2.0 authorization code flow in backend
+  - [x] 3.2 Implement OAuth 2.0 authorization code flow in backend
     - Create AuthService with OAuth methods
     - Implement authorization URL generation
     - Implement code-to-token exchange
@@ -54,7 +54,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 37: Token Refresh**
     - **Validates: Requirements 8.1, 8.4, 8.5, 8.6**
   
-  - [ ] 3.4 Implement session management
+  - [x] 3.4 Implement session management
     - Create SessionService for CRUD operations
     - Implement session creation and deletion
     - _Requirements: 8.4, 8.8_
@@ -64,12 +64,12 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 39: Token Revocation**
     - **Validates: Requirements 8.4, 8.8**
   
-  - [ ] 3.6 Create authentication middleware
+  - [x] 3.6 Create authentication middleware
     - Implement token validation middleware
     - Add middleware to protect routes
     - _Requirements: 8.5_
 
-- [ ] 4. Checkpoint - Ensure authentication works
+- [x] 4. Checkpoint - Ensure authentication works
   - Test OAuth login flow end-to-end
   - Verify token validation and refresh
   - Ensure all tests pass
