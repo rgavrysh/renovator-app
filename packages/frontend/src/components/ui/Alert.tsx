@@ -5,6 +5,7 @@ export interface AlertProps {
   title?: string;
   children: React.ReactNode;
   onClose?: () => void;
+  className?: string;
 }
 
 export const Alert: React.FC<AlertProps> = ({
@@ -12,6 +13,7 @@ export const Alert: React.FC<AlertProps> = ({
   title,
   children,
   onClose,
+  className = '',
 }) => {
   const variantStyles = {
     info: {
@@ -66,7 +68,7 @@ export const Alert: React.FC<AlertProps> = ({
   const styles = variantStyles[variant];
   
   return (
-    <div className={`rounded-linear border p-4 ${styles.container}`}>
+    <div className={`rounded-linear border p-4 ${styles.container} ${className}`}>
       <div className="flex">
         <div className={`flex-shrink-0 ${styles.icon}`}>
           {icons[variant]}

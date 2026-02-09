@@ -3,15 +3,10 @@ import App from './App';
 import { ComponentShowcase } from './pages/ComponentShowcase';
 import { Login } from './pages/Login';
 import { AuthCallback } from './pages/AuthCallback';
+import { Dashboard } from './pages/Dashboard';
+import { ProjectForm } from './pages/ProjectForm';
+import { ProjectDetail } from './pages/ProjectDetail';
 import { ProtectedRoute } from './components/ProtectedRoute';
-
-// Placeholder components for routes (to be implemented in later tasks)
-const Dashboard = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold">Dashboard</h1>
-    <p className="mt-4 text-gray-600">Project dashboard coming soon...</p>
-  </div>
-);
 
 const NotFound = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -44,6 +39,30 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'projects/new',
+        element: (
+          <ProtectedRoute>
+            <ProjectForm />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'projects/:id',
+        element: (
+          <ProtectedRoute>
+            <ProjectDetail />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'projects/:id/edit',
+        element: (
+          <ProtectedRoute>
+            <ProjectForm />
           </ProtectedRoute>
         ),
       },
