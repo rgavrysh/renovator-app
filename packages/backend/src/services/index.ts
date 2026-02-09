@@ -5,6 +5,7 @@ export { MilestoneService } from './MilestoneService';
 export { WorkItemTemplateService } from './WorkItemTemplateService';
 export { TaskService } from './TaskService';
 export { BudgetService } from './BudgetService';
+export { FileStorageService } from './FileStorageService';
 export type { OAuthTokens, TokenValidationResult, UserInfo } from './AuthService';
 export type {
   CreateProjectInput,
@@ -31,3 +32,8 @@ export type {
   UpdateBudgetItemInput,
   BudgetAlert,
 } from './BudgetService';
+export type {
+  UploadResult,
+  PresignedUrlResult,
+  FileMetadata,
+} from './FileStorageService';

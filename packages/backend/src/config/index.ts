@@ -24,6 +24,11 @@ interface Config {
     dsn: string;
     environment: string;
   };
+  fileStorage: {
+    baseUrl: string;
+    secret: string;
+    storagePath: string;
+  };
 }
 
 const config: Config = {
@@ -47,6 +52,11 @@ const config: Config = {
   sentry: {
     dsn: process.env.SENTRY_DSN || '',
     environment: process.env.SENTRY_ENVIRONMENT || 'development',
+  },
+  fileStorage: {
+    baseUrl: process.env.FILE_STORAGE_BASE_URL || 'http://localhost:4000/files',
+    secret: process.env.FILE_STORAGE_SECRET || 'default-secret-change-in-production',
+    storagePath: process.env.FILE_STORAGE_PATH || './uploads',
   },
 };
 
