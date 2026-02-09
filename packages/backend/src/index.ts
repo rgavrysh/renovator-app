@@ -7,6 +7,8 @@ import projectRoutes from './routes/projects';
 import milestoneRoutes from './routes/milestones';
 import taskRoutes from './routes/tasks';
 import budgetRoutes from './routes/budgets';
+import documentRoutes from './routes/documents';
+import photoRoutes from './routes/photos';
 
 // Initialize Sentry
 initSentry();
@@ -41,6 +43,10 @@ app.use('/api', taskRoutes); // For /api/work-items routes
 app.use('/api/projects', budgetRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api', budgetRoutes); // For /api/budget-items routes
+app.use('/api/projects', documentRoutes);
+app.use('/api', documentRoutes); // For /api/documents routes
+app.use('/api/projects', photoRoutes);
+app.use('/api', photoRoutes); // For /api/photos routes
 
 // Sentry error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler());

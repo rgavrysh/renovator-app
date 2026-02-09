@@ -6,6 +6,8 @@ export { WorkItemTemplateService } from './WorkItemTemplateService';
 export { TaskService } from './TaskService';
 export { BudgetService } from './BudgetService';
 export { FileStorageService } from './FileStorageService';
+export { DocumentService } from './DocumentService';
+export { PhotoService } from './PhotoService';
 export type { OAuthTokens, TokenValidationResult, UserInfo } from './AuthService';
 export type {
   CreateProjectInput,
@@ -37,3 +39,13 @@ export type {
   PresignedUrlResult,
   FileMetadata,
 } from './FileStorageService';
+export type {
+  UploadDocumentInput,
+  DocumentMetadata,
+  DocumentFilters,
+} from './DocumentService';
+export type {
+  UploadPhotoInput,
+  PhotoMetadata,
+  PhotoFilters,
+} from './PhotoService';
