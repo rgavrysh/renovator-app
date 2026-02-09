@@ -3,6 +3,7 @@ import config from './config';
 import { initSentry, Sentry } from './utils/sentry';
 import { initializeDatabase } from './config/database';
 import { authenticate } from './middleware';
+import projectRoutes from './routes/projects';
 
 // Initialize Sentry
 initSentry();
@@ -27,7 +28,8 @@ app.get('/api/me', authenticate, (req: Request, res: Response) => {
   res.json({ user: req.user });
 });
 
-// API routes will be added here
+// API routes
+app.use('/api/projects', projectRoutes);
 
 // Sentry error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler());
