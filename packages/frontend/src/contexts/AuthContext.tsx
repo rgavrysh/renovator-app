@@ -30,10 +30,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const TOKEN_STORAGE_KEY = 'auth_tokens';
 const USER_STORAGE_KEY = 'auth_user';
 const SESSION_STORAGE_KEY = 'auth_session';
+const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // Refresh 5 minutes before expiration
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [tokenRefreshTimer, setTokenRefreshTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Load user and tokens from localStorage on mount
   useEffect(() => {
@@ -51,6 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           
           if (isValid) {
             setUser(userData);
+            scheduleTokenRefresh(tokens.expiresIn);
           } else {
             // Try to refresh token
             try {
@@ -70,6 +73,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     loadAuth();
+
+    // Cleanup timer on unmount
+    return () => {
+      if (tokenRefreshTimer) {
+        clearTimeout(tokenRefreshTimer);
+      }
+    };
   }, []);
 
   const verifyToken = async (accessToken: string): Promise<boolean> => {
@@ -82,6 +92,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return response.ok;
     } catch (error) {
       return false;
+    }
+  };
+
+  const scheduleTokenRefresh = (expiresIn: number) => {
+    // Clear existing timer
+    if (tokenRefreshTimer) {
+      clearTimeout(tokenRefreshTimer);
+    }
+
+    // Calculate when to refresh (expiresIn is in seconds, convert to ms and subtract threshold)
+    const refreshTime = (expiresIn * 1000) - TOKEN_REFRESH_THRESHOLD;
+    
+    // Only schedule if refresh time is positive
+    if (refreshTime > 0) {
+      const timer = setTimeout(() => {
+        refreshToken().catch(error => {
+          console.error('Automatic token refresh failed:', error);
+          clearAuth();
+        });
+      }, refreshTime);
+      
+      setTokenRefreshTimer(timer);
     }
   };
 
@@ -107,6 +139,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokens));
+
+    // Schedule next refresh
+    scheduleTokenRefresh(tokens.expiresIn);
 
     // Get updated user info
     const userResponse = await fetch(`${config.api.url}/api/auth/me`, {
@@ -154,6 +189,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (storedTokens) {
         const tokens: AuthTokens = JSON.parse(storedTokens);
 
+        // Call backend logout endpoint to revoke tokens
         await fetch(`${config.api.url}/api/auth/logout`, {
           method: 'POST',
           headers: {
@@ -168,7 +204,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Error during logout:', error);
     } finally {
+      // Always clear local auth state, even if backend call fails
       clearAuth();
+      // Redirect to login page
+      window.location.href = '/login';
     }
   };
 
@@ -181,6 +220,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const clearAuth = () => {
+    // Clear refresh timer
+    if (tokenRefreshTimer) {
+      clearTimeout(tokenRefreshTimer);
+      setTokenRefreshTimer(null);
+    }
+    
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(USER_STORAGE_KEY);
     localStorage.removeItem(SESSION_STORAGE_KEY);

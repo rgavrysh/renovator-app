@@ -289,14 +289,14 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Create authentication context/provider
     - _Requirements: 8.1, 8.4_
   
-  - [ ] 13.4 Implement protected routes and auth guards
+  - [x] 13.4 Implement protected routes and auth guards
     - Create ProtectedRoute component
     - Implement token refresh logic
     - Handle logout and token revocation
     - _Requirements: 8.5, 8.6, 8.8_
 
 - [ ] 14. Frontend - Project Management UI
-  - [ ] 14.1 Create project dashboard
+  - [-] 14.1 Create project dashboard
     - Display list of active projects
     - Implement project status indicators
     - Add search functionality
