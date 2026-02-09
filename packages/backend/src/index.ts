@@ -1,8 +1,10 @@
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import config from './config';
 import { initSentry, Sentry } from './utils/sentry';
 import { initializeDatabase } from './config/database';
 import { authenticate } from './middleware';
+import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
 import milestoneRoutes from './routes/milestones';
 import taskRoutes from './routes/tasks';
@@ -20,6 +22,14 @@ const app = express();
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 
+// CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -35,6 +45,7 @@ app.get('/api/me', authenticate, (req: Request, res: Response) => {
 });
 
 // API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/projects', milestoneRoutes);
 app.use('/api/milestones', milestoneRoutes);

@@ -43,6 +43,17 @@ export class SessionService {
       relations: ['user'],
     });
   }
+  /**
+   * Get session by refresh token
+   */
+  async getSessionByRefreshToken(refreshToken: string): Promise<Session | null> {
+    const sessionRepository = AppDataSource.getRepository(Session);
+    return await sessionRepository.findOne({
+      where: { refreshToken },
+      relations: ['user'],
+    });
+  }
+
 
   /**
    * Update session tokens (e.g., after token refresh)
