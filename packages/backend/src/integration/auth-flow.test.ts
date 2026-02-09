@@ -16,7 +16,7 @@ import { Session } from '../entities/Session';
  * 5. Token refresh
  * 6. Session cleanup
  */
-describe('OAuth Authentication Flow - End-to-End', () => {
+describe.sequential('OAuth Authentication Flow - End-to-End', () => {
   let authService: AuthService;
   let sessionService: SessionService;
 
