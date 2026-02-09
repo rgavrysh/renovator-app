@@ -280,7 +280,6 @@ export class AuthService {
         lastName: userInfo.family_name || '',
         phone: userInfo.phone,
         company: userInfo.company,
-        passwordHash: '', // Not used with OAuth
         lastLoginAt: new Date(),
       });
     }

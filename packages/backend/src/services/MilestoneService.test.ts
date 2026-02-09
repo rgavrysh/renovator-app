@@ -4,7 +4,7 @@ import { MilestoneService } from './MilestoneService';
 import { ProjectService } from './ProjectService';
 import { Milestone, MilestoneStatus } from '../entities/Milestone';
 import { Project, ProjectStatus } from '../entities/Project';
-import { Task, TaskStatus } from '../entities/Task';
+import { Task, TaskStatus, TaskPriority } from '../entities/Task';
 import { User } from '../entities/User';
 
 describe('MilestoneService', () => {
@@ -381,7 +381,7 @@ describe('MilestoneService', () => {
           milestoneId: milestone.id,
           name: 'Task 1',
           status: TaskStatus.COMPLETED,
-          priority: 'medium',
+          priority: TaskPriority.MEDIUM,
         })
       );
 
@@ -391,7 +391,7 @@ describe('MilestoneService', () => {
           milestoneId: milestone.id,
           name: 'Task 2',
           status: TaskStatus.IN_PROGRESS,
-          priority: 'medium',
+          priority: TaskPriority.MEDIUM,
         })
       );
 
@@ -401,7 +401,7 @@ describe('MilestoneService', () => {
           milestoneId: milestone.id,
           name: 'Task 3',
           status: TaskStatus.TODO,
-          priority: 'medium',
+          priority: TaskPriority.MEDIUM,
         })
       );
 

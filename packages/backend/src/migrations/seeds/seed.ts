@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { User } from '../../entities/User';
 import { Project, ProjectStatus } from '../../entities/Project';
 import { Task, TaskStatus, TaskPriority } from '../../entities/Task';
+import { WorkItemTemplateService } from '../../services/WorkItemTemplateService';
 
 export async function seedDatabase(dataSource: DataSource): Promise<void> {
   const userRepository = dataSource.getRepository(User);
@@ -20,7 +21,6 @@ export async function seedDatabase(dataSource: DataSource): Promise<void> {
   // Create Users
   const user1 = userRepository.create({
     email: 'john.renovator@example.com',
-    passwordHash: '$2b$10$dummyHashForDevelopment1234567890', // Placeholder hash
     firstName: 'John',
     lastName: 'Renovator',
     phone: '+1-555-0101',
@@ -30,7 +30,6 @@ export async function seedDatabase(dataSource: DataSource): Promise<void> {
 
   const user2 = userRepository.create({
     email: 'jane.builder@example.com',
-    passwordHash: '$2b$10$dummyHashForDevelopment1234567890', // Placeholder hash
     firstName: 'Jane',
     lastName: 'Builder',
     phone: '+1-555-0102',
@@ -176,6 +175,10 @@ export async function seedDatabase(dataSource: DataSource): Promise<void> {
 
   await taskRepository.save([...tasks1, ...tasks2, ...tasks3]);
   console.log('✓ Created 8 tasks across 3 projects');
+
+  // Seed default work item templates
+  const workItemTemplateService = new WorkItemTemplateService();
+  await workItemTemplateService.seedDefaultTemplates();
 
   console.log('Database seeding completed successfully!');
 }

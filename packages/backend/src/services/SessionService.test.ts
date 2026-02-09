@@ -3,6 +3,7 @@ import { AppDataSource } from '../config/database';
 import { SessionService } from './SessionService';
 import { Session } from '../entities/Session';
 import { User } from '../entities/User';
+import { Project } from '../entities/Project';
 import { OAuthTokens } from './AuthService';
 
 describe('SessionService', () => {
@@ -19,9 +20,15 @@ describe('SessionService', () => {
   });
 
   beforeEach(async () => {
-    // Clean up sessions first (due to foreign key constraint), then users
+    // Clean up in correct order due to foreign key constraints
+    const projectRepository = AppDataSource.getRepository(Project);
     const sessionRepository = AppDataSource.getRepository(Session);
     const userRepository = AppDataSource.getRepository(User);
+    
+    const projects = await projectRepository.find();
+    if (projects.length > 0) {
+      await projectRepository.remove(projects);
+    }
     
     const sessions = await sessionRepository.find();
     if (sessions.length > 0) {
@@ -39,7 +46,6 @@ describe('SessionService', () => {
       firstName: 'Test',
       lastName: 'User',
       idpUserId: 'test-idp-user-id',
-      passwordHash: 'not-used',
     });
     testUser = await userRepository.save(testUser);
   });

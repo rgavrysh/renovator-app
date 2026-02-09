@@ -4,6 +4,7 @@ import { AuthService, OAuthTokens } from '../services/AuthService';
 import { SessionService } from '../services/SessionService';
 import { User } from '../entities/User';
 import { Session } from '../entities/Session';
+import { Project } from '../entities/Project';
 
 /**
  * End-to-End Integration Test for OAuth Authentication Flow
@@ -32,13 +33,13 @@ describe.sequential('OAuth Authentication Flow - End-to-End', () => {
 
   beforeEach(async () => {
     // Clean up database before each test
+    const projectRepository = AppDataSource.getRepository(Project);
     const sessionRepository = AppDataSource.getRepository(Session);
     const userRepository = AppDataSource.getRepository(User);
     
-    // Delete all sessions first (due to foreign key constraint)
+    // Delete in correct order due to foreign key constraints
+    await projectRepository.createQueryBuilder().delete().execute();
     await sessionRepository.createQueryBuilder().delete().execute();
-    
-    // Then delete all users
     await userRepository.createQueryBuilder().delete().execute();
   });
 

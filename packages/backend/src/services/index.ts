@@ -2,6 +2,8 @@ export { AuthService } from './AuthService';
 export { SessionService } from './SessionService';
 export { ProjectService } from './ProjectService';
 export { MilestoneService } from './MilestoneService';
+export { WorkItemTemplateService } from './WorkItemTemplateService';
+export { TaskService } from './TaskService';
 export type { OAuthTokens, TokenValidationResult, UserInfo } from './AuthService';
 export type {
   CreateProjectInput,
@@ -13,3 +15,13 @@ export type {
   UpdateMilestoneInput,
   Timeline,
 } from './MilestoneService';
+export type {
+  CreateWorkItemTemplateInput,
+  UpdateWorkItemTemplateInput,
+} from './WorkItemTemplateService';
+export type {
+  CreateTaskInput,
+  UpdateTaskInput,
+  TaskFilters,
+  TaskCosts,
+} from './TaskService';
