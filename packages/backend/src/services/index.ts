@@ -4,6 +4,7 @@ export { ProjectService } from './ProjectService';
 export { MilestoneService } from './MilestoneService';
 export { WorkItemTemplateService } from './WorkItemTemplateService';
 export { TaskService } from './TaskService';
+export { BudgetService } from './BudgetService';
 export type { OAuthTokens, TokenValidationResult, UserInfo } from './AuthService';
 export type {
   CreateProjectInput,
@@ -25,3 +26,8 @@ export type {
   TaskFilters,
   TaskCosts,
 } from './TaskService';
+export type {
+  CreateBudgetItemInput,
+  UpdateBudgetItemInput,
+  BudgetAlert,
+} from './BudgetService';
