@@ -375,4 +375,54 @@ router.get('/suppliers', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * PUT /api/suppliers/:id
+ * Update a supplier
+ */
+router.put('/suppliers/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, contactName, email, phone, address, notes } = req.body;
+
+    const updateData: any = {};
+
+    if (name !== undefined) updateData.name = name;
+    if (contactName !== undefined) updateData.contactName = contactName;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (address !== undefined) updateData.address = address;
+    if (notes !== undefined) updateData.notes = notes;
+
+    const supplier = await supplierService.updateSupplier(id, updateData, req.userId!);
+    res.json(supplier);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Supplier not found') {
+      res.status(404).json({ error: 'Supplier not found' });
+      return;
+    }
+    console.error('Error updating supplier:', error);
+    res.status(500).json({ error: 'Failed to update supplier' });
+  }
+});
+
+/**
+ * DELETE /api/suppliers/:id
+ * Delete a supplier
+ */
+router.delete('/suppliers/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await supplierService.deleteSupplier(id, req.userId!);
+    res.status(204).send();
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Supplier not found') {
+      res.status(404).json({ error: 'Supplier not found' });
+      return;
+    }
+    console.error('Error deleting supplier:', error);
+    res.status(500).json({ error: 'Failed to delete supplier' });
+  }
+});
+
 export default router;
