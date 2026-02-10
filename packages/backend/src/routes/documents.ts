@@ -186,6 +186,36 @@ router.get('/documents/:id', authenticate, async (req: Request, res: Response) =
 });
 
 /**
+ * GET /api/documents/:id/download
+ * Get a presigned download URL for a document
+ */
+router.get('/documents/:id/download', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const document = await documentService.getDocument(id);
+
+    // Verify user owns the project
+    try {
+      await projectService.getProject(document.projectId, req.userId!);
+    } catch (error) {
+      res.status(404).json({ error: 'Document not found' });
+      return;
+    }
+
+    const url = await documentService.generatePresignedUrl(id);
+    res.json({ url });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Document not found') {
+      res.status(404).json({ error: 'Document not found' });
+      return;
+    }
+    console.error('Error generating download URL:', error);
+    res.status(500).json({ error: 'Failed to generate download URL' });
+  }
+});
+
+/**
  * DELETE /api/documents/:id
  * Soft delete a document (move to trash)
  */
@@ -212,6 +242,59 @@ router.delete('/documents/:id', authenticate, async (req: Request, res: Response
     }
     console.error('Error deleting document:', error);
     res.status(500).json({ error: 'Failed to delete document' });
+  }
+});
+
+/**
+ * GET /api/projects/:projectId/documents/trash
+ * Get documents in trash for a project
+ */
+router.get('/:projectId/documents/trash', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+
+    // Verify project exists and user owns it
+    try {
+      await projectService.getProject(projectId, req.userId!);
+    } catch (error) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    const documents = await documentService.getTrashDocuments(projectId);
+    res.json(documents);
+  } catch (error) {
+    console.error('Error getting trash documents:', error);
+    res.status(500).json({ error: 'Failed to get trash documents' });
+  }
+});
+
+/**
+ * POST /api/documents/:id/restore
+ * Restore a document from trash
+ */
+router.post('/documents/:id/restore', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const document = await documentService.restoreDocument(id);
+
+    // Verify user owns the project
+    try {
+      await projectService.getProject(document.projectId, req.userId!);
+    } catch (error) {
+      res.status(404).json({ error: 'Document not found' });
+      return;
+    }
+
+    res.json(document);
+  } catch (error) {
+    if (error instanceof Error && (error.message === 'Document not found' || error.message === 'Document is not in trash')) {
+      res.status(404).json({ error: error.message });
+      return;
+    }
+    console.error('Error restoring document:', error);
+    res.status(500).json({ error: 'Failed to restore document' });
   }
 });
 
