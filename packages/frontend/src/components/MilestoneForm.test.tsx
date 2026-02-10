@@ -109,6 +109,7 @@ describe('MilestoneForm', () => {
         onClose={mockOnClose}
         onSuccess={mockOnSuccess}
         projectId={projectId}
+        existingMilestonesCount={2}
       />
     );
 
@@ -135,6 +136,7 @@ describe('MilestoneForm', () => {
           name: 'New Milestone',
           description: 'Test description',
           targetDate: futureDate,
+          orderIndex: 2,
         }
       );
       expect(mockOnSuccess).toHaveBeenCalled();
@@ -159,6 +161,7 @@ describe('MilestoneForm', () => {
         onClose={mockOnClose}
         onSuccess={mockOnSuccess}
         projectId={projectId}
+        existingMilestonesCount={3}
         milestone={milestone}
       />
     );
@@ -177,6 +180,7 @@ describe('MilestoneForm', () => {
           name: 'Updated Milestone',
           description: 'Complete the foundation work',
           targetDate: '2026-12-31',
+          orderIndex: 3,
         }
       );
       expect(mockOnSuccess).toHaveBeenCalled();

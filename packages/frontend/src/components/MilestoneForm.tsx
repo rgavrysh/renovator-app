@@ -16,6 +16,7 @@ interface MilestoneFormProps {
   onClose: () => void;
   onSuccess: () => void;
   projectId: string;
+  existingMilestonesCount?: number;
   milestone?: {
     id: string;
     name: string;
@@ -29,6 +30,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
   onClose,
   onSuccess,
   projectId,
+  existingMilestonesCount = 0,
   milestone,
 }) => {
   const [formData, setFormData] = useState<MilestoneFormData>({
@@ -117,6 +119,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
         targetDate: formData.targetDate,
+        orderIndex: existingMilestonesCount,
       };
 
       if (isEditMode) {

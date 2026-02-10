@@ -11,6 +11,10 @@ import { Alert } from '../components/ui/Alert';
 import { Divider } from '../components/ui/Divider';
 import { MilestoneList, type Milestone, MilestoneStatus } from '../components/MilestoneList';
 import { MilestoneForm } from '../components/MilestoneForm';
+import { TaskList } from '../components/TaskList';
+import { TaskDetail } from '../components/TaskDetail';
+import { TaskForm } from '../components/TaskForm';
+import { WorkItemsLibraryModal } from '../components/WorkItemsLibraryModal';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
@@ -50,6 +54,7 @@ interface Task {
   completedDate?: string;
   estimatedPrice?: number;
   actualPrice?: number;
+  notes: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -92,6 +97,11 @@ export const ProjectDetail: React.FC = () => {
   const [isArchiving, setIsArchiving] = useState(false);
   const [isMilestoneFormOpen, setIsMilestoneFormOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<Milestone | undefined>(undefined);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
+  const [isWorkItemsModalOpen, setIsWorkItemsModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -192,6 +202,62 @@ export const ProjectDetail: React.FC = () => {
       console.error('Error completing milestone:', err);
       setError(err.message || 'Failed to complete milestone. Please try again.');
     }
+  };
+
+  const handleViewTaskDetails = (task: Task) => {
+    setSelectedTask(task);
+    setIsTaskDetailOpen(true);
+  };
+
+  const handleTaskDetailClose = () => {
+    setIsTaskDetailOpen(false);
+    setSelectedTask(null);
+  };
+
+  const handleTaskUpdate = async () => {
+    // Reload project data to get updated task with new notes
+    await loadProjectData();
+    
+    // Update the selected task with fresh data
+    if (selectedTask) {
+      const updatedTask = tasks.find(t => t.id === selectedTask.id);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    }
+  };
+
+  const handleCreateTask = () => {
+    setEditingTask(undefined);
+    setIsTaskFormOpen(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setIsTaskFormOpen(true);
+  };
+
+  const handleTaskFormClose = () => {
+    setIsTaskFormOpen(false);
+    setEditingTask(undefined);
+  };
+
+  const handleTaskFormSuccess = () => {
+    // Reload project data to get updated tasks
+    loadProjectData();
+  };
+
+  const handleAddFromLibrary = () => {
+    setIsWorkItemsModalOpen(true);
+  };
+
+  const handleWorkItemsModalClose = () => {
+    setIsWorkItemsModalOpen(false);
+  };
+
+  const handleWorkItemsModalSuccess = () => {
+    // Reload project data to get newly created tasks
+    loadProjectData();
   };
 
   const getStatusBadgeVariant = (status: ProjectStatus) => {
@@ -522,72 +588,34 @@ export const ProjectDetail: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Tasks Summary */}
+            {/* Tasks */}
             <Card>
-              <CardHeader title="Tasks" />
+              <CardHeader 
+                title="Tasks"
+                action={
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleAddFromLibrary}
+                    >
+                      Add from Library
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleCreateTask}
+                    >
+                      Add Task
+                    </Button>
+                  </div>
+                }
+              />
               <CardContent>
-                {tasks.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-gray-500">No tasks yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Task Statistics */}
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{taskStats.total}</p>
-                        <p className="text-xs text-gray-500">Total</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-green-600">{taskStats.completed}</p>
-                        <p className="text-xs text-gray-500">Completed</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-blue-600">{taskStats.inProgress}</p>
-                        <p className="text-xs text-gray-500">In Progress</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-600">{taskStats.todo}</p>
-                        <p className="text-xs text-gray-500">To Do</p>
-                      </div>
-                    </div>
-
-                    <Divider />
-
-                    {/* Recent Tasks */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Recent Tasks</h4>
-                      <div className="space-y-2">
-                        {tasks.slice(0, 5).map((task) => (
-                          <div
-                            key={task.id}
-                            className="flex items-center justify-between p-2 rounded-linear hover:bg-gray-50"
-                          >
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900">{task.name}</p>
-                              {task.dueDate && (
-                                <p className="text-xs text-gray-500">
-                                  Due: {formatDate(task.dueDate)}
-                                </p>
-                              )}
-                            </div>
-                            <Badge
-                              variant={getTaskStatusBadgeVariant(task.status)}
-                              size="sm"
-                            >
-                              {getTaskStatusLabel(task.status)}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                      {tasks.length > 5 && (
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                          And {tasks.length - 5} more tasks...
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <TaskList 
+                  tasks={tasks}
+                  onViewDetails={handleViewTaskDetails}
+                />
               </CardContent>
             </Card>
           </div>
@@ -682,9 +710,39 @@ export const ProjectDetail: React.FC = () => {
             onClose={handleMilestoneFormClose}
             onSuccess={handleMilestoneFormSuccess}
             projectId={id}
+            existingMilestonesCount={milestones.length}
             milestone={editingMilestone}
           />
         )}
+
+        {/* Task Form Modal */}
+        {id && (
+          <TaskForm
+            isOpen={isTaskFormOpen}
+            onClose={handleTaskFormClose}
+            onSuccess={handleTaskFormSuccess}
+            projectId={id}
+            task={editingTask}
+          />
+        )}
+
+        {/* Work Items Library Modal */}
+        {id && (
+          <WorkItemsLibraryModal
+            isOpen={isWorkItemsModalOpen}
+            onClose={handleWorkItemsModalClose}
+            onSuccess={handleWorkItemsModalSuccess}
+            projectId={id}
+          />
+        )}
+
+        {/* Task Detail Modal */}
+        <TaskDetail
+          isOpen={isTaskDetailOpen}
+          onClose={handleTaskDetailClose}
+          task={selectedTask}
+          onTaskUpdate={handleTaskUpdate}
+        />
       </Container>
     </PageLayout>
   );
