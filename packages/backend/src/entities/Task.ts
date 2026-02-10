@@ -70,6 +70,9 @@ export class Task {
   @Column({ name: 'actual_price', type: 'decimal', precision: 12, scale: 2, nullable: true })
   actualPrice?: number;
 
+  @Column({ name: 'per_unit', type: 'varchar', length: 50, nullable: true })
+  perUnit?: string;
+
   @Column({ name: 'assigned_to', type: 'uuid', nullable: true })
   assignedTo?: string;
 

@@ -134,7 +134,8 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Implement bulk task creation from templates
     - Implement task filtering
     - Implement task cost aggregation
-    - _Requirements: 3.1, 3.2, 3.6, 3.8, 3.9, 3.10, 3.11, 3.12_
+    - Ensure task price updates trigger budget total recalculation
+    - _Requirements: 3.1, 3.2, 3.6, 3.8, 3.9, 3.10, 3.11, 3.12, 3.14, 4.10_
   
   - [ ]* 7.3 Write property tests for tasks
     - **Property 10: Task Creation Completeness**
@@ -175,15 +176,17 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Implement budget and budget item CRUD
     - Implement variance calculations
     - Implement budget alert detection
-    - Implement totals aggregation
-    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7_
+    - Implement totals aggregation including task actual prices
+    - Add calculateTotalsWithTasks method to aggregate from TaskService
+    - Ensure budget totals update when tasks are modified
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10_
   
   - [ ]* 9.2 Write property tests for budgets
-    - **Property 18: Budget Item Creation Completeness**
-    - **Property 19: Budget Variance Calculation**
-    - **Property 20: Budget Totals Aggregation**
-    - **Property 21: Budget Alert Threshold**
-    - **Validates: Requirements 4.1-4.7**
+    - **Property 19: Budget Item Creation Completeness**
+    - **Property 20: Budget Variance Calculation**
+    - **Property 21: Budget Totals Aggregation (including task prices)**
+    - **Property 22: Budget Alert Threshold**
+    - **Validates: Requirements 4.1-4.10**
   
   - [x] 9.3 Create REST API endpoints for budgets
     - POST /api/projects/:projectId/budget - Create budget
@@ -354,10 +357,12 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - _Requirements: 3.3, 3.4, 3.6_
   
   - [x] 16.3 Create task creation/edit form
-    - Build form with all task fields including pricing
+    - Build form with all task fields including pricing and per unit (optional)
     - Implement milestone association
     - Handle task creation and updates
-    - _Requirements: 3.1, 3.2, 3.5_
+    - Enable click on task row to open task detail/edit view
+    - Allow editing of milestone, priority, due date, price, and per unit
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
   
   - [x] 16.4 Implement task notes feature
     - Add notes section to task detail
@@ -384,13 +389,13 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Show template details: name, description, category, default price, unit
     - _Requirements: 3.15, 3.16_
   
-  - [ ] 16.8 Create work item template creation/edit form
+  - [x] 16.8 Create work item template creation/edit form
     - Build form with fields: name, description, category, estimated duration, default price, unit
     - Implement form validation
     - Handle template creation and updates via API
     - _Requirements: 3.7, 3.17_
   
-  - [ ] 16.9 Implement work item template deletion
+  - [x] 16.9 Implement work item template deletion
     - Add delete button to template list/detail view
     - Show confirmation dialog before deletion
     - Update UI after successful deletion
@@ -406,22 +411,34 @@ This implementation plan breaks down the development of the Renovator Project Ma
 
 - [ ] 18. Frontend - Budget Management UI
   - [x] 18.1 Create budget overview component
-    - Display budget totals and variance
+    - Display budget totals including separate breakdown of budget items vs task costs
+    - Show total actual from budget items
+    - Show total actual from tasks (auto-calculated)
+    - Show combined total actual costs
+    - Display variance and percentage spent
     - Show budget alerts when over threshold
-    - Display percentage spent
-    - _Requirements: 4.4, 4.5_
+    - _Requirements: 4.4, 4.5, 4.6, 4.7_
   
   - [x] 18.2 Create budget items list
     - Display budget items by category
-    - Show estimated vs actual costs
+    - Show estimated vs actual costs for each item
     - Display variance for each item
-    - _Requirements: 4.1, 4.2, 4.3_
+    - Clearly separate budget items from task-based costs
+    - _Requirements: 4.1, 4.2, 4.3, 4.6_
   
   - [x] 18.3 Create budget item creation/edit form
     - Build form for budget item details
     - Allow category selection
     - Handle creation and updates
-    - _Requirements: 4.1, 4.2, 4.6, 4.7_
+    - Trigger immediate recalculation of budget totals
+    - _Requirements: 4.1, 4.2, 4.8, 4.9_
+  
+  - [x] 18.4 Display task costs in budget view
+    - Show aggregated task actual prices in budget overview
+    - Display task costs separately from budget items
+    - Link to task list for detailed breakdown
+    - Update automatically when task prices change
+    - _Requirements: 3.14, 4.5, 4.6, 4.10_
 
 - [x] 19. Frontend - Document and Photo Management UI
   - [x] 19.1 Create document upload component

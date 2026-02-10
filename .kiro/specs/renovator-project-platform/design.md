@@ -195,9 +195,12 @@ interface Task {
   completedDate?: Date;
   estimatedPrice?: number;
   actualPrice?: number;
+  perUnit?: string; // Unit of measurement (e.g., "sq ft", "linear ft", "each")
   assignedTo?: string;
   notes: string[];
   createdAt: Date;
+  updatedAt: Date;
+}
   updatedAt: Date;
 }
 
@@ -273,6 +276,7 @@ interface TaskService {
 - Cost variance calculation
 - Budget alerts and warnings
 - Category-based budget organization
+- Automatic aggregation of task actual prices into budget totals
 
 **Key Interfaces**:
 
@@ -281,7 +285,9 @@ interface Budget {
   id: string;
   projectId: string;
   totalEstimated: number;
-  totalActual: number;
+  totalActual: number; // Includes budget items + task actual prices
+  totalActualFromItems: number; // Only from budget items
+  totalActualFromTasks: number; // Only from task actual prices
   variance: number;
   variancePercentage: number;
   items: BudgetItem[];
@@ -319,6 +325,7 @@ interface BudgetService {
   updateBudgetItem(itemId: string, data: UpdateBudgetItemInput): Promise<BudgetItem>;
   deleteBudgetItem(itemId: string): Promise<void>;
   calculateVariance(budgetId: string): Promise<Budget>;
+  calculateTotalsWithTasks(projectId: string): Promise<{ totalActualFromItems: number; totalActualFromTasks: number; totalActual: number }>;
   checkBudgetAlerts(budgetId: string): Promise<BudgetAlert[]>;
 }
 
@@ -329,6 +336,18 @@ interface BudgetAlert {
   variancePercentage: number;
 }
 ```
+
+**Budget Calculation Logic**:
+
+The budget totals are calculated as follows:
+- `totalEstimated`: Sum of all budget item estimated costs
+- `totalActualFromItems`: Sum of all budget item actual costs
+- `totalActualFromTasks`: Sum of all task actual prices for the project (from TaskService.calculateTotalTaskCosts)
+- `totalActual`: `totalActualFromItems` + `totalActualFromTasks`
+- `variance`: `totalActual` - `totalEstimated`
+- `variancePercentage`: `(variance / totalEstimated) × 100`
+
+This ensures that all project costs, whether tracked as budget items or task actual prices, are included in the budget totals.
 
 
 
@@ -699,6 +718,8 @@ CREATE TABLE budgets (
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   total_estimated DECIMAL(12, 2) NOT NULL DEFAULT 0,
   total_actual DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  total_actual_from_items DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  total_actual_from_tasks DECIMAL(12, 2) NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -904,12 +925,12 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 **Validates: Requirements 4.3**
 
 **Property 21: Budget Totals Aggregation**
-*For any* budget with items, the total estimated should equal the sum of all item estimated costs, total actual should equal the sum of all item actual costs, and remaining budget should equal (total estimated - total actual).
-**Validates: Requirements 4.4, 4.7**
+*For any* budget with items and associated project with tasks, the total estimated should equal the sum of all item estimated costs, total actual from items should equal the sum of all item actual costs, total actual from tasks should equal the sum of all task actual prices, total actual should equal (total actual from items + total actual from tasks), and remaining budget should equal (total estimated - total actual).
+**Validates: Requirements 4.4, 4.5, 4.6, 4.9, 4.10**
 
 **Property 22: Budget Alert Threshold**
 *For any* budget where actual costs exceed estimated costs by more than 10%, a budget warning alert should be generated.
-**Validates: Requirements 4.5**
+**Validates: Requirements 4.7**
 
 #### Document Management Properties
 

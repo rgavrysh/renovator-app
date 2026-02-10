@@ -8,6 +8,8 @@ export interface Budget {
   projectId: string;
   totalEstimated: number;
   totalActual: number;
+  totalActualFromItems: number;
+  totalActualFromTasks: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,12 +18,14 @@ export interface BudgetOverviewProps {
   budget: Budget | null;
   showCard?: boolean;
   className?: string;
+  onViewTasks?: () => void;
 }
 
 export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   budget,
   showCard = true,
   className = '',
+  onViewTasks,
 }) => {
   const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
@@ -105,6 +109,30 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           <p className="text-xl font-bold text-gray-900">
             {formatCurrency(budget.totalActual)}
           </p>
+          
+          {/* Breakdown of actual costs */}
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">From Budget Items:</span>
+              <span className="font-medium text-gray-700">
+                {formatCurrency(budget.totalActualFromItems)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">From Tasks:</span>
+              <span className="font-medium text-gray-700">
+                {formatCurrency(budget.totalActualFromTasks)}
+              </span>
+              {onViewTasks && budget.totalActualFromTasks > 0 && (
+                <button
+                  onClick={onViewTasks}
+                  className="ml-2 text-primary-600 hover:text-primary-700 underline"
+                >
+                  View Tasks
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <Divider />

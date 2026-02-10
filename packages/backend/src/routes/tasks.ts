@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { TaskService } from '../services/TaskService';
 import { WorkItemTemplateService } from '../services/WorkItemTemplateService';
 import { ProjectService } from '../services/ProjectService';
+import { BudgetService } from '../services/BudgetService';
 import { authenticate } from '../middleware';
 import { TaskStatus, TaskPriority } from '../entities/Task';
 import { WorkItemCategory } from '../entities/WorkItemTemplate';
@@ -10,6 +11,7 @@ const router = Router();
 const taskService = new TaskService();
 const workItemService = new WorkItemTemplateService();
 const projectService = new ProjectService();
+const budgetService = new BudgetService();
 
 /**
  * POST /api/projects/:projectId/tasks
@@ -80,6 +82,16 @@ router.post('/:projectId/tasks', authenticate, async (req: Request, res: Respons
       assignedTo,
     });
 
+    // Recalculate budget totals if task has pricing
+    if (actualPrice !== undefined && actualPrice !== null) {
+      try {
+        await budgetService.recalculateBudgetTotalsForProject(projectId);
+      } catch (error) {
+        // Budget might not exist yet, that's okay
+        console.log('Budget not found for project, skipping recalculation');
+      }
+    }
+
     res.status(201).json(task);
   } catch (error) {
     console.error('Error creating task:', error);
@@ -111,6 +123,15 @@ router.post('/:projectId/tasks/bulk', authenticate, async (req: Request, res: Re
     }
 
     const tasks = await taskService.bulkCreateTasksFromTemplates(projectId, templateIds);
+
+    // Recalculate budget totals after bulk task creation
+    try {
+      await budgetService.recalculateBudgetTotalsForProject(projectId);
+    } catch (error) {
+      // Budget might not exist yet, that's okay
+      console.log('Budget not found for project, skipping recalculation');
+    }
+
     res.status(201).json(tasks);
   } catch (error) {
     if (error instanceof Error && error.message.includes('template')) {
@@ -318,6 +339,17 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
     }
 
     const updatedTask = await taskService.updateTask(id, updateData);
+
+    // Recalculate budget totals if task pricing was updated
+    if (actualPrice !== undefined) {
+      try {
+        await budgetService.recalculateBudgetTotalsForProject(task.projectId);
+      } catch (error) {
+        // Budget might not exist yet, that's okay
+        console.log('Budget not found for project, skipping recalculation');
+      }
+    }
+
     res.json(updatedTask);
   } catch (error) {
     console.error('Error updating task:', error);
@@ -351,6 +383,15 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
     }
 
     await taskService.deleteTask(id);
+
+    // Recalculate budget totals after task deletion
+    try {
+      await budgetService.recalculateBudgetTotalsForProject(task.projectId);
+    } catch (error) {
+      // Budget might not exist yet, that's okay
+      console.log('Budget not found for project, skipping recalculation');
+    }
+
     res.status(204).send();
   } catch (error) {
     console.error('Error deleting task:', error);
@@ -426,6 +467,28 @@ router.get('/work-items', authenticate, async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/work-items/:id
+ * Get a specific work item template
+ */
+router.get('/work-items/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const template = await workItemService.getTemplate(id, req.userId);
+    
+    if (!template) {
+      res.status(404).json({ error: 'Work item template not found' });
+      return;
+    }
+
+    res.json(template);
+  } catch (error) {
+    console.error('Error getting work item template:', error);
+    res.status(500).json({ error: 'Failed to get work item template' });
+  }
+});
+
+/**
  * POST /api/work-items
  * Create a custom work item template
  */
@@ -471,6 +534,91 @@ router.post('/work-items', authenticate, async (req: Request, res: Response) => 
   } catch (error) {
     console.error('Error creating work item template:', error);
     res.status(500).json({ error: 'Failed to create work item template' });
+  }
+});
+
+/**
+ * PUT /api/work-items/:id
+ * Update a custom work item template
+ */
+router.put('/work-items/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, description, category, estimatedDuration, defaultPrice, unit } = req.body;
+
+    // Validate required fields
+    if (!name || !category) {
+      res.status(400).json({ error: 'Missing required fields: name, category' });
+      return;
+    }
+
+    // Validate category
+    if (!Object.values(WorkItemCategory).includes(category)) {
+      res.status(400).json({ error: 'Invalid work item category' });
+      return;
+    }
+
+    // Validate estimatedDuration if provided
+    if (estimatedDuration !== undefined && (typeof estimatedDuration !== 'number' || estimatedDuration < 0)) {
+      res.status(400).json({ error: 'estimatedDuration must be a non-negative number' });
+      return;
+    }
+
+    // Validate defaultPrice if provided
+    if (defaultPrice !== undefined && (typeof defaultPrice !== 'number' || defaultPrice < 0)) {
+      res.status(400).json({ error: 'defaultPrice must be a non-negative number' });
+      return;
+    }
+
+    const updateData: any = {
+      name,
+      description,
+      category,
+    };
+
+    if (estimatedDuration !== undefined) {
+      updateData.estimatedDuration = estimatedDuration;
+    }
+
+    if (defaultPrice !== undefined) {
+      updateData.defaultPrice = defaultPrice;
+    }
+
+    if (unit !== undefined) {
+      updateData.unit = unit;
+    }
+
+    const template = await workItemService.updateTemplate(id, updateData, req.userId);
+
+    res.json(template);
+  } catch (error: any) {
+    console.error('Error updating work item template:', error);
+    if (error.message === 'Template not found' || error.message === 'Cannot update default templates') {
+      res.status(404).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to update work item template' });
+  }
+});
+
+/**
+ * DELETE /api/work-items/:id
+ * Delete a custom work item template
+ */
+router.delete('/work-items/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    await workItemService.deleteTemplate(id, req.userId);
+
+    res.status(204).send();
+  } catch (error: any) {
+    console.error('Error deleting work item template:', error);
+    if (error.message === 'Template not found' || error.message === 'Cannot delete default templates') {
+      res.status(404).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: 'Failed to delete work item template' });
   }
 });
 

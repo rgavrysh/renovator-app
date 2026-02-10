@@ -8,6 +8,7 @@ import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
 import { apiClient } from '../utils/api';
 import { WorkItemTemplate, WorkItemCategory } from '../components/WorkItemsLibraryModal';
+import { WorkItemTemplateForm } from '../components/WorkItemTemplateForm';
 
 export const WorkItemsLibrary: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ export const WorkItemsLibrary: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<WorkItemTemplate | undefined>(undefined);
 
   useEffect(() => {
     loadWorkItems();
@@ -92,6 +95,48 @@ export const WorkItemsLibrary: React.FC = () => {
     return filteredWorkItems.filter(item => !item.isDefault);
   }, [filteredWorkItems]);
 
+  const handleCreateTemplate = () => {
+    setSelectedTemplate(undefined);
+    setIsFormOpen(true);
+  };
+
+  const handleEditTemplate = (template: WorkItemTemplate) => {
+    setSelectedTemplate(template);
+    setIsFormOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    loadWorkItems();
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setSelectedTemplate(undefined);
+  };
+
+  const handleDeleteTemplate = async (template: WorkItemTemplate) => {
+    // Show confirmation dialog
+    if (!window.confirm(
+      `Are you sure you want to delete "${template.name}"?\n\nNote: Existing tasks created from this template will be preserved.`
+    )) {
+      return;
+    }
+
+    try {
+      setError(null);
+      await apiClient.delete(`/api/work-items/${template.id}`);
+      
+      // Show success message
+      window.alert(`Template "${template.name}" has been deleted.\n\nExisting tasks created from this template have been preserved.`);
+      
+      // Reload work items
+      loadWorkItems();
+    } catch (err: any) {
+      console.error('Error deleting work item template:', err);
+      setError(err.message || 'Failed to delete work item template. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header
@@ -110,9 +155,14 @@ export const WorkItemsLibrary: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl font-bold text-gray-900">Work Items Library</h1>
-            <Button variant="primary" onClick={() => navigate('/dashboard')}>
-              Back to Dashboard
-            </Button>
+            <div className="flex gap-3">
+              <Button variant="primary" onClick={handleCreateTemplate}>
+                Create Template
+              </Button>
+              <Button variant="secondary" onClick={() => navigate('/dashboard')}>
+                Back to Dashboard
+              </Button>
+            </div>
           </div>
           <p className="text-gray-600">
             Manage your custom work item templates
@@ -178,7 +228,8 @@ export const WorkItemsLibrary: React.FC = () => {
                 customWorkItems.map(item => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-linear border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all"
+                    className="bg-white rounded-linear border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer relative"
+                    onClick={() => handleEditTemplate(item)}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
@@ -189,6 +240,17 @@ export const WorkItemsLibrary: React.FC = () => {
                           {getCategoryLabel(item.category)}
                         </Badge>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTemplate(item);
+                        }}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        Delete
+                      </Button>
                     </div>
 
                     {item.description && (
@@ -231,6 +293,13 @@ export const WorkItemsLibrary: React.FC = () => {
           </div>
         )}
       </main>
+
+      <WorkItemTemplateForm
+        isOpen={isFormOpen}
+        onClose={handleFormClose}
+        onSuccess={handleFormSuccess}
+        template={selectedTemplate}
+      />
     </div>
   );
 };

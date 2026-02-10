@@ -50,8 +50,10 @@ The Renovator Project Management Platform is an all-in-one digital workspace des
 
 #### Acceptance Criteria
 
-1. WHEN a renovator creates a task, THE Platform SHALL capture task name, description, assigned milestone, priority level, due date, estimated price, and actual price
-2. WHERE a task has pricing information, THE Platform SHALL allow estimated price and actual price to be optional fields
+1. WHEN a renovator creates a task, THE Platform SHALL capture task name, description, assigned milestone, priority level, due date, estimated price, actual price, and per unit measurement
+2. WHERE a task has pricing information, THE Platform SHALL allow estimated price, actual price, and per unit to be optional fields
+3. WHEN a renovator clicks on a task row in the task list, THE Platform SHALL open the task detail view for editing
+4. WHEN a renovator edits a task, THE Platform SHALL allow updating milestone, priority, due date, estimated price, actual price, and per unit measurement
 3. THE Platform SHALL provide a predefined library of common renovation work items that renovators can select and add to their projects
 4. WHEN a renovator views the work items library, THE Platform SHALL display tasks organized by category (demolition, framing, electrical, plumbing, drywall, painting, finishing, etc.)
 5. WHERE a work item template includes a default price, THE Platform SHALL populate the estimated price when creating a task from that template
@@ -79,9 +81,12 @@ The Renovator Project Management Platform is an all-in-one digital workspace des
 2. WHEN a renovator adds a budget item, THE Platform SHALL capture item name, category, estimated cost, and actual cost
 3. WHEN actual costs are entered, THE Platform SHALL calculate variance between estimated and actual costs
 4. WHEN viewing budget status, THE Platform SHALL display total estimated budget, total actual costs, remaining budget, and percentage spent
-5. IF actual costs exceed estimated budget by more than 10%, THEN THE Platform SHALL display a budget warning alert
-6. THE Platform SHALL allow renovators to update budget estimates during project execution
-7. WHEN a budget item is added or modified, THE Platform SHALL immediately update all budget totals and calculations
+5. WHEN calculating budget totals, THE Platform SHALL automatically aggregate actual prices from all project tasks and include them in the total actual costs
+6. WHEN viewing budget breakdown, THE Platform SHALL display budget items separately from task-based costs with clear categorization
+7. IF actual costs exceed estimated budget by more than 10%, THEN THE Platform SHALL display a budget warning alert
+8. THE Platform SHALL allow renovators to update budget estimates during project execution
+9. WHEN a budget item is added or modified, THE Platform SHALL immediately update all budget totals and calculations
+10. WHEN a task actual price is added or modified, THE Platform SHALL immediately update budget totals to reflect the change
 
 ### Requirement 5: Document Management
 

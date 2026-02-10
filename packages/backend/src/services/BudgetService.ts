@@ -2,6 +2,7 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Budget } from '../entities/Budget';
 import { BudgetItem, BudgetCategory } from '../entities/BudgetItem';
+import { TaskService } from './TaskService';
 
 // UUID validation regex
 const UUID_REGEX =
@@ -37,10 +38,12 @@ export interface BudgetAlert {
 export class BudgetService {
   private budgetRepository: Repository<Budget>;
   private budgetItemRepository: Repository<BudgetItem>;
+  private taskService: TaskService;
 
   constructor() {
     this.budgetRepository = AppDataSource.getRepository(Budget);
     this.budgetItemRepository = AppDataSource.getRepository(BudgetItem);
+    this.taskService = new TaskService();
   }
 
   async createBudget(projectId: string): Promise<Budget> {
@@ -61,6 +64,8 @@ export class BudgetService {
       projectId,
       totalEstimated: 0,
       totalActual: 0,
+      totalActualFromItems: 0,
+      totalActualFromTasks: 0,
     });
 
     return await this.budgetRepository.save(budget);
@@ -208,6 +213,20 @@ export class BudgetService {
     return alerts;
   }
 
+  async recalculateBudgetTotalsForProject(projectId: string): Promise<void> {
+    if (!isValidUUID(projectId)) {
+      throw new Error('Invalid project ID');
+    }
+
+    const budget = await this.budgetRepository.findOne({
+      where: { projectId },
+    });
+
+    if (budget) {
+      await this.recalculateBudgetTotals(budget.id);
+    }
+  }
+
   private async recalculateBudgetTotals(budgetId: string): Promise<void> {
     const budget = await this.budgetRepository.findOne({
       where: { id: budgetId },
@@ -220,15 +239,22 @@ export class BudgetService {
 
     // Calculate totals from all budget items
     let totalEstimated = 0;
-    let totalActual = 0;
+    let totalActualFromItems = 0;
 
     for (const item of budget.items) {
       totalEstimated += Number(item.estimatedCost);
-      totalActual += Number(item.actualCost);
+      totalActualFromItems += Number(item.actualCost);
     }
 
+    // Calculate totals from tasks
+    const taskCosts = await this.taskService.calculateTotalTaskCosts(budget.projectId);
+    const totalActualFromTasks = taskCosts.actual;
+
+    // Update budget totals
     budget.totalEstimated = totalEstimated;
-    budget.totalActual = totalActual;
+    budget.totalActualFromItems = totalActualFromItems;
+    budget.totalActualFromTasks = totalActualFromTasks;
+    budget.totalActual = totalActualFromItems + totalActualFromTasks;
 
     await this.budgetRepository.save(budget);
   }

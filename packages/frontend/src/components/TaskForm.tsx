@@ -16,6 +16,7 @@ export interface TaskFormData {
   dueDate: string;
   estimatedPrice: string;
   actualPrice: string;
+  perUnit: string;
 }
 
 interface Milestone {
@@ -39,6 +40,7 @@ interface TaskFormProps {
     dueDate?: string;
     estimatedPrice?: number;
     actualPrice?: number;
+    perUnit?: string;
   };
 }
 
@@ -58,6 +60,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     dueDate: '',
     estimatedPrice: '',
     actualPrice: '',
+    perUnit: '',
   });
 
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -85,8 +88,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: task.priority,
         milestoneId: task.milestoneId || '',
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
-        estimatedPrice: task.estimatedPrice !== undefined ? task.estimatedPrice.toString() : '',
-        actualPrice: task.actualPrice !== undefined ? task.actualPrice.toString() : '',
+        estimatedPrice: task.estimatedPrice != null ? task.estimatedPrice.toString() : '',
+        actualPrice: task.actualPrice != null ? task.actualPrice.toString() : '',
+        perUnit: task.perUnit || '',
       });
     } else {
       setFormData({
@@ -98,6 +102,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         dueDate: '',
         estimatedPrice: '',
         actualPrice: '',
+        perUnit: '',
       });
     }
     setErrors({});
@@ -192,6 +197,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: formData.priority,
         milestoneId: formData.milestoneId || undefined,
         dueDate: formData.dueDate || undefined,
+        perUnit: formData.perUnit.trim() || undefined,
       };
 
       // Only include pricing fields if they have values
@@ -354,6 +360,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               fullWidth
             />
           </div>
+
+          <Input
+            label="Per Unit (Optional)"
+            name="perUnit"
+            value={formData.perUnit}
+            onChange={handleChange}
+            error={errors.perUnit}
+            placeholder="e.g., sq ft, linear ft, each"
+            fullWidth
+          />
         </div>
 
         <ModalFooter>

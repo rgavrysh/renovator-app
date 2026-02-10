@@ -243,6 +243,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
               <p className="text-xs text-gray-500 mb-1">Estimated Price</p>
               <p className="text-sm font-medium text-gray-900">
                 ${Number(task.estimatedPrice).toFixed(2)}
+                {task.perUnit && <span className="text-gray-500"> / {task.perUnit}</span>}
               </p>
             </div>
           )}
@@ -251,6 +252,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
               <p className="text-xs text-gray-500 mb-1">Actual Price</p>
               <p className="text-sm font-medium text-gray-900">
                 ${Number(task.actualPrice).toFixed(2)}
+                {task.perUnit && <span className="text-gray-500"> / {task.perUnit}</span>}
               </p>
             </div>
           )}

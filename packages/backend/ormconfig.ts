@@ -1,3 +1,3 @@
-import { dataSourceOptions } from './src/config/database';
+import { AppDataSource } from './src/config/database';
 
-export default dataSourceOptions;
+export default AppDataSource;

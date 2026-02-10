@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BudgetOverview, Budget } from './BudgetOverview';
 
@@ -8,6 +8,8 @@ describe('BudgetOverview', () => {
     projectId: 'project-1',
     totalEstimated: 10000,
     totalActual: 8000,
+    totalActualFromItems: 5000,
+    totalActualFromTasks: 3000,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   };
@@ -46,6 +48,8 @@ describe('BudgetOverview', () => {
       ...mockBudget,
       totalEstimated: 10000,
       totalActual: 11500, // 15% over
+      totalActualFromItems: 8000,
+      totalActualFromTasks: 3500,
     };
     
     render(<BudgetOverview budget={overBudget} />);
@@ -59,6 +63,8 @@ describe('BudgetOverview', () => {
       ...mockBudget,
       totalEstimated: 10000,
       totalActual: 13000, // 30% over
+      totalActualFromItems: 9000,
+      totalActualFromTasks: 4000,
     };
     
     render(<BudgetOverview budget={criticalOverBudget} />);
@@ -72,6 +78,8 @@ describe('BudgetOverview', () => {
       ...mockBudget,
       totalEstimated: 10000,
       totalActual: 10500, // 5% over, below 10% threshold
+      totalActualFromItems: 7000,
+      totalActualFromTasks: 3500,
     };
     
     render(<BudgetOverview budget={underBudget} />);
@@ -85,16 +93,18 @@ describe('BudgetOverview', () => {
       ...mockBudget,
       totalEstimated: 10000,
       totalActual: 12000,
+      totalActualFromItems: 8000,
+      totalActualFromTasks: 4000,
     };
     
-    const { container } = render(<BudgetOverview budget={overBudget} />);
+    render(<BudgetOverview budget={overBudget} />);
     
     const varianceElement = screen.getByText('+$2,000.00');
     expect(varianceElement).toHaveClass('text-red-600');
   });
 
   it('should display negative variance in green', () => {
-    const { container } = render(<BudgetOverview budget={mockBudget} />);
+    render(<BudgetOverview budget={mockBudget} />);
     
     const varianceElement = screen.getByText('-$2,000.00');
     expect(varianceElement).toHaveClass('text-green-600');
@@ -105,12 +115,14 @@ describe('BudgetOverview', () => {
       ...mockBudget,
       totalEstimated: 0,
       totalActual: 0,
+      totalActualFromItems: 0,
+      totalActualFromTasks: 0,
     };
     
     render(<BudgetOverview budget={zeroBudget} />);
     
     // Check that all values are $0.00
-    expect(screen.getAllByText('$0.00')).toHaveLength(3); // Estimated, Actual, Variance
+    expect(screen.getAllByText('$0.00')).toHaveLength(5); // Estimated, Actual, From Items, From Tasks, Variance
     expect(screen.queryByText('Percentage Spent')).not.toBeInTheDocument();
   });
 
@@ -130,5 +142,38 @@ describe('BudgetOverview', () => {
     );
     
     expect(container.firstChild).toHaveClass('custom-class');
+  });
+
+  it('should display breakdown of actual costs', () => {
+    render(<BudgetOverview budget={mockBudget} />);
+    
+    expect(screen.getByText('From Budget Items:')).toBeInTheDocument();
+    expect(screen.getByText('$5,000.00')).toBeInTheDocument();
+    
+    expect(screen.getByText('From Tasks:')).toBeInTheDocument();
+    expect(screen.getByText('$3,000.00')).toBeInTheDocument();
+  });
+
+  it('should show View Tasks link when task costs exist and onViewTasks is provided', () => {
+    const onViewTasks = vi.fn();
+    render(<BudgetOverview budget={mockBudget} onViewTasks={onViewTasks} />);
+    
+    const viewButton = screen.getByText('View Tasks');
+    expect(viewButton).toBeInTheDocument();
+    
+    viewButton.click();
+    expect(onViewTasks).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not show View Tasks link when task costs are zero', () => {
+    const budgetWithNoTaskCosts: Budget = {
+      ...mockBudget,
+      totalActualFromTasks: 0,
+    };
+    const onViewTasks = vi.fn();
+    
+    render(<BudgetOverview budget={budgetWithNoTaskCosts} onViewTasks={onViewTasks} />);
+    
+    expect(screen.queryByText('View Tasks')).not.toBeInTheDocument();
   });
 });

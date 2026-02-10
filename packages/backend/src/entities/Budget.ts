@@ -25,6 +25,12 @@ export class Budget {
   @Column({ name: 'total_actual', type: 'decimal', precision: 12, scale: 2, default: 0 })
   totalActual: number;
 
+  @Column({ name: 'total_actual_from_items', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  totalActualFromItems: number;
+
+  @Column({ name: 'total_actual_from_tasks', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  totalActualFromTasks: number;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

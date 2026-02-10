@@ -19,6 +19,9 @@ import { DocumentUpload } from '../components/DocumentUpload';
 import { DocumentList } from '../components/DocumentList';
 import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
+import { BudgetOverview } from '../components/BudgetOverview';
+import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
+import { BudgetItemForm } from '../components/BudgetItemForm';
 import { UserDropdown } from '../components/UserDropdown';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
@@ -83,6 +86,8 @@ interface Budget {
   projectId: string;
   totalEstimated: number;
   totalActual: number;
+  totalActualFromItems: number;
+  totalActualFromTasks: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -96,10 +101,14 @@ export const ProjectDetail: React.FC = () => {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [budget, setBudget] = useState<Budget | null>(null);
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [isCreatingBudget, setIsCreatingBudget] = useState(false);
+  const [isBudgetItemFormOpen, setIsBudgetItemFormOpen] = useState(false);
+  const [editingBudgetItem, setEditingBudgetItem] = useState<BudgetItem | undefined>(undefined);
   const [isMilestoneFormOpen, setIsMilestoneFormOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<Milestone | undefined>(undefined);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -145,9 +154,17 @@ export const ProjectDetail: React.FC = () => {
           `/api/projects/${id}/budget`
         );
         setBudget(budgetData);
+        
+        // Load budget items if budget exists
+        if (budgetData && budgetData.id) {
+          // Budget items are included in the budget response
+          setBudgetItems((budgetData as any).items || []);
+        }
       } catch (err) {
         // Budget might not exist yet, that's okay
         console.log('No budget found for project');
+        setBudget(null);
+        setBudgetItems([]);
       }
     } catch (err: any) {
       console.error('Error loading project data:', err);
@@ -323,6 +340,50 @@ export const ProjectDetail: React.FC = () => {
   const handlePhotoUploadSuccess = () => {
     // Refresh photo gallery
     setPhotosKey(prev => prev + 1);
+  };
+
+  const handleScrollToTasks = () => {
+    // Scroll to tasks section
+    const tasksSection = document.getElementById('tasks-section');
+    if (tasksSection) {
+      tasksSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleCreateBudget = async () => {
+    if (!id) return;
+    
+    try {
+      setIsCreatingBudget(true);
+      const newBudget = await apiClient.post<Budget>(`/api/projects/${id}/budget`);
+      setBudget(newBudget);
+      setBudgetItems([]);
+    } catch (err: any) {
+      console.error('Error creating budget:', err);
+      setError(err.message || 'Failed to create budget. Please try again.');
+    } finally {
+      setIsCreatingBudget(false);
+    }
+  };
+
+  const handleAddBudgetItem = () => {
+    setEditingBudgetItem(undefined);
+    setIsBudgetItemFormOpen(true);
+  };
+
+  const handleEditBudgetItem = (item: BudgetItem) => {
+    setEditingBudgetItem(item);
+    setIsBudgetItemFormOpen(true);
+  };
+
+  const handleBudgetItemFormClose = () => {
+    setIsBudgetItemFormOpen(false);
+    setEditingBudgetItem(undefined);
+  };
+
+  const handleBudgetItemFormSuccess = () => {
+    // Reload project data to get updated budget and items
+    loadProjectData();
   };
 
   const getStatusBadgeVariant = (status: ProjectStatus) => {
@@ -627,7 +688,7 @@ export const ProjectDetail: React.FC = () => {
             </Card>
 
             {/* Tasks */}
-            <Card>
+            <Card id="tasks-section">
               <CardHeader 
                 title="Tasks"
                 action={
@@ -652,6 +713,7 @@ export const ProjectDetail: React.FC = () => {
               <CardContent>
                 <TaskList 
                   tasks={tasks}
+                  onEdit={handleEditTask}
                   onViewDetails={handleViewTaskDetails}
                   onStatusChange={handleTaskStatusChange}
                 />
@@ -709,11 +771,33 @@ export const ProjectDetail: React.FC = () => {
           <div className="space-y-6">
             {/* Budget Summary */}
             <Card>
-              <CardHeader title="Budget Summary" />
+              <CardHeader 
+                title="Budget Summary"
+                action={
+                  budget ? (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleAddBudgetItem}
+                    >
+                      Add Item
+                    </Button>
+                  ) : null
+                }
+              />
               <CardContent>
                 {!budget ? (
                   <div className="text-center py-8">
-                    <p className="text-sm text-gray-500">No budget set</p>
+                    <p className="text-sm text-gray-500 mb-4">No budget set</p>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleCreateBudget}
+                      loading={isCreatingBudget}
+                      disabled={isCreatingBudget}
+                    >
+                      Create Budget
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -729,6 +813,32 @@ export const ProjectDetail: React.FC = () => {
                       <p className="text-xl font-bold text-gray-900">
                         {formatCurrency(budget.totalActual)}
                       </p>
+                      
+                      {/* Breakdown of actual costs */}
+                      <div className="mt-2 space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">From Budget Items:</span>
+                          <span className="font-medium text-gray-700">
+                            {formatCurrency(budget.totalActualFromItems || 0)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">From Tasks:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-700">
+                              {formatCurrency(budget.totalActualFromTasks || 0)}
+                            </span>
+                            {budget.totalActualFromTasks > 0 && (
+                              <button
+                                onClick={handleScrollToTasks}
+                                className="text-primary-600 hover:text-primary-700 underline text-xs"
+                              >
+                                View
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <Divider />
@@ -758,6 +868,19 @@ export const ProjectDetail: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Budget Items */}
+            {budget && budgetItems.length > 0 && (
+              <Card>
+                <CardHeader title="Budget Items" />
+                <CardContent>
+                  <BudgetItemsList 
+                    items={budgetItems}
+                    showCard={false}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Quick Stats */}
             <Card>
@@ -849,6 +972,17 @@ export const ProjectDetail: React.FC = () => {
             onSuccess={handlePhotoUploadSuccess}
             projectId={id}
             milestones={milestones}
+          />
+        )}
+
+        {/* Budget Item Form Modal */}
+        {budget && (
+          <BudgetItemForm
+            isOpen={isBudgetItemFormOpen}
+            onClose={handleBudgetItemFormClose}
+            onSuccess={handleBudgetItemFormSuccess}
+            budgetId={budget.id}
+            budgetItem={editingBudgetItem}
           />
         )}
       </Container>

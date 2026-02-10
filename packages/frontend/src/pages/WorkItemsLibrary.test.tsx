@@ -9,6 +9,7 @@ import * as apiModule from '../utils/api';
 vi.mock('../utils/api', () => ({
   apiClient: {
     get: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -177,5 +178,140 @@ describe('WorkItemsLibrary', () => {
     await waitFor(() => {
       expect(screen.getByText('Network error')).toBeInTheDocument();
     });
+  });
+
+  it('should delete work item template when delete button is clicked and confirmed', async () => {
+    const mockWorkItems = [
+      {
+        id: '1',
+        name: 'Custom Task 1',
+        description: 'Custom description',
+        category: 'demolition',
+        defaultPrice: 100,
+        isDefault: false,
+        ownerId: 'user-1',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+
+    (apiModule.apiClient.get as any).mockResolvedValue(mockWorkItems);
+    (apiModule.apiClient.delete as any).mockResolvedValue(undefined);
+
+    // Mock window.confirm and window.alert
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    render(
+      <BrowserRouter>
+        <WorkItemsLibrary />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Custom Task 1')).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    deleteButton.click();
+
+    await waitFor(() => {
+      expect(confirmSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Are you sure you want to delete "Custom Task 1"?')
+      );
+      expect(confirmSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Existing tasks created from this template will be preserved')
+      );
+      expect(apiModule.apiClient.delete).toHaveBeenCalledWith('/api/work-items/1');
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Template "Custom Task 1" has been deleted')
+      );
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Existing tasks created from this template have been preserved')
+      );
+    });
+
+    confirmSpy.mockRestore();
+    alertSpy.mockRestore();
+  });
+
+  it('should not delete work item template if user cancels confirmation', async () => {
+    const mockWorkItems = [
+      {
+        id: '1',
+        name: 'Custom Task 1',
+        description: 'Custom description',
+        category: 'demolition',
+        defaultPrice: 100,
+        isDefault: false,
+        ownerId: 'user-1',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+
+    (apiModule.apiClient.get as any).mockResolvedValue(mockWorkItems);
+
+    // Mock window.confirm to return false
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    render(
+      <BrowserRouter>
+        <WorkItemsLibrary />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Custom Task 1')).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    deleteButton.click();
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(apiModule.apiClient.delete).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('should handle deletion errors', async () => {
+    const mockWorkItems = [
+      {
+        id: '1',
+        name: 'Custom Task 1',
+        description: 'Custom description',
+        category: 'demolition',
+        defaultPrice: 100,
+        isDefault: false,
+        ownerId: 'user-1',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+
+    (apiModule.apiClient.get as any).mockResolvedValue(mockWorkItems);
+    (apiModule.apiClient.delete as any).mockRejectedValue(new Error('Failed to delete template'));
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    render(
+      <BrowserRouter>
+        <WorkItemsLibrary />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Custom Task 1')).toBeInTheDocument();
+    });
+
+    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    deleteButton.click();
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to delete template')).toBeInTheDocument();
+    });
+
+    expect(alertSpy).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+    alertSpy.mockRestore();
   });
 });

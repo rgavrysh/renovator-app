@@ -15,6 +15,7 @@ export interface Task {
   completedDate?: string;
   estimatedPrice?: number;
   actualPrice?: number;
+  perUnit?: string;
   notes: string[];
   createdAt: string;
   updatedAt: string;
@@ -215,11 +216,12 @@ export const TaskList: React.FC<TaskListProps> = ({
               <div key={task.id}>
                 {index > 0 && <Divider />}
                 <div
-                  className={`flex items-start justify-between p-3 rounded-linear transition-colors ${
+                  className={`flex items-start justify-between p-3 rounded-linear transition-colors cursor-pointer ${
                     taskIsOverdue
                       ? 'bg-red-50 border border-red-200'
                       : 'hover:bg-gray-50'
                   }`}
+                  onClick={() => onEdit && onEdit(task)}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -297,10 +299,16 @@ export const TaskList: React.FC<TaskListProps> = ({
                         <span>Completed: {formatDate(task.completedDate)}</span>
                       )}
                       {task.estimatedPrice !== undefined && task.estimatedPrice !== null && (
-                        <span>Est: ${Number(task.estimatedPrice).toFixed(2)}</span>
+                        <span>
+                          Est: ${Number(task.estimatedPrice).toFixed(2)}
+                          {task.perUnit && ` / ${task.perUnit}`}
+                        </span>
                       )}
                       {task.actualPrice !== undefined && task.actualPrice !== null && (
-                        <span>Actual: ${Number(task.actualPrice).toFixed(2)}</span>
+                        <span>
+                          Actual: ${Number(task.actualPrice).toFixed(2)}
+                          {task.perUnit && ` / ${task.perUnit}`}
+                        </span>
                       )}
                       {taskIsOverdue && (
                         <span className="font-medium text-red-600">⚠ Overdue</span>
@@ -309,7 +317,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                   </div>
 
                   {/* Action buttons */}
-                  <div className="ml-3 flex items-center gap-2">
+                  <div className="ml-3 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     {/* View Details button */}
                     {onViewDetails && (
                       <button
