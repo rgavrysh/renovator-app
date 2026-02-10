@@ -222,8 +222,11 @@ interface WorkItemTemplate {
   category: WorkItemCategory;
   estimatedDuration?: number;
   defaultPrice?: number;
+  unit?: string; // Unit of measurement (e.g., "sq ft", "linear ft", "each")
   isDefault: boolean;
   ownerId?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 enum WorkItemCategory {
@@ -244,6 +247,7 @@ enum WorkItemCategory {
 interface TaskService {
   createTask(data: CreateTaskInput): Promise<Task>;
   updateTask(id: string, data: UpdateTaskInput): Promise<Task>;
+  updateTaskStatus(id: string, status: TaskStatus): Promise<Task>;
   deleteTask(id: string): Promise<void>;
   listTasks(projectId: string, filters: TaskFilters): Promise<Task[]>;
   assignTask(taskId: string, userId: string): Promise<Task>;
@@ -251,8 +255,11 @@ interface TaskService {
   calculateTotalTaskCosts(projectId: string): Promise<{ estimated: number; actual: number }>;
   
   // Work items library
-  getWorkItemTemplates(category?: WorkItemCategory): Promise<WorkItemTemplate[]>;
+  getWorkItemTemplates(ownerId: string, category?: WorkItemCategory): Promise<WorkItemTemplate[]>;
+  getWorkItemTemplate(id: string): Promise<WorkItemTemplate>;
   createWorkItemTemplate(data: CreateWorkItemTemplateInput): Promise<WorkItemTemplate>;
+  updateWorkItemTemplate(id: string, data: UpdateWorkItemTemplateInput): Promise<WorkItemTemplate>;
+  deleteWorkItemTemplate(id: string): Promise<void>;
   bulkCreateTasksFromTemplates(projectId: string, templateIds: string[]): Promise<Task[]>;
 }
 ```
@@ -855,128 +862,132 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 **Validates: Requirements 3.1, 3.2**
 
 **Property 11: Work Items Library Organization**
-*For any* work item template library, retrieving templates should return them grouped by category with all templates in each category sharing the same category value.
-**Validates: Requirements 3.3**
+*For any* work item template library for a specific user, retrieving templates should return them grouped by category with all templates in each category sharing the same category value, including both system default templates and user-created custom templates.
+**Validates: Requirements 3.3, 3.16**
 
 **Property 12: Bulk Task Creation from Templates**
-*For any* set of work item template IDs and a target project, bulk creating tasks should result in one task created for each template with the task name and description matching the template, and if the template has a default price, the task's estimated price should be set to that default price.
-**Validates: Requirements 3.6, 3.5**
+*For any* set of work item template IDs and a target project, bulk creating tasks should result in one task created for each template with the task name and description matching the template, and if the template has a default price and unit, the task's estimated price should be set to that default price.
+**Validates: Requirements 3.6, 3.5, 3.17**
 
 **Property 13: Task Filtering Accuracy**
 *For any* collection of tasks and any filter criteria (status, priority, milestone, or due date), the filtered results should include all and only those tasks matching the specified criteria.
 **Validates: Requirements 3.6**
 
-**Property 14: Task Completion Updates Milestone**
-*For any* task associated with a milestone, marking the task as complete should update the task status to "completed", record the completion date, and trigger a recalculation of the milestone's progress.
-**Validates: Requirements 3.7**
+**Property 14: Task Status Transitions**
+*For any* task, updating its status should allow transitions between todo, in_progress, completed, and blocked states, and when transitioning to completed, should record the completion date and trigger milestone progress recalculation.
+**Validates: Requirements 3.9, 3.10**
 
-**Property 15: Overdue Task Detection**
+**Property 15: Task Deletion Impact**
+*For any* task associated with a milestone or budget, deleting the task should remove it from the system and trigger recalculation of the milestone's progress and the project's budget totals.
+**Validates: Requirements 3.11**
+
+**Property 16: Overdue Task Detection**
 *For any* task with a due date in the past and status not equal to "completed", the task should be identified as overdue.
-**Validates: Requirements 3.9**
-
-**Property 16: Task Note Persistence**
-*For any* task and any note text, adding a note should result in the note being appended to the task's notes collection and retrievable in subsequent queries.
 **Validates: Requirements 3.12**
 
-**Property 17: Task Cost Aggregation**
-*For any* project with tasks, calculating total task costs should return the sum of all estimated prices as the estimated total and the sum of all actual prices as the actual total, excluding tasks where pricing is null.
+**Property 17: Task Note Persistence**
+*For any* task and any note text, adding a note should result in the note being appended to the task's notes collection and retrievable in subsequent queries.
 **Validates: Requirements 3.13**
+
+**Property 18: Task Cost Aggregation**
+*For any* project with tasks, calculating total task costs should return the sum of all estimated prices as the estimated total and the sum of all actual prices as the actual total, excluding tasks where pricing is null.
+**Validates: Requirements 3.14**
 
 #### Budget Management Properties
 
-**Property 18: Budget Item Creation Completeness**
+**Property 19: Budget Item Creation Completeness**
 *For any* valid budget item input containing name, category, and estimated cost, creating a budget item should result in an item with all fields preserved and actual cost initialized to zero.
 **Validates: Requirements 4.1, 4.2**
 
-**Property 19: Budget Variance Calculation**
+**Property 20: Budget Variance Calculation**
 *For any* budget item with estimated cost E and actual cost A, the variance should equal (A - E) and the percentage variance should equal ((A - E) / E) × 100.
 **Validates: Requirements 4.3**
 
-**Property 20: Budget Totals Aggregation**
+**Property 21: Budget Totals Aggregation**
 *For any* budget with items, the total estimated should equal the sum of all item estimated costs, total actual should equal the sum of all item actual costs, and remaining budget should equal (total estimated - total actual).
 **Validates: Requirements 4.4, 4.7**
 
-**Property 21: Budget Alert Threshold**
+**Property 22: Budget Alert Threshold**
 *For any* budget where actual costs exceed estimated costs by more than 10%, a budget warning alert should be generated.
 **Validates: Requirements 4.5**
 
 #### Document Management Properties
 
-**Property 22: Document Upload Completeness**
+**Property 23: Document Upload Completeness**
 *For any* valid document file and metadata containing type and project association, uploading should result in a document entity with file stored, metadata preserved, upload timestamp recorded, and uploader ID captured.
 **Validates: Requirements 5.2**
 
-**Property 23: Document Format Validation**
+**Property 24: Document Format Validation**
 *For any* file upload attempt, files with extensions in the allowed set (PDF, JPG, PNG, HEIC, DOC, DOCX, XLS, XLSX) should succeed, and files with other extensions should be rejected.
 **Validates: Requirements 5.1**
 
-**Property 24: Document Search Accuracy**
+**Property 25: Document Search Accuracy**
 *For any* collection of documents and search query, results should include all and only those documents where the query matches document name, type, or the upload date falls within the specified date range.
 **Validates: Requirements 5.4**
 
-**Property 25: Document Soft Delete**
+**Property 26: Document Soft Delete**
 *For any* document, deleting it should set the deleted_at timestamp to the current time, and the document should remain retrievable from trash for 30 days before permanent deletion.
 **Validates: Requirements 5.7**
 
 #### Photo Management Properties
 
-**Property 26: Photo Metadata Extraction**
+**Property 27: Photo Metadata Extraction**
 *For any* photo file with EXIF metadata containing capture date, uploading should result in the capture date being extracted and stored in the photo's metadata.
 **Validates: Requirements 6.1**
 
-**Property 27: Photo Chronological Ordering**
+**Property 28: Photo Chronological Ordering**
 *For any* collection of project photos, retrieving them should return photos sorted by capture date in ascending chronological order.
 **Validates: Requirements 6.3**
 
-**Property 28: Photo Batch Upload**
+**Property 29: Photo Batch Upload**
 *For any* set of N photo files uploaded simultaneously, the operation should result in exactly N photo entities created, each with its own metadata and storage URL.
 **Validates: Requirements 6.6**
 
-**Property 29: Photo Thumbnail Generation**
+**Property 30: Photo Thumbnail Generation**
 *For any* uploaded photo, a thumbnail image should be automatically generated and its URL stored in the photo entity's thumbnail_url field.
 **Validates: Requirements 6.7**
 
 #### Resource Management Properties
 
-**Property 30: Resource Creation Completeness**
+**Property 31: Resource Creation Completeness**
 *For any* valid resource input containing type, name, quantity, unit, cost, and status, creating a resource should result in an entity with all fields preserved and initial status set to "needed".
 **Validates: Requirements 7.1**
 
-**Property 31: Resource Status Transitions**
+**Property 32: Resource Status Transitions**
 *For any* resource, marking it as ordered should update status to "ordered" and record order date and expected delivery date; marking it as received should update status to "received" and record actual delivery date.
 **Validates: Requirements 7.2, 7.3**
 
-**Property 32: Resource Grouping by Status**
+**Property 33: Resource Grouping by Status**
 *For any* collection of project resources, retrieving them grouped by status should return resources organized into groups where all resources in each group share the same status value.
 **Validates: Requirements 7.5**
 
-**Property 33: Overdue Delivery Detection**
+**Property 34: Overdue Delivery Detection**
 *For any* resource with status "ordered" and expected delivery date more than 2 days in the past, the resource should be identified as having an overdue delivery.
 **Validates: Requirements 7.7**
 
 #### Authentication and Security Properties
 
-**Property 34: OAuth Authorization URL Generation**
+**Property 35: OAuth Authorization URL Generation**
 *For any* valid redirect URI, generating an authorization URL should return a properly formatted OAuth 2.0 authorization endpoint URL with client ID, redirect URI, response type, and state parameters.
 **Validates: Requirements 8.1**
 
-**Property 35: Authorization Code Exchange**
+**Property 36: Authorization Code Exchange**
 *For any* valid authorization code and redirect URI, exchanging the code for tokens should return an access token, refresh token, and expiration time.
 **Validates: Requirements 8.4**
 
-**Property 36: Access Token Validation**
+**Property 37: Access Token Validation**
 *For any* valid access token, validation should return a successful result with user ID and expiration time; for invalid or expired tokens, validation should return a failure result.
 **Validates: Requirements 8.5**
 
-**Property 37: Token Refresh**
+**Property 38: Token Refresh**
 *For any* valid refresh token, requesting a new access token should return a new access token with updated expiration time.
 **Validates: Requirements 8.6**
 
-**Property 38: Session Creation**
+**Property 39: Session Creation**
 *For any* user ID and OAuth tokens, creating a session should store the access token, refresh token, and expiration time, and return a unique session ID.
 **Validates: Requirements 8.4**
 
-**Property 39: Token Revocation**
+**Property 40: Token Revocation**
 *For any* valid access token, revoking it should invalidate the token and delete the associated session.
 **Validates: Requirements 8.8**
 

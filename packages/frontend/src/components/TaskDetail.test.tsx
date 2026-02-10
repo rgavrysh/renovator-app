@@ -243,4 +243,110 @@ describe('TaskDetail', () => {
     expect(screen.queryByText('Estimated Price')).not.toBeInTheDocument();
     expect(screen.queryByText('Actual Price')).not.toBeInTheDocument();
   });
+
+  it('should display delete button', () => {
+    render(
+      <TaskDetail
+        isOpen={true}
+        onClose={mockOnClose}
+        task={mockTask}
+        onTaskUpdate={mockOnTaskUpdate}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /delete task/i })).toBeInTheDocument();
+  });
+
+  it('should delete task when delete button is clicked and confirmed', async () => {
+    const user = userEvent.setup();
+    const mockOnTaskDelete = vi.fn();
+    vi.mocked(apiClient.delete).mockResolvedValue(undefined);
+    
+    // Mock window.confirm
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    render(
+      <TaskDetail
+        isOpen={true}
+        onClose={mockOnClose}
+        task={mockTask}
+        onTaskUpdate={mockOnTaskUpdate}
+        onTaskDelete={mockOnTaskDelete}
+      />
+    );
+
+    const deleteButton = screen.getByRole('button', { name: /delete task/i });
+    await user.click(deleteButton);
+
+    await waitFor(() => {
+      expect(confirmSpy).toHaveBeenCalledWith(
+        'Are you sure you want to delete "Install kitchen cabinets"? This action cannot be undone.'
+      );
+      expect(apiClient.delete).toHaveBeenCalledWith('/api/tasks/task-1');
+      expect(mockOnClose).toHaveBeenCalled();
+      expect(mockOnTaskDelete).toHaveBeenCalledWith('task-1');
+    });
+
+    confirmSpy.mockRestore();
+  });
+
+  it('should not delete task if user cancels confirmation', async () => {
+    const user = userEvent.setup();
+    const mockOnTaskDelete = vi.fn();
+    
+    // Mock window.confirm to return false
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    render(
+      <TaskDetail
+        isOpen={true}
+        onClose={mockOnClose}
+        task={mockTask}
+        onTaskUpdate={mockOnTaskUpdate}
+        onTaskDelete={mockOnTaskDelete}
+      />
+    );
+
+    const deleteButton = screen.getByRole('button', { name: /delete task/i });
+    await user.click(deleteButton);
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(apiClient.delete).not.toHaveBeenCalled();
+    expect(mockOnClose).not.toHaveBeenCalled();
+    expect(mockOnTaskDelete).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
+  it('should show alert when delete fails', async () => {
+    const user = userEvent.setup();
+    const mockOnTaskDelete = vi.fn();
+    vi.mocked(apiClient.delete).mockRejectedValue(new Error('Failed to delete task'));
+    
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    render(
+      <TaskDetail
+        isOpen={true}
+        onClose={mockOnClose}
+        task={mockTask}
+        onTaskUpdate={mockOnTaskUpdate}
+        onTaskDelete={mockOnTaskDelete}
+      />
+    );
+
+    const deleteButton = screen.getByRole('button', { name: /delete task/i });
+    await user.click(deleteButton);
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith('Failed to delete task');
+    });
+
+    expect(mockOnClose).not.toHaveBeenCalled();
+    expect(mockOnTaskDelete).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+    alertSpy.mockRestore();
+  });
 });

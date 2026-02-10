@@ -15,6 +15,11 @@ import { TaskList } from '../components/TaskList';
 import { TaskDetail } from '../components/TaskDetail';
 import { TaskForm } from '../components/TaskForm';
 import { WorkItemsLibraryModal } from '../components/WorkItemsLibraryModal';
+import { DocumentUpload } from '../components/DocumentUpload';
+import { DocumentList } from '../components/DocumentList';
+import { PhotoUpload } from '../components/PhotoUpload';
+import { PhotoGallery } from '../components/PhotoGallery';
+import { UserDropdown } from '../components/UserDropdown';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
@@ -85,7 +90,7 @@ interface Budget {
 export const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const [project, setProject] = useState<Project | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -102,6 +107,10 @@ export const ProjectDetail: React.FC = () => {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | undefined>(undefined);
   const [isWorkItemsModalOpen, setIsWorkItemsModalOpen] = useState(false);
+  const [isDocumentUploadOpen, setIsDocumentUploadOpen] = useState(false);
+  const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
+  const [documentsKey, setDocumentsKey] = useState(0);
+  const [photosKey, setPhotosKey] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -214,6 +223,11 @@ export const ProjectDetail: React.FC = () => {
     setSelectedTask(null);
   };
 
+  const handleTaskDelete = async (taskId: string) => {
+    // Reload project data to get updated task list and recalculated progress
+    await loadProjectData();
+  };
+
   const handleTaskUpdate = async () => {
     // Reload project data to get updated task with new notes
     await loadProjectData();
@@ -224,6 +238,31 @@ export const ProjectDetail: React.FC = () => {
       if (updatedTask) {
         setSelectedTask(updatedTask);
       }
+    }
+  };
+
+  const handleTaskStatusChange = async (task: Task, newStatus: TaskStatus) => {
+    try {
+      // Call the API to update task status
+      await apiClient.put(`/api/tasks/${task.id}`, {
+        status: newStatus,
+        // If marking as completed, set the completed date
+        completedDate: newStatus === TaskStatus.COMPLETED ? new Date().toISOString() : null,
+      });
+
+      // Reload project data to get updated tasks and recalculated progress
+      await loadProjectData();
+
+      // Update the selected task if it's open in the detail view
+      if (selectedTask && selectedTask.id === task.id) {
+        const updatedTask = tasks.find(t => t.id === task.id);
+        if (updatedTask) {
+          setSelectedTask(updatedTask);
+        }
+      }
+    } catch (err: any) {
+      console.error('Error updating task status:', err);
+      setError(err.message || 'Failed to update task status. Please try again.');
     }
   };
 
@@ -258,6 +297,32 @@ export const ProjectDetail: React.FC = () => {
   const handleWorkItemsModalSuccess = () => {
     // Reload project data to get newly created tasks
     loadProjectData();
+  };
+
+  const handleDocumentUploadOpen = () => {
+    setIsDocumentUploadOpen(true);
+  };
+
+  const handleDocumentUploadClose = () => {
+    setIsDocumentUploadOpen(false);
+  };
+
+  const handleDocumentUploadSuccess = () => {
+    // Refresh document list
+    setDocumentsKey(prev => prev + 1);
+  };
+
+  const handlePhotoUploadOpen = () => {
+    setIsPhotoUploadOpen(true);
+  };
+
+  const handlePhotoUploadClose = () => {
+    setIsPhotoUploadOpen(false);
+  };
+
+  const handlePhotoUploadSuccess = () => {
+    // Refresh photo gallery
+    setPhotosKey(prev => prev + 1);
   };
 
   const getStatusBadgeVariant = (status: ProjectStatus) => {
@@ -368,16 +433,7 @@ export const ProjectDetail: React.FC = () => {
                 <span className="text-lg font-semibold text-gray-900">Renovator</span>
               </div>
             }
-            actions={
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">
-                  {user?.firstName} {user?.lastName}
-                </span>
-                <Button variant="ghost" size="sm" onClick={logout}>
-                  Logout
-                </Button>
-              </div>
-            }
+            actions={<UserDropdown />}
           />
         }
       >
@@ -403,16 +459,7 @@ export const ProjectDetail: React.FC = () => {
                 <span className="text-lg font-semibold text-gray-900">Renovator</span>
               </div>
             }
-            actions={
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">
-                  {user?.firstName} {user?.lastName}
-                </span>
-                <Button variant="ghost" size="sm" onClick={logout}>
-                  Logout
-                </Button>
-              </div>
-            }
+            actions={<UserDropdown />}
           />
         }
       >
@@ -443,16 +490,7 @@ export const ProjectDetail: React.FC = () => {
               <span className="text-lg font-semibold text-gray-900">Renovator</span>
             </div>
           }
-          actions={
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">
-                {user?.firstName} {user?.lastName}
-              </span>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                Logout
-              </Button>
-            </div>
-          }
+          actions={<UserDropdown />}
         />
       }
     >
@@ -615,6 +653,53 @@ export const ProjectDetail: React.FC = () => {
                 <TaskList 
                   tasks={tasks}
                   onViewDetails={handleViewTaskDetails}
+                  onStatusChange={handleTaskStatusChange}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Documents */}
+            <Card>
+              <CardHeader 
+                title="Documents"
+                action={
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleDocumentUploadOpen}
+                  >
+                    Upload Document
+                  </Button>
+                }
+              />
+              <CardContent>
+                <DocumentList 
+                  key={documentsKey}
+                  projectId={id!}
+                  showCard={false}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Photos */}
+            <Card>
+              <CardHeader 
+                title="Photos"
+                action={
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handlePhotoUploadOpen}
+                  >
+                    Upload Photos
+                  </Button>
+                }
+              />
+              <CardContent>
+                <PhotoGallery 
+                  key={photosKey}
+                  projectId={id!}
+                  showCard={false}
                 />
               </CardContent>
             </Card>
@@ -742,7 +827,30 @@ export const ProjectDetail: React.FC = () => {
           onClose={handleTaskDetailClose}
           task={selectedTask}
           onTaskUpdate={handleTaskUpdate}
+          onStatusChange={handleTaskStatusChange}
+          onTaskDelete={handleTaskDelete}
         />
+
+        {/* Document Upload Modal */}
+        {id && (
+          <DocumentUpload
+            isOpen={isDocumentUploadOpen}
+            onClose={handleDocumentUploadClose}
+            onSuccess={handleDocumentUploadSuccess}
+            projectId={id}
+          />
+        )}
+
+        {/* Photo Upload Modal */}
+        {id && (
+          <PhotoUpload
+            isOpen={isPhotoUploadOpen}
+            onClose={handlePhotoUploadClose}
+            onSuccess={handlePhotoUploadSuccess}
+            projectId={id}
+            milestones={milestones}
+          />
+        )}
       </Container>
     </PageLayout>
   );

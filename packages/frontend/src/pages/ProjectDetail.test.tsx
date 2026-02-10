@@ -158,6 +158,26 @@ describe('ProjectDetail', () => {
   });
 
   it('should display project information', async () => {
+    // Mock fetch for photos and documents BEFORE rendering
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/photos')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      if (typeof url === 'string' && url.includes('/documents')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockUser,
+      });
+    });
+
     vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
       if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
       if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);
@@ -178,6 +198,26 @@ describe('ProjectDetail', () => {
   });
 
   it('should display milestones', async () => {
+    // Mock fetch for photos and documents BEFORE rendering
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/photos')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      if (typeof url === 'string' && url.includes('/documents')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockUser,
+      });
+    });
+
     vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
       if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
       if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);
@@ -196,6 +236,26 @@ describe('ProjectDetail', () => {
   });
 
   it('should display task statistics', async () => {
+    // Mock fetch for photos and documents BEFORE rendering
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/photos')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      if (typeof url === 'string' && url.includes('/documents')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockUser,
+      });
+    });
+
     vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
       if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
       if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);
@@ -209,13 +269,35 @@ describe('ProjectDetail', () => {
       expect(screen.getByText('Kitchen Renovation')).toBeInTheDocument();
     });
 
-    // Verify task names are displayed in the recent tasks section
+    // Verify task names are displayed in the tasks section
     expect(screen.getByText('Remove cabinets')).toBeInTheDocument();
     expect(screen.getByText('Install cabinets')).toBeInTheDocument();
-    expect(screen.getByText('Recent Tasks')).toBeInTheDocument();
+    // Check for the Tasks card header (using getAllByText since it appears in multiple places)
+    const tasksHeaders = screen.getAllByText('Tasks');
+    expect(tasksHeaders.length).toBeGreaterThan(0);
   });
 
   it('should display budget summary', async () => {
+    // Mock fetch for photos and documents BEFORE rendering
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/photos')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      if (typeof url === 'string' && url.includes('/documents')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockUser,
+      });
+    });
+
     vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
       if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
       if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);
@@ -234,6 +316,26 @@ describe('ProjectDetail', () => {
   });
 
   it('should handle missing budget gracefully', async () => {
+    // Mock fetch for photos and documents BEFORE rendering
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/photos')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      if (typeof url === 'string' && url.includes('/documents')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockUser,
+      });
+    });
+
     vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
       if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
       if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);
@@ -261,6 +363,26 @@ describe('ProjectDetail', () => {
   });
 
   it('should calculate progress correctly', async () => {
+    // Mock fetch for photos and documents BEFORE rendering
+    mockFetch.mockImplementation((url: string) => {
+      if (typeof url === 'string' && url.includes('/photos')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      if (typeof url === 'string' && url.includes('/documents')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => [],
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => mockUser,
+      });
+    });
+
     vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
       if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
       if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);

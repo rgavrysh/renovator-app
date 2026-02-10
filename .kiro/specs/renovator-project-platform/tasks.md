@@ -141,22 +141,27 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 11: Work Items Library Organization**
     - **Property 12: Bulk Task Creation from Templates**
     - **Property 13: Task Filtering Accuracy**
-    - **Property 14: Task Completion Updates Milestone**
-    - **Property 15: Overdue Task Detection**
-    - **Property 16: Task Note Persistence**
-    - **Property 17: Task Cost Aggregation**
-    - **Validates: Requirements 3.1-3.12**
+    - **Property 14: Task Status Transitions**
+    - **Property 15: Task Deletion Impact**
+    - **Property 16: Overdue Task Detection**
+    - **Property 17: Task Note Persistence**
+    - **Property 18: Task Cost Aggregation**
+    - **Validates: Requirements 3.1-3.14**
   
   - [x] 7.4 Create REST API endpoints for tasks
     - POST /api/projects/:projectId/tasks - Create task
     - POST /api/projects/:projectId/tasks/bulk - Bulk create from templates
     - GET /api/projects/:projectId/tasks - List/filter tasks
     - PUT /api/tasks/:id - Update task
+    - PATCH /api/tasks/:id/status - Update task status
     - DELETE /api/tasks/:id - Delete task
     - POST /api/tasks/:id/notes - Add note
-    - GET /api/work-items - Get work item templates
+    - GET /api/work-items - Get work item templates (with optional ownerId filter)
+    - GET /api/work-items/:id - Get specific work item template
     - POST /api/work-items - Create custom template
-    - _Requirements: 3.1, 3.3, 3.4, 3.6, 3.7, 3.8, 3.10_
+    - PUT /api/work-items/:id - Update work item template
+    - DELETE /api/work-items/:id - Delete work item template
+    - _Requirements: 3.1, 3.3, 3.4, 3.6, 3.7, 3.8, 3.10, 3.11, 3.15, 3.16, 3.17, 3.18_
 
 - [x] 8. Checkpoint - Ensure core project features work
   - Test project, milestone, and task creation
@@ -280,6 +285,7 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Create base components (Button, Input, Card, Modal, etc.)
     - Implement clean, minimalist design system
     - Create layout components (Header, Sidebar, Container)
+    - Add user dropdown menu in header with username display
     - _Requirements: All UI requirements_
   
   - [x] 13.3 Implement OAuth 2.0 login flow
@@ -296,19 +302,19 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - _Requirements: 8.5, 8.6, 8.8_
 
 - [ ] 14. Frontend - Project Management UI
-  - [-] 14.1 Create project dashboard
+  - [x] 14.1 Create project dashboard
     - Display list of active projects
     - Implement project status indicators
     - Add search functionality
     - _Requirements: 1.2, 1.3_
   
-  - [ ] 14.2 Create project creation/edit form
+  - [x] 14.2 Create project creation/edit form
     - Build form with all project fields
     - Implement form validation
     - Handle project creation and updates
     - _Requirements: 1.1, 1.5_
   
-  - [ ] 14.3 Create project detail view
+  - [x] 14.3 Create project detail view
     - Display project information
     - Show project timeline and milestones
     - Display project tasks and budget summary
@@ -316,50 +322,82 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - _Requirements: 1.4, 2.5_
 
 - [ ] 15. Frontend - Timeline and Milestone UI
-  - [ ] 15.1 Create milestone list component
+  - [x] 15.1 Create milestone list component
     - Display milestones in chronological order
     - Show progress indicators
     - Highlight overdue milestones
     - _Requirements: 2.5_
   
-  - [ ] 15.2 Create milestone creation/edit form
+  - [x] 15.2 Create milestone creation/edit form
     - Build form for milestone details
     - Implement date picker
     - Handle milestone creation and updates
     - _Requirements: 2.1, 2.2_
   
-  - [ ] 15.3 Implement milestone completion
+  - [x] 15.3 Implement milestone completion
     - Add complete button/action
     - Update UI to reflect completion
     - Recalculate project progress
     - _Requirements: 2.3, 2.4_
 
 - [ ] 16. Frontend - Task Management UI
-  - [ ] 16.1 Create task list component
+  - [x] 16.1 Create task list component
     - Display tasks with filtering options
     - Show task status, priority, and due dates
     - Highlight overdue tasks
-    - _Requirements: 3.8, 3.9, 3.10_
+    - _Requirements: 3.8, 3.10, 3.12_
   
-  - [ ] 16.2 Create work items library modal
+  - [x] 16.2 Create work items library modal
     - Display work items by category
     - Allow selection of multiple items
     - Implement bulk add functionality
     - _Requirements: 3.3, 3.4, 3.6_
   
-  - [ ] 16.3 Create task creation/edit form
+  - [x] 16.3 Create task creation/edit form
     - Build form with all task fields including pricing
     - Implement milestone association
     - Handle task creation and updates
     - _Requirements: 3.1, 3.2, 3.5_
   
-  - [ ] 16.4 Implement task notes feature
+  - [x] 16.4 Implement task notes feature
     - Add notes section to task detail
     - Allow adding new notes
     - Display note history
+    - _Requirements: 3.13_
+  
+  - [x] 16.5 Implement task status management
+    - Add status dropdown/buttons to task list and detail views
+    - Allow status transitions (todo, in_progress, completed, blocked)
+    - Update UI to reflect status changes
+    - _Requirements: 3.9, 3.10_
+  
+  - [x] 16.6 Implement task deletion
+    - Add delete button to task detail view
+    - Show confirmation dialog before deletion
+    - Update UI after successful deletion
     - _Requirements: 3.11_
+  
+  - [x] 16.7 Create Work Items Library management page
+    - Add "Work Items Library" option to user dropdown menu
+    - Create dedicated page/modal for managing work item templates
+    - Display all custom work item templates in a list/grid view
+    - Show template details: name, description, category, default price, unit
+    - _Requirements: 3.15, 3.16_
+  
+  - [ ] 16.8 Create work item template creation/edit form
+    - Build form with fields: name, description, category, estimated duration, default price, unit
+    - Implement form validation
+    - Handle template creation and updates via API
+    - _Requirements: 3.7, 3.17_
+  
+  - [ ] 16.9 Implement work item template deletion
+    - Add delete button to template list/detail view
+    - Show confirmation dialog before deletion
+    - Update UI after successful deletion
+    - Display message that existing tasks created from template are preserved
+    - _Requirements: 3.18_
 
-- [ ] 17. Checkpoint - Ensure core UI features work
+- [x] 17. Checkpoint - Ensure core UI features work
   - Test project, milestone, and task UI flows
   - Verify responsive design
   - Ensure all tests pass
@@ -367,69 +405,69 @@ This implementation plan breaks down the development of the Renovator Project Ma
 
 
 - [ ] 18. Frontend - Budget Management UI
-  - [ ] 18.1 Create budget overview component
+  - [x] 18.1 Create budget overview component
     - Display budget totals and variance
     - Show budget alerts when over threshold
     - Display percentage spent
     - _Requirements: 4.4, 4.5_
   
-  - [ ] 18.2 Create budget items list
+  - [x] 18.2 Create budget items list
     - Display budget items by category
     - Show estimated vs actual costs
     - Display variance for each item
     - _Requirements: 4.1, 4.2, 4.3_
   
-  - [ ] 18.3 Create budget item creation/edit form
+  - [x] 18.3 Create budget item creation/edit form
     - Build form for budget item details
     - Allow category selection
     - Handle creation and updates
     - _Requirements: 4.1, 4.2, 4.6, 4.7_
 
-- [ ] 19. Frontend - Document and Photo Management UI
-  - [ ] 19.1 Create document upload component
+- [x] 19. Frontend - Document and Photo Management UI
+  - [x] 19.1 Create document upload component
     - Implement file picker with format validation
     - Show upload progress
     - Handle document categorization
     - _Requirements: 5.1, 5.2, 5.3_
   
-  - [ ] 19.2 Create document list and search
+  - [x] 19.2 Create document list and search
     - Display documents with filters
     - Implement search functionality
     - Add document preview/download
     - _Requirements: 5.4, 5.5_
   
-  - [ ] 19.3 Implement document trash/restore
+  - [x] 19.3 Implement document trash/restore
     - Add delete functionality
     - Create trash view
     - Implement restore from trash
     - _Requirements: 5.7_
   
-  - [ ] 19.4 Create photo gallery component
+  - [x] 19.4 Create photo gallery component
     - Display photos in chronological order
     - Show thumbnails with date stamps
     - Implement photo viewer/lightbox
     - _Requirements: 6.3, 6.7_
   
-  - [ ] 19.5 Create photo upload component
+  - [x] 19.5 Create photo upload component
     - Implement batch photo upload
     - Extract and display capture dates
     - Allow milestone association
     - Add caption functionality
     - _Requirements: 6.1, 6.2, 6.4, 6.6_
 
-- [ ] 20. Frontend - Resource Management UI
-  - [ ] 20.1 Create resource list component
+- [x] 20. Frontend - Resource Management UI
+  - [x] 20.1 Create resource list component
     - Display resources grouped by status
     - Show overdue delivery warnings
     - _Requirements: 7.5, 7.7_
   
-  - [ ] 20.2 Create resource creation/edit form
+  - [x] 20.2 Create resource creation/edit form
     - Build form for resource details
     - Allow supplier selection
     - Handle status transitions
     - _Requirements: 7.1, 7.2, 7.3_
   
-  - [ ] 20.3 Create supplier management UI
+  - [x] 20.3 Create supplier management UI
     - Create supplier list
     - Build supplier creation/edit form
     - _Requirements: 7.4_

@@ -415,4 +415,63 @@ describe('TaskList', () => {
     
     expect(screen.queryByText('Details')).not.toBeInTheDocument();
   });
+
+  it('should show status dropdown when onStatusChange is provided', () => {
+    const onStatusChange = vi.fn();
+    const { container } = render(<TaskList tasks={mockTasks} onStatusChange={onStatusChange} />);
+    
+    // Check for status dropdowns (select elements)
+    const statusDropdowns = container.querySelectorAll('select');
+    // Should have 2 selects per task (status dropdown) + 2 filter selects = 6 total
+    expect(statusDropdowns.length).toBeGreaterThan(2);
+  });
+
+  it('should show status badge when onStatusChange is not provided', () => {
+    render(<TaskList tasks={mockTasks} />);
+    
+    // Should show status badges instead of dropdowns
+    expect(screen.getAllByText('Completed').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('In Progress').length).toBeGreaterThan(0);
+  });
+
+  it('should call onStatusChange when status dropdown is changed', async () => {
+    const user = userEvent.setup();
+    const onStatusChange = vi.fn();
+    const { container } = render(<TaskList tasks={mockTasks} onStatusChange={onStatusChange} />);
+    
+    // Find the first task's status dropdown (skip the filter dropdowns)
+    const statusDropdowns = container.querySelectorAll('select');
+    const taskStatusDropdown = Array.from(statusDropdowns).find(
+      (select) => select.value === TaskStatus.COMPLETED
+    );
+    
+    expect(taskStatusDropdown).toBeDefined();
+    
+    if (taskStatusDropdown) {
+      await user.selectOptions(taskStatusDropdown, TaskStatus.IN_PROGRESS);
+      
+      expect(onStatusChange).toHaveBeenCalledTimes(1);
+      expect(onStatusChange).toHaveBeenCalledWith(mockTasks[0], TaskStatus.IN_PROGRESS);
+    }
+  });
+
+  it('should have all status options in task status dropdown', () => {
+    const onStatusChange = vi.fn();
+    const { container } = render(<TaskList tasks={mockTasks} onStatusChange={onStatusChange} />);
+    
+    // Find a task status dropdown
+    const statusDropdowns = container.querySelectorAll('select');
+    const taskStatusDropdown = Array.from(statusDropdowns).find(
+      (select) => select.value === TaskStatus.COMPLETED
+    );
+    
+    expect(taskStatusDropdown).toBeDefined();
+    
+    if (taskStatusDropdown) {
+      expect(taskStatusDropdown).toHaveTextContent('To Do');
+      expect(taskStatusDropdown).toHaveTextContent('In Progress');
+      expect(taskStatusDropdown).toHaveTextContent('Completed');
+      expect(taskStatusDropdown).toHaveTextContent('Blocked');
+    }
+  });
 });

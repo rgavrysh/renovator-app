@@ -59,9 +59,15 @@ The Renovator Project Management Platform is an all-in-one digital workspace des
 7. THE Platform SHALL allow renovators to customize work item templates including default prices and save them for future use
 8. WHEN a renovator views tasks, THE Platform SHALL allow filtering by status, priority, milestone, or due date
 9. WHEN a renovator completes a task, THE Platform SHALL update the task status and recalculate milestone progress
-10. WHEN a task is overdue, THE Platform SHALL display it prominently in the renovator's task list
-11. THE Platform SHALL allow renovators to add notes and comments to individual tasks
-12. WHEN calculating project costs, THE Platform SHALL aggregate actual prices from all tasks with pricing information
+10. WHEN a renovator changes a task status, THE Platform SHALL allow transitions between todo, in_progress, completed, and blocked states
+11. WHEN a renovator deletes a task, THE Platform SHALL remove the task and recalculate any affected milestone progress and budget totals
+12. WHEN a task is overdue, THE Platform SHALL display it prominently in the renovator's task list
+13. THE Platform SHALL allow renovators to add notes and comments to individual tasks
+14. WHEN calculating project costs, THE Platform SHALL aggregate actual prices from all tasks with pricing information
+15. WHEN a renovator accesses the user menu dropdown, THE Platform SHALL provide a "Work Items Library" option to manage custom work item templates
+16. WHEN a renovator opens the Work Items Library management interface, THE Platform SHALL display all custom work item templates with options to create, edit, and delete templates
+17. WHEN a renovator creates or edits a work item template, THE Platform SHALL allow specification of name, description, category, estimated duration, default price per unit, and unit of measurement
+18. WHEN a renovator deletes a work item template, THE Platform SHALL remove it from the library while preserving any tasks already created from that template
 
 ### Requirement 4: Budget Creation and Tracking
 

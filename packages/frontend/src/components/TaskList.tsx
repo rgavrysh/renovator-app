@@ -40,6 +40,7 @@ export interface TaskListProps {
   onComplete?: (task: Task) => void;
   onDelete?: (task: Task) => void;
   onViewDetails?: (task: Task) => void;
+  onStatusChange?: (task: Task, newStatus: TaskStatus) => void;
 }
 
 export const TaskList: React.FC<TaskListProps> = ({
@@ -48,6 +49,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   onComplete,
   onDelete,
   onViewDetails,
+  onStatusChange,
 }) => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -240,12 +242,29 @@ export const TaskList: React.FC<TaskListProps> = ({
                       >
                         {task.name}
                       </h4>
-                      <Badge
-                        variant={getTaskStatusBadgeVariant(task.status)}
-                        size="sm"
-                      >
-                        {getTaskStatusLabel(task.status)}
-                      </Badge>
+                      
+                      {/* Status Dropdown */}
+                      {onStatusChange ? (
+                        <select
+                          value={task.status}
+                          onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
+                          className="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value={TaskStatus.TODO}>To Do</option>
+                          <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
+                          <option value={TaskStatus.COMPLETED}>Completed</option>
+                          <option value={TaskStatus.BLOCKED}>Blocked</option>
+                        </select>
+                      ) : (
+                        <Badge
+                          variant={getTaskStatusBadgeVariant(task.status)}
+                          size="sm"
+                        >
+                          {getTaskStatusLabel(task.status)}
+                        </Badge>
+                      )}
+                      
                       <Badge
                         variant={getTaskPriorityBadgeVariant(task.priority)}
                         size="sm"

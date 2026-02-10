@@ -12,6 +12,8 @@ interface TaskDetailProps {
   onClose: () => void;
   task: Task | null;
   onTaskUpdate?: () => void;
+  onStatusChange?: (task: Task, newStatus: TaskStatus) => void;
+  onTaskDelete?: (taskId: string) => void;
 }
 
 export const TaskDetail: React.FC<TaskDetailProps> = ({
@@ -19,10 +21,13 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
   onClose,
   task,
   onTaskUpdate,
+  onStatusChange,
+  onTaskDelete,
 }) => {
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -132,6 +137,36 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (!task) {
+      return;
+    }
+
+    // Show confirmation dialog
+    if (!window.confirm(`Are you sure you want to delete "${task.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await apiClient.delete(`/api/tasks/${task.id}`);
+
+      // Close the modal
+      onClose();
+
+      // Notify parent to refresh task list
+      if (onTaskDelete) {
+        onTaskDelete(task.id);
+      }
+    } catch (error: any) {
+      console.error('Error deleting task:', error);
+      alert(error.message || 'Failed to delete task. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (!task) {
     return null;
   }
@@ -145,13 +180,36 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
     >
       <div className="space-y-6">
         {/* Task Status and Priority */}
-        <div className="flex items-center gap-2">
-          <Badge variant={getTaskStatusBadgeVariant(task.status)}>
-            {getTaskStatusLabel(task.status)}
-          </Badge>
-          <Badge variant={getTaskPriorityBadgeVariant(task.priority)}>
-            {getTaskPriorityLabel(task.priority)}
-          </Badge>
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            {onStatusChange ? (
+              <select
+                value={task.status}
+                onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-linear bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value={TaskStatus.TODO}>To Do</option>
+                <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
+                <option value={TaskStatus.COMPLETED}>Completed</option>
+                <option value={TaskStatus.BLOCKED}>Blocked</option>
+              </select>
+            ) : (
+              <Badge variant={getTaskStatusBadgeVariant(task.status)}>
+                {getTaskStatusLabel(task.status)}
+              </Badge>
+            )}
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-700 mb-1">
+              Priority
+            </label>
+            <Badge variant={getTaskPriorityBadgeVariant(task.priority)}>
+              {getTaskPriorityLabel(task.priority)}
+            </Badge>
+          </div>
         </div>
 
         {/* Task Description */}
@@ -253,9 +311,19 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
       </div>
 
       <ModalFooter>
-        <Button variant="secondary" onClick={onClose}>
-          Close
-        </Button>
+        <div className="flex items-center justify-between w-full">
+          <Button
+            variant="danger"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            loading={isDeleting}
+          >
+            Delete Task
+          </Button>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
+        </div>
       </ModalFooter>
     </Modal>
   );

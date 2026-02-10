@@ -8,3 +8,4 @@ export * from './BudgetOverview';
 export * from './BudgetItemsList';
 export * from './BudgetItemForm';
 export * from './DocumentUpload';
+export * from './UserDropdown';

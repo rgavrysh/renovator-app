@@ -9,6 +9,7 @@ import { Textarea } from '../components/ui/Textarea';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
+import { UserDropdown } from '../components/UserDropdown';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
@@ -42,7 +43,7 @@ const PROJECT_STATUS_OPTIONS = [
 export const ProjectForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isEditMode = !!id;
 
   const [formData, setFormData] = useState<ProjectFormData>({
@@ -209,16 +210,7 @@ export const ProjectForm: React.FC = () => {
                 <span className="text-lg font-semibold text-gray-900">Renovator</span>
               </div>
             }
-            actions={
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">
-                  {user?.firstName} {user?.lastName}
-                </span>
-                <Button variant="ghost" size="sm" onClick={logout}>
-                  Logout
-                </Button>
-              </div>
-            }
+            actions={<UserDropdown />}
           />
         }
       >
@@ -243,16 +235,7 @@ export const ProjectForm: React.FC = () => {
               <span className="text-lg font-semibold text-gray-900">Renovator</span>
             </div>
           }
-          actions={
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">
-                {user?.firstName} {user?.lastName}
-              </span>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                Logout
-              </Button>
-            </div>
-          }
+          actions={<UserDropdown />}
         />
       }
     >
