@@ -108,6 +108,7 @@ export const ProjectDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isCreatingBudget, setIsCreatingBudget] = useState(false);
+  const [isRecalculatingTasks, setIsRecalculatingTasks] = useState(false);
   const [isExportingBudget, setIsExportingBudget] = useState(false);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
   const [isBudgetItemFormOpen, setIsBudgetItemFormOpen] = useState(false);
@@ -366,6 +367,25 @@ export const ProjectDetail: React.FC = () => {
       setError(err.message || 'Failed to create budget. Please try again.');
     } finally {
       setIsCreatingBudget(false);
+    }
+  };
+
+  const handleRecalculateTasksCosts = async () => {
+    if (!id || !budget) return;
+    
+    try {
+      setIsRecalculatingTasks(true);
+      const updatedBudget = await apiClient.post<Budget>(`/api/projects/${id}/budget/recalculate-tasks`);
+      setBudget(updatedBudget);
+      // Also reload budget items in case they changed
+      if (updatedBudget && updatedBudget.id) {
+        setBudgetItems((updatedBudget as any).items || budgetItems);
+      }
+    } catch (err: any) {
+      console.error('Error recalculating tasks costs:', err);
+      setError(err.message || 'Failed to recalculate tasks costs. Please try again.');
+    } finally {
+      setIsRecalculatingTasks(false);
     }
   };
 
@@ -932,7 +952,29 @@ export const ProjectDetail: React.FC = () => {
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500">From Tasks:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-500">From Tasks:</span>
+                            <button
+                              onClick={handleRecalculateTasksCosts}
+                              disabled={isRecalculatingTasks}
+                              className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                              title="Recalculate tasks costs"
+                            >
+                              <svg
+                                className={`w-3.5 h-3.5 ${isRecalculatingTasks ? 'animate-spin' : ''}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                />
+                              </svg>
+                            </button>
+                          </div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-700">
                               {formatCurrency(budget.totalActualFromTasks || 0)}

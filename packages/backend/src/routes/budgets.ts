@@ -276,6 +276,35 @@ router.get('/:budgetId/alerts', authenticate, async (req: Request, res: Response
 });
 
 /**
+ * POST /api/projects/:projectId/budget/recalculate-tasks
+ * Recalculate budget totals from tasks
+ */
+router.post('/:projectId/budget/recalculate-tasks', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+
+    // Verify project exists and user owns it
+    try {
+      await projectService.getProject(projectId, req.userId!);
+    } catch (error) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    await budgetService.recalculateBudgetTotalsForProject(projectId);
+    const budget = await budgetService.getBudget(projectId);
+    res.json(budget);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Budget not found') {
+      res.status(404).json({ error: 'Budget not found' });
+      return;
+    }
+    console.error('Error recalculating budget:', error);
+    res.status(500).json({ error: 'Failed to recalculate budget' });
+  }
+});
+
+/**
  * GET /api/projects/:projectId/budget/export
  * Export budget to PDF
  */

@@ -64,12 +64,15 @@ export class BudgetService {
       throw new Error('Budget already exists for this project');
     }
 
+    // Calculate existing tasks costs to include them from the start
+    const taskCosts = await this.taskService.calculateTotalTaskCosts(projectId);
+
     const budget = this.budgetRepository.create({
       projectId,
       totalEstimated: 0,
-      totalActual: 0,
+      totalActual: taskCosts.actual,
       totalActualFromItems: 0,
-      totalActualFromTasks: 0,
+      totalActualFromTasks: taskCosts.actual,
     });
 
     return await this.budgetRepository.save(budget);
