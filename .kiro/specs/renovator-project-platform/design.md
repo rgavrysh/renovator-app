@@ -327,6 +327,7 @@ interface BudgetService {
   calculateVariance(budgetId: string): Promise<Budget>;
   calculateTotalsWithTasks(projectId: string): Promise<{ totalActualFromItems: number; totalActualFromTasks: number; totalActual: number }>;
   checkBudgetAlerts(budgetId: string): Promise<BudgetAlert[]>;
+  exportBudgetToPDF(projectId: string): Promise<Buffer>;
 }
 
 interface BudgetAlert {
@@ -348,6 +349,35 @@ The budget totals are calculated as follows:
 - `variancePercentage`: `(variance / totalEstimated) × 100`
 
 This ensures that all project costs, whether tracked as budget items or task actual prices, are included in the budget totals.
+
+**Budget Export Format**:
+
+The PDF export includes:
+1. **Header Section**:
+   - Project name
+   - Client name, email, and phone
+   - Total budget amount (totalEstimated)
+   - Export date
+
+2. **Items Table**:
+   - Columns: ID, Name, Quantity, Per Unit, Price
+   - Rows for all tasks (with pricing information)
+   - Rows for all budget items
+   - Each row clearly labeled with type (Task/Budget Item)
+
+3. **Footer Section**:
+   - Subtotal by category:
+     - Tasks (sum of all task actual prices)
+     - Labor (sum of budget items in LABOR category)
+     - Materials (sum of budget items in MATERIALS category)
+     - Equipment (sum of budget items in EQUIPMENT category)
+     - Subcontractors (sum of budget items in SUBCONTRACTORS category)
+     - Permits (sum of budget items in PERMITS category)
+     - Contingency (sum of budget items in CONTINGENCY category)
+     - Other (sum of budget items in OTHER category)
+   - Total Estimated: totalEstimated
+   - Total Actual: totalActual
+   - Variance: variance (with percentage)
 
 
 
@@ -932,9 +962,13 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 *For any* budget where actual costs exceed estimated costs by more than 10%, a budget warning alert should be generated.
 **Validates: Requirements 4.7**
 
+**Property 23: Budget Export Completeness**
+*For any* project with budget items and tasks, exporting the budget to PDF should generate a document containing a header with project name and client details, a table with all tasks and budget items including ID, name, quantity, per unit, and price columns, and a footer with aggregated sums by type (tasks, labor, materials, subcontractors, equipment, permits, contingency, other).
+**Validates: Requirements 4.11, 4.12**
+
 #### Document Management Properties
 
-**Property 23: Document Upload Completeness**
+**Property 24: Document Upload Completeness**
 *For any* valid document file and metadata containing type and project association, uploading should result in a document entity with file stored, metadata preserved, upload timestamp recorded, and uploader ID captured.
 **Validates: Requirements 5.2**
 
@@ -946,13 +980,13 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 *For any* collection of documents and search query, results should include all and only those documents where the query matches document name, type, or the upload date falls within the specified date range.
 **Validates: Requirements 5.4**
 
-**Property 26: Document Soft Delete**
+**Property 27: Document Soft Delete**
 *For any* document, deleting it should set the deleted_at timestamp to the current time, and the document should remain retrievable from trash for 30 days before permanent deletion.
 **Validates: Requirements 5.7**
 
 #### Photo Management Properties
 
-**Property 27: Photo Metadata Extraction**
+**Property 28: Photo Metadata Extraction**
 *For any* photo file with EXIF metadata containing capture date, uploading should result in the capture date being extracted and stored in the photo's metadata.
 **Validates: Requirements 6.1**
 
@@ -964,13 +998,13 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 *For any* set of N photo files uploaded simultaneously, the operation should result in exactly N photo entities created, each with its own metadata and storage URL.
 **Validates: Requirements 6.6**
 
-**Property 30: Photo Thumbnail Generation**
+**Property 31: Photo Thumbnail Generation**
 *For any* uploaded photo, a thumbnail image should be automatically generated and its URL stored in the photo entity's thumbnail_url field.
 **Validates: Requirements 6.7**
 
 #### Resource Management Properties
 
-**Property 31: Resource Creation Completeness**
+**Property 32: Resource Creation Completeness**
 *For any* valid resource input containing type, name, quantity, unit, cost, and status, creating a resource should result in an entity with all fields preserved and initial status set to "needed".
 **Validates: Requirements 7.1**
 
@@ -982,13 +1016,13 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 *For any* collection of project resources, retrieving them grouped by status should return resources organized into groups where all resources in each group share the same status value.
 **Validates: Requirements 7.5**
 
-**Property 34: Overdue Delivery Detection**
+**Property 35: Overdue Delivery Detection**
 *For any* resource with status "ordered" and expected delivery date more than 2 days in the past, the resource should be identified as having an overdue delivery.
 **Validates: Requirements 7.7**
 
 #### Authentication and Security Properties
 
-**Property 35: OAuth Authorization URL Generation**
+**Property 36: OAuth Authorization URL Generation**
 *For any* valid redirect URI, generating an authorization URL should return a properly formatted OAuth 2.0 authorization endpoint URL with client ID, redirect URI, response type, and state parameters.
 **Validates: Requirements 8.1**
 
@@ -1008,7 +1042,7 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 *For any* user ID and OAuth tokens, creating a session should store the access token, refresh token, and expiration time, and return a unique session ID.
 **Validates: Requirements 8.4**
 
-**Property 40: Token Revocation**
+**Property 41: Token Revocation**
 *For any* valid access token, revoking it should invalidate the token and delete the associated session.
 **Validates: Requirements 8.8**
 

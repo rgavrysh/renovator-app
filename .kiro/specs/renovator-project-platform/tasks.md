@@ -186,7 +186,8 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - **Property 20: Budget Variance Calculation**
     - **Property 21: Budget Totals Aggregation (including task prices)**
     - **Property 22: Budget Alert Threshold**
-    - **Validates: Requirements 4.1-4.10**
+    - **Property 23: Budget Export Completeness**
+    - **Validates: Requirements 4.1-4.12**
   
   - [x] 9.3 Create REST API endpoints for budgets
     - POST /api/projects/:projectId/budget - Create budget
@@ -195,7 +196,15 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - PUT /api/budget-items/:id - Update budget item
     - DELETE /api/budget-items/:id - Delete budget item
     - GET /api/budgets/:budgetId/alerts - Get budget alerts
-    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+    - GET /api/projects/:projectId/budget/export - Export budget to PDF
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.11, 4.12_
+  
+  - [x] 9.4 Implement PDF generation for budget export
+    - Install PDF generation library (e.g., pdfkit, puppeteer, or jsPDF)
+    - Create PDF template with header, table, and footer sections
+    - Implement data aggregation by category for footer
+    - Generate PDF buffer for download
+    - _Requirements: 4.11, 4.12_
 
 - [ ] 10. Document and Photo Management Backend Implementation
   - [x] 10.1 Set up file storage service
@@ -439,6 +448,13 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Link to task list for detailed breakdown
     - Update automatically when task prices change
     - _Requirements: 3.14, 4.5, 4.6, 4.10_
+  
+  - [x] 18.5 Implement budget export UI
+    - Add "Export to PDF" button to budget overview
+    - Show loading state during PDF generation
+    - Trigger download of generated PDF file
+    - Display success/error messages
+    - _Requirements: 4.11, 4.12_
 
 - [x] 19. Frontend - Document and Photo Management UI
   - [x] 19.1 Create document upload component

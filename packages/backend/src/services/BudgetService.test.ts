@@ -486,4 +486,46 @@ describe('BudgetService', () => {
       expect(Number(budget.totalActual)).toBeCloseTo(2222.21, 2);
     });
   });
+
+  describe('exportBudgetToPDF', () => {
+    test('should generate PDF buffer for budget export', async () => {
+      const budget = await budgetService.createBudget(testProjectId);
+
+      // Add some budget items
+      await budgetService.addBudgetItem(budget.id, {
+        name: 'Labor Costs',
+        category: BudgetCategory.LABOR,
+        estimatedCost: 5000,
+        actualCost: 4800,
+      });
+
+      await budgetService.addBudgetItem(budget.id, {
+        name: 'Materials',
+        category: BudgetCategory.MATERIALS,
+        estimatedCost: 3000,
+        actualCost: 3200,
+      });
+
+      const pdfBuffer = await budgetService.exportBudgetToPDF(testProjectId);
+
+      expect(pdfBuffer).toBeInstanceOf(Buffer);
+      expect(pdfBuffer.length).toBeGreaterThan(0);
+      
+      // Check PDF header (PDF files start with %PDF-)
+      const pdfHeader = pdfBuffer.toString('utf8', 0, 5);
+      expect(pdfHeader).toBe('%PDF-');
+    });
+
+    test('should throw error for invalid project ID', async () => {
+      await expect(budgetService.exportBudgetToPDF('invalid-id')).rejects.toThrow(
+        'Invalid project ID'
+      );
+    });
+
+    test('should throw error if budget not found', async () => {
+      const nonExistentProjectId = '123e4567-e89b-12d3-a456-426614174999';
+
+      await expect(budgetService.exportBudgetToPDF(nonExistentProjectId)).rejects.toThrow();
+    });
+  });
 });

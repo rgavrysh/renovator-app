@@ -247,4 +247,39 @@ router.get('/:budgetId/alerts', authenticate, async (req: Request, res: Response
   }
 });
 
+/**
+ * GET /api/projects/:projectId/budget/export
+ * Export budget to PDF
+ */
+router.get('/:projectId/budget/export', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+
+    // Verify project exists and user owns it
+    try {
+      await projectService.getProject(projectId, req.userId!);
+    } catch (error) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    // Generate PDF
+    const pdfBuffer = await budgetService.exportBudgetToPDF(projectId);
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="budget-${projectId}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    res.send(pdfBuffer);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Budget not found') {
+      res.status(404).json({ error: 'Budget not found' });
+      return;
+    }
+    console.error('Error exporting budget to PDF:', error);
+    res.status(500).json({ error: 'Failed to export budget to PDF' });
+  }
+});
+
 export default router;

@@ -87,6 +87,8 @@ The Renovator Project Management Platform is an all-in-one digital workspace des
 8. THE Platform SHALL allow renovators to update budget estimates during project execution
 9. WHEN a budget item is added or modified, THE Platform SHALL immediately update all budget totals and calculations
 10. WHEN a task actual price is added or modified, THE Platform SHALL immediately update budget totals to reflect the change
+11. WHEN a renovator exports a budget, THE Platform SHALL generate a PDF document containing project header with name and client details, a table of all tasks and budget items with columns for ID, name, quantity, per unit, and price, and a footer with aggregated sums by type (tasks, labor, subcontractors, materials, etc.)
+12. THE Platform SHALL allow renovators to download the exported budget PDF to their local device
 
 ### Requirement 5: Document Management
 

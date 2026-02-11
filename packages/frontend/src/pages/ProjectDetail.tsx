@@ -23,8 +23,9 @@ import { BudgetOverview } from '../components/BudgetOverview';
 import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
 import { BudgetItemForm } from '../components/BudgetItemForm';
 import { UserDropdown } from '../components/UserDropdown';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, getAccessToken } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
+import config from '../config';
 
 interface Project {
   id: string;
@@ -107,6 +108,8 @@ export const ProjectDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isCreatingBudget, setIsCreatingBudget] = useState(false);
+  const [isExportingBudget, setIsExportingBudget] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState<string | null>(null);
   const [isBudgetItemFormOpen, setIsBudgetItemFormOpen] = useState(false);
   const [editingBudgetItem, setEditingBudgetItem] = useState<BudgetItem | undefined>(undefined);
   const [isMilestoneFormOpen, setIsMilestoneFormOpen] = useState(false);
@@ -384,6 +387,62 @@ export const ProjectDetail: React.FC = () => {
   const handleBudgetItemFormSuccess = () => {
     // Reload project data to get updated budget and items
     loadProjectData();
+  };
+
+  const handleExportBudget = async () => {
+    if (!id || !budget) return;
+    
+    try {
+      setIsExportingBudget(true);
+      setError(null);
+      setExportSuccess(null);
+      
+      // Get access token
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        throw new Error('Not authenticated');
+      }
+      
+      // Call the export API endpoint
+      const response = await fetch(`${config.api.url}/api/projects/${id}/budget/export`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export budget');
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${project?.name || 'project'}-budget-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      // Show success message
+      setExportSuccess('Budget exported successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setExportSuccess(null);
+      }, 3000);
+    } catch (err: any) {
+      console.error('Error exporting budget:', err);
+      setError(err.message || 'Failed to export budget to PDF. Please try again.');
+    } finally {
+      setIsExportingBudget(false);
+    }
   };
 
   const getStatusBadgeVariant = (status: ProjectStatus) => {
@@ -775,17 +834,35 @@ export const ProjectDetail: React.FC = () => {
                 title="Budget Summary"
                 action={
                   budget ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={handleAddBudgetItem}
-                    >
-                      Add Item
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleExportBudget}
+                        loading={isExportingBudget}
+                        disabled={isExportingBudget}
+                      >
+                        Export to PDF
+                      </Button>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleAddBudgetItem}
+                      >
+                        Add Item
+                      </Button>
+                    </div>
                   ) : null
                 }
               />
               <CardContent>
+                {/* Success message */}
+                {exportSuccess && (
+                  <Alert variant="success" className="mb-4">
+                    {exportSuccess}
+                  </Alert>
+                )}
+                
                 {!budget ? (
                   <div className="text-center py-8">
                     <p className="text-sm text-gray-500 mb-4">No budget set</p>
