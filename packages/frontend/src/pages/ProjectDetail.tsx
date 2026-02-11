@@ -389,6 +389,38 @@ export const ProjectDetail: React.FC = () => {
     loadProjectData();
   };
 
+  const handleDeleteBudgetItem = async (item: BudgetItem) => {
+    if (!window.confirm(`Are you sure you want to delete "${item.name}" from the budget?`)) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/api/budget-items/${item.id}`);
+      // Reload project data to get updated budget and items
+      await loadProjectData();
+    } catch (err: any) {
+      console.error('Error deleting budget item:', err);
+      setError(err.message || 'Failed to delete budget item. Please try again.');
+    }
+  };
+
+  const handleDeleteBudget = async () => {
+    if (!id || !budget) return;
+
+    if (!window.confirm('Are you sure you want to remove the entire budget? All budget items will be deleted. This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/api/projects/${id}/budget`);
+      setBudget(null);
+      setBudgetItems([]);
+    } catch (err: any) {
+      console.error('Error deleting budget:', err);
+      setError(err.message || 'Failed to delete budget. Please try again.');
+    }
+  };
+
   const handleExportBudget = async () => {
     if (!id || !budget) return;
     
@@ -941,6 +973,18 @@ export const ProjectDetail: React.FC = () => {
                         </p>
                       </div>
                     )}
+
+                    <Divider />
+
+                    <div className="pt-1">
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={handleDeleteBudget}
+                      >
+                        Remove Budget
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -954,6 +998,8 @@ export const ProjectDetail: React.FC = () => {
                   <BudgetItemsList 
                     items={budgetItems}
                     showCard={false}
+                    onEditItem={handleEditBudgetItem}
+                    onDeleteItem={handleDeleteBudgetItem}
                   />
                 </CardContent>
               </Card>

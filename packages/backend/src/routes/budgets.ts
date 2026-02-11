@@ -65,6 +65,34 @@ router.get('/:projectId/budget', authenticate, async (req: Request, res: Respons
 });
 
 /**
+ * DELETE /api/projects/:projectId/budget
+ * Delete the entire budget for a project (including all budget items)
+ */
+router.delete('/:projectId/budget', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+
+    // Verify project exists and user owns it
+    try {
+      await projectService.getProject(projectId, req.userId!);
+    } catch (error) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    await budgetService.deleteBudget(projectId);
+    res.status(204).send();
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Budget not found') {
+      res.status(404).json({ error: 'Budget not found' });
+      return;
+    }
+    console.error('Error deleting budget:', error);
+    res.status(500).json({ error: 'Failed to delete budget' });
+  }
+});
+
+/**
  * POST /api/budgets/:budgetId/items
  * Add a budget item to a budget
  */

@@ -152,6 +152,29 @@ export class BudgetService {
     return savedItem;
   }
 
+  async deleteBudget(projectId: string): Promise<void> {
+    if (!isValidUUID(projectId)) {
+      throw new Error('Budget not found');
+    }
+
+    const budget = await this.budgetRepository.findOne({
+      where: { projectId },
+      relations: ['items'],
+    });
+
+    if (!budget) {
+      throw new Error('Budget not found');
+    }
+
+    // Remove all budget items first
+    if (budget.items && budget.items.length > 0) {
+      await this.budgetItemRepository.remove(budget.items);
+    }
+
+    // Remove the budget itself
+    await this.budgetRepository.remove(budget);
+  }
+
   async deleteBudgetItem(itemId: string): Promise<void> {
     if (!isValidUUID(itemId)) {
       throw new Error('Budget item not found');
