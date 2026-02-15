@@ -333,14 +333,14 @@ export class BudgetService {
 
     // Table headers
     const tableTop = doc.y;
-    const colWidths = { id: 60, name: 180, quantity: 60, perUnit: 80, price: 80 };
+    const colWidths = { id: 60, name: 180, quantity: 60, unit: 80, price: 80 };
     let currentY = tableTop;
 
     doc.fontSize(10).font('Helvetica-Bold');
     doc.text('ID', 50, currentY, { width: colWidths.id });
     doc.text('Name', 110, currentY, { width: colWidths.name });
-    doc.text('Quantity', 290, currentY, { width: colWidths.quantity });
-    doc.text('Per Unit', 350, currentY, { width: colWidths.perUnit });
+    doc.text('Amount', 290, currentY, { width: colWidths.quantity });
+    doc.text('Unit', 350, currentY, { width: colWidths.unit });
     doc.text('Price', 430, currentY, { width: colWidths.price });
     
     currentY += 20;
@@ -360,14 +360,14 @@ export class BudgetService {
       }
 
       const shortId = task.id.substring(0, 8);
-      const quantity = task.perUnit ? '1' : '-';
-      const perUnit = task.perUnit || '-';
+      const amount = task.amount ? String(Number(task.amount)) : '1';
+      const unit = task.unit || '-';
       const price = task.actualPrice ? `$${Number(task.actualPrice).toFixed(2)}` : '$0.00';
 
       doc.text(`${shortId}`, 50, currentY, { width: colWidths.id });
       doc.text(`[Task] ${task.name}`, 110, currentY, { width: colWidths.name });
-      doc.text(quantity, 290, currentY, { width: colWidths.quantity });
-      doc.text(perUnit, 350, currentY, { width: colWidths.perUnit });
+      doc.text(amount, 290, currentY, { width: colWidths.quantity });
+      doc.text(unit, 350, currentY, { width: colWidths.unit });
       doc.text(price, 430, currentY, { width: colWidths.price });
       
       currentY += 20;
@@ -389,7 +389,7 @@ export class BudgetService {
       doc.text(`${shortId}`, 50, currentY, { width: colWidths.id });
       doc.text(`[${item.category}] ${item.name}`, 110, currentY, { width: colWidths.name });
       doc.text('-', 290, currentY, { width: colWidths.quantity });
-      doc.text('-', 350, currentY, { width: colWidths.perUnit });
+      doc.text('-', 350, currentY, { width: colWidths.unit });
       doc.text(price, 430, currentY, { width: colWidths.price });
       
       currentY += 20;

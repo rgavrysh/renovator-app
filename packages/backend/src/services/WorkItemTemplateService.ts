@@ -16,6 +16,7 @@ export interface CreateWorkItemTemplateInput {
   category: WorkItemCategory;
   estimatedDuration?: number;
   defaultPrice?: number;
+  unit?: string;
   isDefault?: boolean;
   ownerId?: string;
 }
@@ -26,6 +27,7 @@ export interface UpdateWorkItemTemplateInput {
   category?: WorkItemCategory;
   estimatedDuration?: number;
   defaultPrice?: number;
+  unit?: string;
 }
 
 export class WorkItemTemplateService {
@@ -42,6 +44,7 @@ export class WorkItemTemplateService {
       category: data.category,
       estimatedDuration: data.estimatedDuration,
       defaultPrice: data.defaultPrice,
+      unit: data.unit,
       isDefault: data.isDefault || false,
       ownerId: data.ownerId,
     });

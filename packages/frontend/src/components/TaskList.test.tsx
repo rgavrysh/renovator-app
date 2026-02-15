@@ -15,7 +15,6 @@ describe('TaskList', () => {
       priority: TaskPriority.HIGH,
       dueDate: '2024-01-15',
       completedDate: '2024-01-14',
-      estimatedPrice: 500,
       actualPrice: 450,
       notes: [],
       createdAt: '2024-01-01',
@@ -30,7 +29,6 @@ describe('TaskList', () => {
       status: TaskStatus.IN_PROGRESS,
       priority: TaskPriority.URGENT,
       dueDate: '2024-02-01',
-      estimatedPrice: 2000,
       notes: [],
       createdAt: '2024-01-01',
       updatedAt: '2024-01-20',
@@ -120,12 +118,10 @@ describe('TaskList', () => {
     expect(screen.getByText(/Completed: Jan 14, 2024/)).toBeInTheDocument();
   });
 
-  it('should display estimated and actual prices when present', () => {
+  it('should display actual prices when present', () => {
     render(<TaskList tasks={mockTasks} />);
     
-    expect(screen.getByText('Est: $500.00')).toBeInTheDocument();
     expect(screen.getByText('Actual: $450.00')).toBeInTheDocument();
-    expect(screen.getByText('Est: $2000.00')).toBeInTheDocument();
   });
 
   it('should highlight overdue tasks', () => {

@@ -93,7 +93,6 @@ describe('Task Routes', () => {
         description: 'Paint the living room walls',
         priority: TaskPriority.HIGH,
         dueDate: new Date('2024-06-01'),
-        estimatedPrice: 1000,
         actualPrice: 950,
       };
 
@@ -108,7 +107,6 @@ describe('Task Routes', () => {
       expect(task.description).toBe(taskData.description);
       expect(task.priority).toBe(taskData.priority);
       expect(task.status).toBe(TaskStatus.TODO);
-      expect(task.estimatedPrice).toBe(taskData.estimatedPrice);
       expect(task.actualPrice).toBe(taskData.actualPrice);
       expect(task.projectId).toBe(testProject.id);
 
@@ -126,7 +124,6 @@ describe('Task Routes', () => {
       expect(task.name).toBe('Minimal task');
       expect(task.status).toBe(TaskStatus.TODO);
       expect(task.priority).toBe(TaskPriority.MEDIUM);
-      expect(task.estimatedPrice).toBeNull();
       expect(task.actualPrice).toBeNull();
 
       // Cleanup
@@ -153,7 +150,7 @@ describe('Task Routes', () => {
       expect(tasks).toHaveLength(1);
       expect(tasks[0].name).toBe(testTemplate.name);
       expect(tasks[0].description).toBe(testTemplate.description);
-      expect(Number(tasks[0].estimatedPrice)).toBe(testTemplate.defaultPrice);
+      expect(Number(tasks[0].actualPrice)).toBe(testTemplate.defaultPrice);
       expect(tasks[0].status).toBe(TaskStatus.TODO);
 
       // Cleanup
@@ -309,11 +306,10 @@ describe('Task Routes', () => {
 
     it('should update pricing fields', async () => {
       const updatedTask = await taskService.updateTask(task.id, {
-        estimatedPrice: 1500,
-        actualPrice: 1400,
+        price: 1400,
+        amount: 1,
       });
 
-      expect(updatedTask.estimatedPrice).toBe(1500);
       expect(updatedTask.actualPrice).toBe(1400);
     });
 
@@ -471,15 +467,15 @@ describe('Task Routes', () => {
       const task1 = await taskService.createTask({
         projectId: costTestProject.id,
         name: 'Task 1',
-        estimatedPrice: 1000,
-        actualPrice: 950,
+        price: 950,
+        amount: 1,
       });
 
       const task2 = await taskService.createTask({
         projectId: costTestProject.id,
         name: 'Task 2',
-        estimatedPrice: 500,
-        actualPrice: 600,
+        price: 600,
+        amount: 1,
       });
 
       const task3 = await taskService.createTask({
@@ -490,7 +486,6 @@ describe('Task Routes', () => {
 
       const costs = await taskService.calculateTotalTaskCosts(costTestProject.id);
 
-      expect(costs.estimated).toBe(1500);
       expect(costs.actual).toBe(1550);
 
       // Cleanup
@@ -511,7 +506,6 @@ describe('Task Routes', () => {
 
       const costs = await taskService.calculateTotalTaskCosts(emptyProject.id);
 
-      expect(costs.estimated).toBe(0);
       expect(costs.actual).toBe(0);
 
       // Cleanup

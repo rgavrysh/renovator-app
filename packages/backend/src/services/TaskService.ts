@@ -11,6 +11,18 @@ function isValidUUID(id: string): boolean {
   return UUID_REGEX.test(id);
 }
 
+/**
+ * Compute actualPrice = price × amount.
+ * Returns undefined if price is not set.
+ */
+function computeActualPrice(price?: number | null, amount?: number | null): number | undefined {
+  if (price === undefined || price === null) {
+    return undefined;
+  }
+  const amt = (amount !== undefined && amount !== null) ? Number(amount) : 1;
+  return Number(price) * amt;
+}
+
 export interface CreateTaskInput {
   projectId: string;
   milestoneId?: string;
@@ -19,8 +31,9 @@ export interface CreateTaskInput {
   status?: TaskStatus;
   priority?: TaskPriority;
   dueDate?: Date;
-  estimatedPrice?: number;
-  actualPrice?: number;
+  price?: number;
+  amount?: number;
+  unit?: string;
   assignedTo?: string;
 }
 
@@ -31,8 +44,9 @@ export interface UpdateTaskInput {
   priority?: TaskPriority;
   dueDate?: Date;
   completedDate?: Date;
-  estimatedPrice?: number;
-  actualPrice?: number;
+  price?: number | null;
+  amount?: number;
+  unit?: string | null;
   assignedTo?: string;
   milestoneId?: string;
 }
@@ -47,7 +61,6 @@ export interface TaskFilters {
 }
 
 export interface TaskCosts {
-  estimated: number;
   actual: number;
 }
 
@@ -73,6 +86,9 @@ export class TaskService {
       throw new Error('Invalid user ID');
     }
 
+    const amount = data.amount !== undefined ? data.amount : 1;
+    const actualPrice = computeActualPrice(data.price, amount);
+
     const task = this.taskRepository.create({
       projectId: data.projectId,
       milestoneId: data.milestoneId,
@@ -81,8 +97,10 @@ export class TaskService {
       status: data.status || TaskStatus.TODO,
       priority: data.priority || TaskPriority.MEDIUM,
       dueDate: data.dueDate,
-      estimatedPrice: data.estimatedPrice,
-      actualPrice: data.actualPrice,
+      price: data.price,
+      amount,
+      actualPrice,
+      unit: data.unit,
       assignedTo: data.assignedTo,
       notes: [],
     });
@@ -123,6 +141,9 @@ export class TaskService {
     }
 
     Object.assign(task, data);
+
+    // Recompute actual price whenever price or amount might have changed
+    task.actualPrice = computeActualPrice(task.price, task.amount);
 
     return await this.taskRepository.save(task);
   }
@@ -219,15 +240,11 @@ export class TaskService {
       where: { projectId },
     });
 
-    const estimated = tasks.reduce((sum, task) => {
-      return sum + (task.estimatedPrice ? Number(task.estimatedPrice) : 0);
-    }, 0);
-
     const actual = tasks.reduce((sum, task) => {
       return sum + (task.actualPrice ? Number(task.actualPrice) : 0);
     }, 0);
 
-    return { estimated, actual };
+    return { actual };
   }
 
   async bulkCreateTasksFromTemplates(
@@ -256,13 +273,20 @@ export class TaskService {
 
     // Create tasks from templates
     const tasks = templates.map((template) => {
+      const price = template.defaultPrice;
+      const amount = 1;
+      const actualPrice = computeActualPrice(price, amount);
+
       return this.taskRepository.create({
         projectId,
         name: template.name,
         description: template.description,
         status: TaskStatus.TODO,
         priority: TaskPriority.MEDIUM,
-        estimatedPrice: template.defaultPrice,
+        price,
+        amount,
+        actualPrice,
+        unit: template.unit,
         notes: [],
       });
     });

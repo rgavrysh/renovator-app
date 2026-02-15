@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, ModalFooter } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -24,6 +25,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
   onStatusChange,
   onTaskDelete,
 }) => {
+  const { t, i18n } = useTranslation();
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [noteError, setNoteError] = useState<string | null>(null);
@@ -31,7 +33,8 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -40,7 +43,8 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
+    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
+    return date.toLocaleString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -50,33 +54,11 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
   };
 
   const getTaskStatusLabel = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.TODO:
-        return 'To Do';
-      case TaskStatus.IN_PROGRESS:
-        return 'In Progress';
-      case TaskStatus.COMPLETED:
-        return 'Completed';
-      case TaskStatus.BLOCKED:
-        return 'Blocked';
-      default:
-        return status;
-    }
+    return t(`taskStatus.${status}`);
   };
 
   const getTaskPriorityLabel = (priority: TaskPriority) => {
-    switch (priority) {
-      case TaskPriority.LOW:
-        return 'Low';
-      case TaskPriority.MEDIUM:
-        return 'Medium';
-      case TaskPriority.HIGH:
-        return 'High';
-      case TaskPriority.URGENT:
-        return 'Urgent';
-      default:
-        return priority;
-    }
+    return t(`taskPriority.${priority}`);
   };
 
   const getTaskStatusBadgeVariant = (status: TaskStatus) => {
@@ -143,7 +125,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
     }
 
     // Show confirmation dialog
-    if (!window.confirm(`Are you sure you want to delete "${task.name}"? This action cannot be undone.`)) {
+    if (!window.confirm(t('taskDetail.deleteConfirm', { name: task.name }))) {
       return;
     }
 
@@ -183,7 +165,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <label className="block text-xs font-medium text-gray-700 mb-1">
-              Status
+              {t('common.status')}
             </label>
             {onStatusChange ? (
               <select
@@ -191,10 +173,10 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
                 onChange={(e) => onStatusChange(task, e.target.value as TaskStatus)}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-linear bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
-                <option value={TaskStatus.TODO}>To Do</option>
-                <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
-                <option value={TaskStatus.COMPLETED}>Completed</option>
-                <option value={TaskStatus.BLOCKED}>Blocked</option>
+                <option value={TaskStatus.TODO}>{t('taskStatus.todo')}</option>
+                <option value={TaskStatus.IN_PROGRESS}>{t('taskStatus.in_progress')}</option>
+                <option value={TaskStatus.COMPLETED}>{t('taskStatus.completed')}</option>
+                <option value={TaskStatus.BLOCKED}>{t('taskStatus.blocked')}</option>
               </select>
             ) : (
               <Badge variant={getTaskStatusBadgeVariant(task.status)}>
@@ -204,7 +186,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
           </div>
           <div className="flex-1">
             <label className="block text-xs font-medium text-gray-700 mb-1">
-              Priority
+              {t('common.priority')}
             </label>
             <Badge variant={getTaskPriorityBadgeVariant(task.priority)}>
               {getTaskPriorityLabel(task.priority)}
@@ -215,7 +197,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
         {/* Task Description */}
         {task.description && (
           <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-2">Description</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">{t('common.description')}</h3>
             <p className="text-sm text-gray-600">{task.description}</p>
           </div>
         )}
@@ -224,7 +206,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
         <div className="grid grid-cols-2 gap-4">
           {task.dueDate && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Due Date</p>
+              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.dueDate')}</p>
               <p className="text-sm font-medium text-gray-900">
                 {formatDate(task.dueDate)}
               </p>
@@ -232,27 +214,34 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
           )}
           {task.completedDate && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Completed Date</p>
+              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.completedDate')}</p>
               <p className="text-sm font-medium text-gray-900">
                 {formatDate(task.completedDate)}
               </p>
             </div>
           )}
-          {task.estimatedPrice !== undefined && task.estimatedPrice !== null && (
+          {task.price !== undefined && task.price !== null && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Estimated Price</p>
+              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.price')}</p>
               <p className="text-sm font-medium text-gray-900">
-                ${Number(task.estimatedPrice).toFixed(2)}
-                {task.perUnit && <span className="text-gray-500"> / {task.perUnit}</span>}
+                ${Number(task.price).toFixed(2)}
+                {task.unit && <span className="text-gray-500"> / {task.unit}</span>}
+              </p>
+            </div>
+          )}
+          {task.amount !== undefined && task.amount !== null && task.amount !== 1 && (
+            <div>
+              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.amount')}</p>
+              <p className="text-sm font-medium text-gray-900">
+                {Number(task.amount).toFixed(2)}
               </p>
             </div>
           )}
           {task.actualPrice !== undefined && task.actualPrice !== null && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">Actual Price</p>
+              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.actualPrice')}</p>
               <p className="text-sm font-medium text-gray-900">
                 ${Number(task.actualPrice).toFixed(2)}
-                {task.perUnit && <span className="text-gray-500"> / {task.perUnit}</span>}
               </p>
             </div>
           )}
@@ -262,14 +251,14 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
 
         {/* Notes Section */}
         <div>
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Notes</h3>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">{t('common.notes')}</h3>
           
           {/* Add Note Form */}
           <div className="mb-4">
             <Textarea
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Add a note..."
+              placeholder={t('taskDetail.addNotePlaceholder')}
               rows={3}
               fullWidth
             />
@@ -284,7 +273,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
                 disabled={!newNote.trim() || isAddingNote}
                 loading={isAddingNote}
               >
-                Add Note
+                {t('taskDetail.addNote')}
               </Button>
             </div>
           </div>
@@ -292,7 +281,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
           {/* Notes History */}
           {task.notes && task.notes.length > 0 ? (
             <div className="space-y-3">
-              <h4 className="text-xs font-medium text-gray-500 uppercase">History</h4>
+              <h4 className="text-xs font-medium text-gray-500 uppercase">{t('taskDetail.history')}</h4>
               <div className="space-y-2">
                 {task.notes.map((note, index) => (
                   <div
@@ -306,7 +295,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-sm text-gray-500">No notes yet</p>
+              <p className="text-sm text-gray-500">{t('taskDetail.noNotes')}</p>
             </div>
           )}
         </div>
@@ -320,10 +309,10 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
             disabled={isDeleting}
             loading={isDeleting}
           >
-            Delete Task
+            {t('taskDetail.deleteTask')}
           </Button>
           <Button variant="secondary" onClick={onClose}>
-            Close
+            {t('common.close')}
           </Button>
         </div>
       </ModalFooter>

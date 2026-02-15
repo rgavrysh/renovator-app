@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageLayout } from '../components/layout/Container';
 import { Header } from '../components/layout/Header';
 import { Container } from '../components/layout/Container';
@@ -23,6 +24,7 @@ import { BudgetOverview } from '../components/BudgetOverview';
 import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
 import { BudgetItemForm } from '../components/BudgetItemForm';
 import { UserDropdown } from '../components/UserDropdown';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth, getAccessToken } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 import config from '../config';
@@ -61,7 +63,9 @@ interface Task {
   priority: TaskPriority;
   dueDate?: string;
   completedDate?: string;
-  estimatedPrice?: number;
+  price?: number;
+  amount?: number;
+  unit?: string;
   actualPrice?: number;
   notes: string[];
   createdAt: string;
@@ -97,6 +101,7 @@ export const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
 
   const [project, setProject] = useState<Project | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -179,7 +184,7 @@ export const ProjectDetail: React.FC = () => {
   };
 
   const handleArchive = async () => {
-    if (!project || !window.confirm('Are you sure you want to archive this project?')) {
+    if (!project || !window.confirm(t('projectDetail.archiveConfirm'))) {
       return;
     }
 
@@ -410,7 +415,7 @@ export const ProjectDetail: React.FC = () => {
   };
 
   const handleDeleteBudgetItem = async (item: BudgetItem) => {
-    if (!window.confirm(`Are you sure you want to delete "${item.name}" from the budget?`)) {
+    if (!window.confirm(t('projectDetail.deleteBudgetItemConfirm', { name: item.name }))) {
       return;
     }
 
@@ -427,7 +432,7 @@ export const ProjectDetail: React.FC = () => {
   const handleDeleteBudget = async () => {
     if (!id || !budget) return;
 
-    if (!window.confirm('Are you sure you want to remove the entire budget? All budget items will be deleted. This action cannot be undone.')) {
+    if (!window.confirm(t('projectDetail.removeBudgetConfirm'))) {
       return;
     }
 
@@ -483,7 +488,7 @@ export const ProjectDetail: React.FC = () => {
       window.URL.revokeObjectURL(url);
       
       // Show success message
-      setExportSuccess('Budget exported successfully!');
+      setExportSuccess(t('projectDetail.budgetExportSuccess'));
       
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -515,20 +520,7 @@ export const ProjectDetail: React.FC = () => {
   };
 
   const getStatusLabel = (status: ProjectStatus) => {
-    switch (status) {
-      case ProjectStatus.PLANNING:
-        return 'Planning';
-      case ProjectStatus.ACTIVE:
-        return 'Active';
-      case ProjectStatus.ON_HOLD:
-        return 'On Hold';
-      case ProjectStatus.COMPLETED:
-        return 'Completed';
-      case ProjectStatus.ARCHIVED:
-        return 'Archived';
-      default:
-        return status;
-    }
+    return t(`projectStatus.${status}`);
   };
 
   const getTaskStatusBadgeVariant = (status: TaskStatus) => {
@@ -547,23 +539,13 @@ export const ProjectDetail: React.FC = () => {
   };
 
   const getTaskStatusLabel = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.TODO:
-        return 'To Do';
-      case TaskStatus.IN_PROGRESS:
-        return 'In Progress';
-      case TaskStatus.COMPLETED:
-        return 'Completed';
-      case TaskStatus.BLOCKED:
-        return 'Blocked';
-      default:
-        return status;
-    }
+    return t(`taskStatus.${status}`);
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -602,10 +584,10 @@ export const ProjectDetail: React.FC = () => {
                 <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
                   <span className="text-white font-bold text-lg">R</span>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">Renovator</span>
+                <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
               </div>
             }
-            actions={<UserDropdown />}
+            actions={<><LanguageSwitcher /><UserDropdown /></>}
           />
         }
       >
@@ -628,19 +610,19 @@ export const ProjectDetail: React.FC = () => {
                 <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
                   <span className="text-white font-bold text-lg">R</span>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">Renovator</span>
+                <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
               </div>
             }
-            actions={<UserDropdown />}
+            actions={<><LanguageSwitcher /><UserDropdown /></>}
           />
         }
       >
         <Container>
           <Alert variant="danger" className="mb-6">
-            {error || 'Project not found'}
+            {error || t('projectDetail.projectNotFound')}
           </Alert>
           <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-            Back to Dashboard
+            {t('projectDetail.backToDashboard')}
           </Button>
         </Container>
       </PageLayout>
@@ -659,10 +641,10 @@ export const ProjectDetail: React.FC = () => {
               <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
                 <span className="text-white font-bold text-lg">R</span>
               </div>
-              <span className="text-lg font-semibold text-gray-900">Renovator</span>
+              <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
             </div>
           }
-          actions={<UserDropdown />}
+          actions={<><LanguageSwitcher /><UserDropdown /></>}
         />
       }
     >
@@ -675,7 +657,7 @@ export const ProjectDetail: React.FC = () => {
               size="sm"
               onClick={() => navigate('/dashboard')}
             >
-              ← Back
+              ← {t('common.back')}
             </Button>
           </div>
           
@@ -688,13 +670,13 @@ export const ProjectDetail: React.FC = () => {
                 </Badge>
               </div>
               <p className="text-sm text-gray-600">
-                Client: {project.clientName}
+                {t('projectDetail.client')}: {project.clientName}
               </p>
             </div>
             
             <div className="flex items-center gap-3">
               <Button variant="secondary" onClick={handleEdit}>
-                Edit Project
+                {t('projectDetail.editProject')}
               </Button>
               {project.status !== ProjectStatus.ARCHIVED && (
                 <Button
@@ -703,7 +685,7 @@ export const ProjectDetail: React.FC = () => {
                   loading={isArchiving}
                   disabled={isArchiving}
                 >
-                  Archive
+                  {t('projectDetail.archive')}
                 </Button>
               )}
             </div>
@@ -715,25 +697,25 @@ export const ProjectDetail: React.FC = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Project Information */}
             <Card>
-              <CardHeader title="Project Information" />
+              <CardHeader title={t('projectDetail.projectInformation')} />
               <CardContent>
                 <div className="space-y-4">
                   {project.description && (
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Description</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('common.description')}</p>
                       <p className="text-sm text-gray-900">{project.description}</p>
                     </div>
                   )}
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Start Date</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.startDate')}</p>
                       <p className="text-sm font-medium text-gray-900">
                         {formatDate(project.startDate)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Estimated End Date</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.estimatedEndDate')}</p>
                       <p className="text-sm font-medium text-gray-900">
                         {formatDate(project.estimatedEndDate)}
                       </p>
@@ -742,7 +724,7 @@ export const ProjectDetail: React.FC = () => {
 
                   {project.actualEndDate && (
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Actual End Date</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.actualEndDate')}</p>
                       <p className="text-sm font-medium text-gray-900">
                         {formatDate(project.actualEndDate)}
                       </p>
@@ -754,13 +736,13 @@ export const ProjectDetail: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     {project.clientEmail && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Client Email</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('projectDetail.clientEmail')}</p>
                         <p className="text-sm text-gray-900">{project.clientEmail}</p>
                       </div>
                     )}
                     {project.clientPhone && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Client Phone</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('projectDetail.clientPhone')}</p>
                         <p className="text-sm text-gray-900">{project.clientPhone}</p>
                       </div>
                     )}
@@ -772,7 +754,7 @@ export const ProjectDetail: React.FC = () => {
             {/* Timeline and Milestones */}
             <Card>
               <CardHeader
-                title="Timeline & Milestones"
+                title={t('projectDetail.timelineMilestones')}
                 action={
                   <div className="flex items-center gap-3">
                     <Button
@@ -780,10 +762,10 @@ export const ProjectDetail: React.FC = () => {
                       size="sm"
                       onClick={handleCreateMilestone}
                     >
-                      Add Milestone
+                      {t('projectDetail.addMilestone')}
                     </Button>
                     <div className="text-sm text-gray-600">
-                      Progress: {progress}%
+                      {t('projectDetail.progress')}: {progress}%
                     </div>
                   </div>
                 }
@@ -801,7 +783,7 @@ export const ProjectDetail: React.FC = () => {
             {/* Tasks */}
             <Card id="tasks-section">
               <CardHeader 
-                title="Tasks"
+                title={t('projectDetail.tasks')}
                 action={
                   <div className="flex items-center gap-2">
                     <Button
@@ -809,14 +791,14 @@ export const ProjectDetail: React.FC = () => {
                       size="sm"
                       onClick={handleAddFromLibrary}
                     >
-                      Add from Library
+                      {t('projectDetail.addFromLibrary')}
                     </Button>
                     <Button
                       variant="primary"
                       size="sm"
                       onClick={handleCreateTask}
                     >
-                      Add Task
+                      {t('projectDetail.addTask')}
                     </Button>
                   </div>
                 }
@@ -834,14 +816,14 @@ export const ProjectDetail: React.FC = () => {
             {/* Documents */}
             <Card>
               <CardHeader 
-                title="Documents"
+                title={t('projectDetail.documents')}
                 action={
                   <Button
                     variant="primary"
                     size="sm"
                     onClick={handleDocumentUploadOpen}
                   >
-                    Upload Document
+                    {t('projectDetail.uploadDocument')}
                   </Button>
                 }
               />
@@ -857,14 +839,14 @@ export const ProjectDetail: React.FC = () => {
             {/* Photos */}
             <Card>
               <CardHeader 
-                title="Photos"
+                title={t('projectDetail.photos')}
                 action={
                   <Button
                     variant="primary"
                     size="sm"
                     onClick={handlePhotoUploadOpen}
                   >
-                    Upload Photos
+                    {t('projectDetail.uploadPhotos')}
                   </Button>
                 }
               />
@@ -883,7 +865,7 @@ export const ProjectDetail: React.FC = () => {
             {/* Budget Summary */}
             <Card>
               <CardHeader 
-                title="Budget Summary"
+                title={t('projectDetail.budgetSummary')}
                 action={
                   budget ? (
                     <div className="flex items-center gap-2">
@@ -894,14 +876,14 @@ export const ProjectDetail: React.FC = () => {
                         loading={isExportingBudget}
                         disabled={isExportingBudget}
                       >
-                        Export to PDF
+                        {t('projectDetail.exportToPdf')}
                       </Button>
                       <Button
                         variant="primary"
                         size="sm"
                         onClick={handleAddBudgetItem}
                       >
-                        Add Item
+                        {t('projectDetail.addItem')}
                       </Button>
                     </div>
                   ) : null
@@ -917,7 +899,7 @@ export const ProjectDetail: React.FC = () => {
                 
                 {!budget ? (
                   <div className="text-center py-8">
-                    <p className="text-sm text-gray-500 mb-4">No budget set</p>
+                    <p className="text-sm text-gray-500 mb-4">{t('projectDetail.noBudgetSet')}</p>
                     <Button
                       variant="primary"
                       size="sm"
@@ -925,20 +907,20 @@ export const ProjectDetail: React.FC = () => {
                       loading={isCreatingBudget}
                       disabled={isCreatingBudget}
                     >
-                      Create Budget
+                      {t('projectDetail.createBudget')}
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Total Estimated</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.totalEstimated')}</p>
                       <p className="text-xl font-bold text-gray-900">
                         {formatCurrency(budget.totalEstimated)}
                       </p>
                     </div>
                     
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Total Actual</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.totalActual')}</p>
                       <p className="text-xl font-bold text-gray-900">
                         {formatCurrency(budget.totalActual)}
                       </p>
@@ -946,19 +928,19 @@ export const ProjectDetail: React.FC = () => {
                       {/* Breakdown of actual costs */}
                       <div className="mt-2 space-y-1">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500">From Budget Items:</span>
+                          <span className="text-gray-500">{t('projectDetail.fromBudgetItems')}</span>
                           <span className="font-medium text-gray-700">
                             {formatCurrency(budget.totalActualFromItems || 0)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-1">
-                            <span className="text-gray-500">From Tasks:</span>
+                            <span className="text-gray-500">{t('projectDetail.fromTasks')}</span>
                             <button
                               onClick={handleRecalculateTasksCosts}
                               disabled={isRecalculatingTasks}
                               className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                              title="Recalculate tasks costs"
+                              title={t('projectDetail.recalculateTasksCosts')}
                             >
                               <svg
                                 className={`w-3.5 h-3.5 ${isRecalculatingTasks ? 'animate-spin' : ''}`}
@@ -984,7 +966,7 @@ export const ProjectDetail: React.FC = () => {
                                 onClick={handleScrollToTasks}
                                 className="text-primary-600 hover:text-primary-700 underline text-xs"
                               >
-                                View
+                                {t('common.view')}
                               </button>
                             )}
                           </div>
@@ -995,7 +977,7 @@ export const ProjectDetail: React.FC = () => {
                     <Divider />
 
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Variance</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.variance')}</p>
                       <p
                         className={`text-lg font-bold ${
                           budget.totalActual > budget.totalEstimated
@@ -1009,7 +991,7 @@ export const ProjectDetail: React.FC = () => {
 
                     {budget.totalEstimated > 0 && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Spent</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('projectDetail.spent')}</p>
                         <p className="text-lg font-bold text-gray-900">
                           {Math.round((budget.totalActual / budget.totalEstimated) * 100)}%
                         </p>
@@ -1024,7 +1006,7 @@ export const ProjectDetail: React.FC = () => {
                         size="sm"
                         onClick={handleDeleteBudget}
                       >
-                        Remove Budget
+                        {t('projectDetail.removeBudget')}
                       </Button>
                     </div>
                   </div>
@@ -1035,7 +1017,7 @@ export const ProjectDetail: React.FC = () => {
             {/* Budget Items */}
             {budget && budgetItems.length > 0 && (
               <Card>
-                <CardHeader title="Budget Items" />
+                <CardHeader title={t('projectDetail.budgetItems')} />
                 <CardContent>
                   <BudgetItemsList 
                     items={budgetItems}
@@ -1049,23 +1031,23 @@ export const ProjectDetail: React.FC = () => {
 
             {/* Quick Stats */}
             <Card>
-              <CardHeader title="Quick Stats" />
+              <CardHeader title={t('projectDetail.quickStats')} />
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Milestones</span>
+                    <span className="text-sm text-gray-600">{t('projectDetail.milestones')}</span>
                     <span className="text-sm font-medium text-gray-900">
                       {milestones.length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Tasks</span>
+                    <span className="text-sm text-gray-600">{t('projectDetail.tasks')}</span>
                     <span className="text-sm font-medium text-gray-900">
                       {tasks.length}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Progress</span>
+                    <span className="text-sm text-gray-600">{t('projectDetail.progress')}</span>
                     <span className="text-sm font-medium text-gray-900">
                       {progress}%
                     </span>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { Select } from './ui/Select';
@@ -14,9 +15,9 @@ export interface TaskFormData {
   priority: TaskPriority;
   milestoneId: string;
   dueDate: string;
-  estimatedPrice: string;
-  actualPrice: string;
-  perUnit: string;
+  price: string;
+  amount: string;
+  unit: string;
 }
 
 interface Milestone {
@@ -38,9 +39,9 @@ interface TaskFormProps {
     priority: TaskPriority;
     milestoneId?: string;
     dueDate?: string;
-    estimatedPrice?: number;
-    actualPrice?: number;
-    perUnit?: string;
+    price?: number;
+    amount?: number;
+    unit?: string;
   };
 }
 
@@ -51,6 +52,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   projectId,
   task,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<TaskFormData>({
     name: '',
     description: '',
@@ -58,9 +60,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     priority: TaskPriority.MEDIUM,
     milestoneId: '',
     dueDate: '',
-    estimatedPrice: '',
-    actualPrice: '',
-    perUnit: '',
+    price: '',
+    amount: '1',
+    unit: '',
   });
 
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -70,6 +72,19 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   const [isLoadingMilestones, setIsLoadingMilestones] = useState(false);
 
   const isEditMode = !!task;
+
+  // Compute actual price for display
+  const computedActualPrice = (() => {
+    const price = parseFloat(formData.price);
+    const amount = parseFloat(formData.amount);
+    if (!isNaN(price) && !isNaN(amount)) {
+      return (price * amount).toFixed(2);
+    }
+    if (!isNaN(price)) {
+      return price.toFixed(2);
+    }
+    return null;
+  })();
 
   // Load milestones when modal opens
   useEffect(() => {
@@ -88,9 +103,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: task.priority,
         milestoneId: task.milestoneId || '',
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
-        estimatedPrice: task.estimatedPrice != null ? task.estimatedPrice.toString() : '',
-        actualPrice: task.actualPrice != null ? task.actualPrice.toString() : '',
-        perUnit: task.perUnit || '',
+        price: task.price != null ? task.price.toString() : '',
+        amount: task.amount != null ? task.amount.toString() : '1',
+        unit: task.unit || '',
       });
     } else {
       setFormData({
@@ -100,9 +115,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: TaskPriority.MEDIUM,
         milestoneId: '',
         dueDate: '',
-        estimatedPrice: '',
-        actualPrice: '',
-        perUnit: '',
+        price: '',
+        amount: '1',
+        unit: '',
       });
     }
     setErrors({});
@@ -142,25 +157,25 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     const newErrors: Partial<Record<keyof TaskFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Task name is required';
+      newErrors.name = t('taskForm.validation.nameRequired');
     }
 
-    // Validate estimated price if provided
-    if (formData.estimatedPrice && isNaN(parseFloat(formData.estimatedPrice))) {
-      newErrors.estimatedPrice = 'Estimated price must be a valid number';
+    // Validate price if provided
+    if (formData.price && isNaN(parseFloat(formData.price))) {
+      newErrors.price = t('taskForm.validation.priceInvalid');
     }
 
-    if (formData.estimatedPrice && parseFloat(formData.estimatedPrice) < 0) {
-      newErrors.estimatedPrice = 'Estimated price cannot be negative';
+    if (formData.price && parseFloat(formData.price) < 0) {
+      newErrors.price = t('taskForm.validation.priceNegative');
     }
 
-    // Validate actual price if provided
-    if (formData.actualPrice && isNaN(parseFloat(formData.actualPrice))) {
-      newErrors.actualPrice = 'Actual price must be a valid number';
+    // Validate amount if provided
+    if (formData.amount && isNaN(parseFloat(formData.amount))) {
+      newErrors.amount = t('taskForm.validation.amountInvalid');
     }
 
-    if (formData.actualPrice && parseFloat(formData.actualPrice) < 0) {
-      newErrors.actualPrice = 'Actual price cannot be negative';
+    if (formData.amount && parseFloat(formData.amount) < 0) {
+      newErrors.amount = t('taskForm.validation.amountNegative');
     }
 
     // Validate due date if provided
@@ -170,7 +185,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       today.setHours(0, 0, 0, 0);
       
       if (dueDate < today && !isEditMode) {
-        newErrors.dueDate = 'Due date cannot be in the past';
+        newErrors.dueDate = t('taskForm.validation.dueDatePast');
       }
     }
 
@@ -197,16 +212,16 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         priority: formData.priority,
         milestoneId: formData.milestoneId || undefined,
         dueDate: formData.dueDate || undefined,
-        perUnit: formData.perUnit.trim() || undefined,
+        unit: formData.unit.trim() || undefined,
       };
 
       // Only include pricing fields if they have values
-      if (formData.estimatedPrice) {
-        payload.estimatedPrice = parseFloat(formData.estimatedPrice);
+      if (formData.price) {
+        payload.price = parseFloat(formData.price);
       }
 
-      if (formData.actualPrice) {
-        payload.actualPrice = parseFloat(formData.actualPrice);
+      if (formData.amount) {
+        payload.amount = parseFloat(formData.amount);
       }
 
       if (isEditMode) {
@@ -232,21 +247,21 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   };
 
   const statusOptions = [
-    { value: TaskStatus.TODO, label: 'To Do' },
-    { value: TaskStatus.IN_PROGRESS, label: 'In Progress' },
-    { value: TaskStatus.COMPLETED, label: 'Completed' },
-    { value: TaskStatus.BLOCKED, label: 'Blocked' },
+    { value: TaskStatus.TODO, label: t('taskStatus.todo') },
+    { value: TaskStatus.IN_PROGRESS, label: t('taskStatus.in_progress') },
+    { value: TaskStatus.COMPLETED, label: t('taskStatus.completed') },
+    { value: TaskStatus.BLOCKED, label: t('taskStatus.blocked') },
   ];
 
   const priorityOptions = [
-    { value: TaskPriority.LOW, label: 'Low' },
-    { value: TaskPriority.MEDIUM, label: 'Medium' },
-    { value: TaskPriority.HIGH, label: 'High' },
-    { value: TaskPriority.URGENT, label: 'Urgent' },
+    { value: TaskPriority.LOW, label: t('taskPriority.low') },
+    { value: TaskPriority.MEDIUM, label: t('taskPriority.medium') },
+    { value: TaskPriority.HIGH, label: t('taskPriority.high') },
+    { value: TaskPriority.URGENT, label: t('taskPriority.urgent') },
   ];
 
   const milestoneOptions = [
-    { value: '', label: 'No Milestone' },
+    { value: '', label: t('taskForm.noMilestone') },
     ...milestones.map((m) => ({
       value: m.id,
       label: m.name,
@@ -257,7 +272,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit Task' : 'Create Task'}
+      title={isEditMode ? t('taskForm.editTitle') : t('taskForm.createTitle')}
       size="md"
     >
       <form onSubmit={handleSubmit} noValidate>
@@ -269,31 +284,31 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           )}
 
           <Input
-            label="Task Name"
+            label={t('taskForm.taskName')}
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={errors.name}
-            placeholder="e.g., Install kitchen cabinets"
+            placeholder={t('taskForm.taskNamePlaceholder')}
             fullWidth
             required
             autoFocus
           />
 
           <Textarea
-            label="Description"
+            label={t('common.description')}
             name="description"
             value={formData.description}
             onChange={handleChange}
             error={errors.description}
-            placeholder="Add details about this task..."
+            placeholder={t('taskForm.descriptionPlaceholder')}
             rows={3}
             fullWidth
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Select
-              label="Status"
+              label={t('common.status')}
               name="status"
               value={formData.status}
               onChange={handleChange}
@@ -303,7 +318,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             />
 
             <Select
-              label="Priority"
+              label={t('common.priority')}
               name="priority"
               value={formData.priority}
               onChange={handleChange}
@@ -314,7 +329,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           </div>
 
           <Select
-            label="Milestone"
+            label={t('taskForm.milestone')}
             name="milestoneId"
             value={formData.milestoneId}
             onChange={handleChange}
@@ -324,7 +339,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           />
 
           <Input
-            label="Due Date"
+            label={t('taskForm.dueDate')}
             name="dueDate"
             type="date"
             value={formData.dueDate}
@@ -333,43 +348,55 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             fullWidth
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <Input
-              label="Estimated Price"
-              name="estimatedPrice"
+              label={t('taskForm.price')}
+              name="price"
               type="number"
               step="0.01"
               min="0"
-              value={formData.estimatedPrice}
+              value={formData.price}
               onChange={handleChange}
-              error={errors.estimatedPrice}
+              error={errors.price}
               placeholder="0.00"
               fullWidth
             />
 
             <Input
-              label="Actual Price"
-              name="actualPrice"
+              label={t('taskForm.amount')}
+              name="amount"
               type="number"
               step="0.01"
               min="0"
-              value={formData.actualPrice}
+              value={formData.amount}
               onChange={handleChange}
-              error={errors.actualPrice}
-              placeholder="0.00"
+              error={errors.amount}
+              placeholder="1"
+              fullWidth
+            />
+
+            <Input
+              label={t('taskForm.unit')}
+              name="unit"
+              value={formData.unit}
+              onChange={handleChange}
+              error={errors.unit}
+              placeholder={t('taskForm.unitPlaceholder')}
               fullWidth
             />
           </div>
 
-          <Input
-            label="Per Unit (Optional)"
-            name="perUnit"
-            value={formData.perUnit}
-            onChange={handleChange}
-            error={errors.perUnit}
-            placeholder="e.g., sq ft, linear ft, each"
-            fullWidth
-          />
+          {/* Computed actual price display */}
+          {computedActualPrice && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-linear">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{t('taskForm.actualPrice')}</span>
+                <span className="text-sm font-semibold text-gray-900">
+                  ${computedActualPrice}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <ModalFooter>
@@ -379,7 +406,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -387,7 +414,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
             loading={isSubmitting}
             disabled={isSubmitting}
           >
-            {isEditMode ? 'Update Task' : 'Create Task'}
+            {isEditMode ? t('taskForm.updateButton') : t('taskForm.createButton')}
           </Button>
         </ModalFooter>
       </form>

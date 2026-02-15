@@ -4,6 +4,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { Modal, ModalFooter } from './ui/Modal';
 import { apiClient } from '../utils/api';
+import { useTranslation } from 'react-i18next';
 
 export interface MilestoneFormData {
   name: string;
@@ -33,6 +34,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
   existingMilestonesCount = 0,
   milestone,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<MilestoneFormData>({
     name: '',
     description: '',
@@ -85,18 +87,18 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
     const newErrors: Partial<Record<keyof MilestoneFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Milestone name is required';
+      newErrors.name = t('milestoneForm.validation.nameRequired');
     }
 
     if (!formData.targetDate) {
-      newErrors.targetDate = 'Target date is required';
+      newErrors.targetDate = t('milestoneForm.validation.targetDateRequired');
     } else {
       const targetDate = new Date(formData.targetDate);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
       if (targetDate < today && !isEditMode) {
-        newErrors.targetDate = 'Target date cannot be in the past';
+        newErrors.targetDate = t('milestoneForm.validation.targetDatePast');
       }
     }
 
@@ -134,7 +136,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
       onClose();
     } catch (error: any) {
       console.error('Error saving milestone:', error);
-      setSubmitError(error.message || 'Failed to save milestone. Please try again.');
+      setSubmitError(error.message || t('common.retry'));
     } finally {
       setIsSubmitting(false);
     }
@@ -148,7 +150,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit Milestone' : 'Create Milestone'}
+      title={isEditMode ? t('milestoneForm.editTitle') : t('milestoneForm.createTitle')}
       size="md"
     >
       <form onSubmit={handleSubmit}>
@@ -160,30 +162,30 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
           )}
 
           <Input
-            label="Milestone Name"
+            label={t('milestoneForm.milestoneName')}
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={errors.name}
-            placeholder="e.g., Foundation Complete"
+            placeholder={t('milestoneForm.milestoneNamePlaceholder')}
             fullWidth
             required
             autoFocus
           />
 
           <Textarea
-            label="Description"
+            label={t('common.description')}
             name="description"
             value={formData.description}
             onChange={handleChange}
             error={errors.description}
-            placeholder="Add details about this milestone..."
+            placeholder={t('milestoneForm.descriptionPlaceholder')}
             rows={3}
             fullWidth
           />
 
           <Input
-            label="Target Date"
+            label={t('milestoneForm.targetDate')}
             name="targetDate"
             type="date"
             value={formData.targetDate}
@@ -201,7 +203,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -209,7 +211,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
             loading={isSubmitting}
             disabled={isSubmitting}
           >
-            {isEditMode ? 'Update Milestone' : 'Create Milestone'}
+            {isEditMode ? t('milestoneForm.updateButton') : t('milestoneForm.createButton')}
           </Button>
         </ModalFooter>
       </form>

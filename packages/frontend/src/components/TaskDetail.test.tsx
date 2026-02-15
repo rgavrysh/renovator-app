@@ -17,7 +17,6 @@ describe('TaskDetail', () => {
     status: TaskStatus.IN_PROGRESS,
     priority: TaskPriority.HIGH,
     dueDate: '2024-02-15',
-    estimatedPrice: 1500,
     actualPrice: 1450,
     notes: ['First note', 'Second note'],
     createdAt: '2024-01-01T00:00:00Z',
@@ -57,7 +56,6 @@ describe('TaskDetail', () => {
       />
     );
 
-    expect(screen.getByText('$1500.00')).toBeInTheDocument();
     expect(screen.getByText('$1450.00')).toBeInTheDocument();
   });
 
@@ -227,7 +225,6 @@ describe('TaskDetail', () => {
   it('should not display pricing when not present', () => {
     const taskWithoutPricing = {
       ...mockTask,
-      estimatedPrice: undefined,
       actualPrice: undefined,
     };
 
@@ -240,7 +237,6 @@ describe('TaskDetail', () => {
       />
     );
 
-    expect(screen.queryByText('Estimated Price')).not.toBeInTheDocument();
     expect(screen.queryByText('Actual Price')).not.toBeInTheDocument();
   });
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
+import { useTranslation } from 'react-i18next';
 
 export enum BudgetCategory {
   LABOR = 'labor',
@@ -40,8 +41,10 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
   onEditItem,
   onDeleteItem,
 }) => {
+  const { t, i18n } = useTranslation();
+
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
@@ -54,16 +57,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
   };
 
   const getCategoryLabel = (category: BudgetCategory): string => {
-    const labels: Record<BudgetCategory, string> = {
-      [BudgetCategory.LABOR]: 'Labor',
-      [BudgetCategory.MATERIALS]: 'Materials',
-      [BudgetCategory.EQUIPMENT]: 'Equipment',
-      [BudgetCategory.SUBCONTRACTORS]: 'Subcontractors',
-      [BudgetCategory.PERMITS]: 'Permits',
-      [BudgetCategory.CONTINGENCY]: 'Contingency',
-      [BudgetCategory.OTHER]: 'Other',
-    };
-    return labels[category];
+    return t(`budgetCategory.${category}`);
   };
 
   const getCategoryColor = (category: BudgetCategory): string => {
@@ -92,8 +86,8 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
     if (items.length === 0) {
       return (
         <EmptyState
-          title="No budget items"
-          description="Add budget items to track estimated and actual costs"
+          title={t('budgetItemsList.noBudgetItems')}
+          description={t('budgetItemsList.addBudgetItems')}
         />
       );
     }
@@ -104,11 +98,11 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
           <div key={category}>
             {/* Category Header */}
             <div className="flex items-center gap-2 mb-3">
-              <Badge variant={getCategoryColor(category) as any}>
+              <Badge variant={getCategoryColor(category as BudgetCategory) as any}>
                 {getCategoryLabel(category as BudgetCategory)}
               </Badge>
               <span className="text-xs text-gray-500">
-                {categoryItems.length} {categoryItems.length === 1 ? 'item' : 'items'}
+                {categoryItems.length} {categoryItems.length === 1 ? t('common.item') : t('common.items')}
               </span>
             </div>
 
@@ -141,7 +135,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
                             <button
                               onClick={() => onEditItem(item)}
                               className="p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                              title="Edit item"
+                              title={t('common.edit')}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -152,7 +146,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
                             <button
                               onClick={() => onDeleteItem(item)}
                               className="p-1 text-gray-400 hover:text-red-600 rounded transition-colors"
-                              title="Delete item"
+                              title={t('common.delete')}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -167,7 +161,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
                     <div className="grid grid-cols-3 gap-4 mt-3">
                       {/* Estimated Cost */}
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Estimated</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('budgetItemsList.estimated')}</p>
                         <p className="text-sm font-medium text-gray-900">
                           {formatCurrency(item.estimatedCost)}
                         </p>
@@ -175,7 +169,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
 
                       {/* Actual Cost */}
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Actual</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('budgetItemsList.actual')}</p>
                         <p className="text-sm font-medium text-gray-900">
                           {formatCurrency(item.actualCost)}
                         </p>
@@ -183,7 +177,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
 
                       {/* Variance */}
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Variance</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('budgetItemsList.variance')}</p>
                         <div className="flex flex-col">
                           <p
                             className={`text-sm font-medium ${
@@ -225,7 +219,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
   if (showCard) {
     return (
       <Card className={className}>
-        <CardHeader title="Budget Items" />
+        <CardHeader title={t('budgetItemsList.title')} />
         <CardContent>{renderContent()}</CardContent>
       </Card>
     );

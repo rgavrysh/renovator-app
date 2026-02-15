@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, ModalFooter } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Spinner } from './ui/Spinner';
@@ -28,6 +29,7 @@ export interface WorkItemTemplate {
   category: WorkItemCategory;
   estimatedDuration?: number;
   defaultPrice?: number;
+  unit?: string;
   isDefault: boolean;
   ownerId?: string;
   createdAt: string;
@@ -46,6 +48,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
   onSuccess,
   projectId,
 }) => {
+  const { t } = useTranslation();
   const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -96,7 +99,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
 
   const handleSubmit = async () => {
     if (selectedItems.size === 0) {
-      setError('Please select at least one work item');
+      setError(t('workItemsModal.selectAtLeastOne'));
       return;
     }
 
@@ -119,21 +122,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
   };
 
   const getCategoryLabel = (category: WorkItemCategory): string => {
-    const labels: Record<WorkItemCategory, string> = {
-      [WorkItemCategory.DEMOLITION]: 'Demolition',
-      [WorkItemCategory.FRAMING]: 'Framing',
-      [WorkItemCategory.ELECTRICAL]: 'Electrical',
-      [WorkItemCategory.PLUMBING]: 'Plumbing',
-      [WorkItemCategory.HVAC]: 'HVAC',
-      [WorkItemCategory.DRYWALL]: 'Drywall',
-      [WorkItemCategory.PAINTING]: 'Painting',
-      [WorkItemCategory.FLOORING]: 'Flooring',
-      [WorkItemCategory.FINISHING]: 'Finishing',
-      [WorkItemCategory.CLEANUP]: 'Cleanup',
-      [WorkItemCategory.INSPECTION]: 'Inspection',
-      [WorkItemCategory.OTHER]: 'Other',
-    };
-    return labels[category];
+    return t(`workItemCategory.${category}`);
   };
 
   const formatCurrency = (amount: number): string => {
@@ -172,7 +161,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
   }, [workItems]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Work Items Library" size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('workItemsModal.title')} size="xl">
       <div className="space-y-4">
         {error && (
           <Alert variant="danger" onClose={() => setError(null)}>
@@ -188,7 +177,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
           <>
             {/* Category Filter */}
             <div className="flex items-center gap-2 pb-4 border-b border-gray-200">
-              <span className="text-sm font-medium text-gray-700">Category:</span>
+              <span className="text-sm font-medium text-gray-700">{t('common.category')}:</span>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedCategory('all')}
@@ -198,7 +187,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  All ({workItems.length})
+                  {t('common.all')} ({workItems.length})
                 </button>
                 {availableCategories.map(category => {
                   const count = workItemsByCategory[category]?.length || 0;
@@ -222,7 +211,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
             {/* Selection Controls */}
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-600">
-                {selectedItems.size} of {filteredWorkItems.length} items selected
+                {t('workItemsModal.itemsSelected', { selected: selectedItems.size, total: filteredWorkItems.length })}
               </div>
               <div className="flex gap-2">
                 <Button
@@ -231,7 +220,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
                   onClick={handleSelectAll}
                   disabled={filteredWorkItems.length === 0}
                 >
-                  Select All
+                  {t('workItemsModal.selectAll')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -239,7 +228,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
                   onClick={handleDeselectAll}
                   disabled={selectedItems.size === 0}
                 >
-                  Deselect All
+                  {t('workItemsModal.deselectAll')}
                 </Button>
               </div>
             </div>
@@ -249,7 +238,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
               {filteredWorkItems.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-sm text-gray-500">
-                    No work items found in this category
+                    {t('workItemsModal.noItemsFound')}
                   </p>
                 </div>
               ) : (
@@ -305,7 +294,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
                             </Badge>
                             {item.isDefault && (
                               <Badge variant="info" size="sm">
-                                Default
+                                {t('workItemsLibrary.default')}
                               </Badge>
                             )}
                           </div>
@@ -319,12 +308,13 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             {item.defaultPrice !== undefined && item.defaultPrice !== null && (
                               <span>
-                                Default Price: {formatCurrency(Number(item.defaultPrice))}
+                                {t('workItemsModal.defaultPrice')} {formatCurrency(Number(item.defaultPrice))}
+                                {item.unit && ` / ${item.unit}`}
                               </span>
                             )}
                             {item.estimatedDuration && (
                               <span>
-                                Est. Duration: {item.estimatedDuration} hours
+                                {t('workItemsModal.estDuration')} {item.estimatedDuration} {t('workItemsModal.hours')}
                               </span>
                             )}
                           </div>
@@ -341,7 +331,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
 
       <ModalFooter>
         <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           variant="primary"
@@ -349,7 +339,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
           loading={isSubmitting}
           disabled={isSubmitting || selectedItems.size === 0}
         >
-          Add {selectedItems.size} {selectedItems.size === 1 ? 'Task' : 'Tasks'}
+          {t('workItemsModal.addTasks', { count: selectedItems.size })}
         </Button>
       </ModalFooter>
     </Modal>

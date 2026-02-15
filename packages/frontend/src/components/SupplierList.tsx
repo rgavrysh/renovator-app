@@ -5,6 +5,7 @@ import { EmptyState } from './ui/EmptyState';
 import { Alert } from './ui/Alert';
 import { SupplierForm, Supplier } from './SupplierForm';
 import { apiClient } from '../utils/api';
+import { useTranslation } from 'react-i18next';
 
 export interface SupplierListProps {
   showCard?: boolean;
@@ -17,6 +18,7 @@ export const SupplierList: React.FC<SupplierListProps> = ({
   className = '',
   onSupplierSelect,
 }) => {
+  const { t } = useTranslation();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +58,7 @@ export const SupplierList: React.FC<SupplierListProps> = ({
   const handleDeleteSupplier = async (supplierId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (!confirm('Are you sure you want to delete this supplier?')) {
+    if (!confirm(t('supplierList.deleteConfirm'))) {
       return;
     }
 
@@ -107,11 +109,11 @@ export const SupplierList: React.FC<SupplierListProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           }
-          title="No suppliers"
-          description="Add suppliers to track vendors and subcontractors"
+          title={t('supplierList.noSuppliers')}
+          description={t('supplierList.addSuppliers')}
           action={
             <Button variant="primary" onClick={handleAddSupplier}>
-              Add Supplier
+              {t('supplierList.addSupplier')}
             </Button>
           }
         />
@@ -145,17 +147,17 @@ export const SupplierList: React.FC<SupplierListProps> = ({
                   <div className="mt-2 space-y-1">
                     {supplier.contactName && (
                       <p className="text-xs text-gray-600">
-                        <span className="font-medium">Contact:</span> {supplier.contactName}
+                        <span className="font-medium">{t('supplierList.contact')}</span> {supplier.contactName}
                       </p>
                     )}
                     {supplier.email && (
                       <p className="text-xs text-gray-600">
-                        <span className="font-medium">Email:</span> {supplier.email}
+                        <span className="font-medium">{t('supplierList.email')}</span> {supplier.email}
                       </p>
                     )}
                     {supplier.phone && (
                       <p className="text-xs text-gray-600">
-                        <span className="font-medium">Phone:</span> {supplier.phone}
+                        <span className="font-medium">{t('supplierList.phone')}</span> {supplier.phone}
                       </p>
                     )}
                   </div>
@@ -164,7 +166,7 @@ export const SupplierList: React.FC<SupplierListProps> = ({
                 {/* Address */}
                 {supplier.address && (
                   <p className="text-xs text-gray-600 mt-2">
-                    <span className="font-medium">Address:</span> {supplier.address}
+                    <span className="font-medium">{t('supplierList.address')}</span> {supplier.address}
                   </p>
                 )}
 
@@ -181,7 +183,7 @@ export const SupplierList: React.FC<SupplierListProps> = ({
                 <button
                   onClick={(e) => handleEditSupplier(supplier, e)}
                   className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                  title="Edit supplier"
+                  title={t('common.edit')}
                   disabled={deletingId === supplier.id}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +193,7 @@ export const SupplierList: React.FC<SupplierListProps> = ({
                 <button
                   onClick={(e) => handleDeleteSupplier(supplier.id, e)}
                   className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                  title="Delete supplier"
+                  title={t('common.delete')}
                   disabled={deletingId === supplier.id}
                 >
                   {deletingId === supplier.id ? (
@@ -226,11 +228,11 @@ export const SupplierList: React.FC<SupplierListProps> = ({
     return (
       <Card className={className}>
         <CardHeader
-          title="Suppliers"
+          title={t('supplierList.title')}
           action={
             suppliers.length > 0 && (
               <Button variant="primary" size="sm" onClick={handleAddSupplier}>
-                Add Supplier
+                {t('supplierList.addSupplier')}
               </Button>
             )
           }

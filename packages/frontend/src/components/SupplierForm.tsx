@@ -4,6 +4,7 @@ import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { Modal, ModalFooter } from './ui/Modal';
 import { apiClient } from '../utils/api';
+import { useTranslation } from 'react-i18next';
 
 export interface Supplier {
   id: string;
@@ -37,6 +38,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
   onSuccess,
   supplier,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<SupplierFormData>({
     name: '',
     contactName: '',
@@ -98,12 +100,12 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     const newErrors: Partial<Record<keyof SupplierFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Supplier name is required';
+      newErrors.name = t('supplierForm.validation.nameRequired');
     }
 
     // Email validation (optional but must be valid if provided)
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t('supplierForm.validation.invalidEmail');
     }
 
     setErrors(newErrors);
@@ -156,7 +158,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit Supplier' : 'Add Supplier'}
+      title={isEditMode ? t('supplierForm.editTitle') : t('supplierForm.addTitle')}
       size="lg"
     >
       <form onSubmit={handleSubmit} noValidate>
@@ -168,69 +170,69 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
           )}
 
           <Input
-            label="Supplier Name"
+            label={t('supplierForm.supplierName')}
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={errors.name}
-            placeholder="e.g., ABC Building Supply"
+            placeholder={t('supplierForm.supplierNamePlaceholder')}
             fullWidth
             required
             autoFocus
           />
 
           <Input
-            label="Contact Name"
+            label={t('supplierForm.contactName')}
             name="contactName"
             value={formData.contactName}
             onChange={handleChange}
             error={errors.contactName}
-            placeholder="e.g., John Smith"
+            placeholder={t('supplierForm.contactNamePlaceholder')}
             fullWidth
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Email"
+              label={t('supplierForm.email')}
               name="email"
               type="email"
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
-              placeholder="contact@supplier.com"
+              placeholder={t('supplierForm.emailPlaceholder')}
               fullWidth
             />
 
             <Input
-              label="Phone"
+              label={t('supplierForm.phone')}
               name="phone"
               type="tel"
               value={formData.phone}
               onChange={handleChange}
               error={errors.phone}
-              placeholder="(555) 123-4567"
+              placeholder={t('supplierForm.phonePlaceholder')}
               fullWidth
             />
           </div>
 
           <Textarea
-            label="Address"
+            label={t('supplierForm.address')}
             name="address"
             value={formData.address}
             onChange={handleChange}
             error={errors.address}
-            placeholder="123 Main St, City, State ZIP"
+            placeholder={t('supplierForm.addressPlaceholder')}
             rows={2}
             fullWidth
           />
 
           <Textarea
-            label="Notes"
+            label={t('common.notes')}
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             error={errors.notes}
-            placeholder="Add any additional notes..."
+            placeholder={t('supplierForm.notesPlaceholder')}
             rows={3}
             fullWidth
           />
@@ -243,7 +245,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -251,7 +253,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
             loading={isSubmitting}
             disabled={isSubmitting}
           >
-            {isEditMode ? 'Update Supplier' : 'Add Supplier'}
+            {isEditMode ? t('supplierForm.updateButton') : t('supplierForm.addButton')}
           </Button>
         </ModalFooter>
       </form>

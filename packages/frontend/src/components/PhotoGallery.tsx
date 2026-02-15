@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { EmptyState } from './ui/EmptyState';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 
 export interface Photo {
   id: string;
@@ -41,6 +42,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   className = '',
   milestoneId,
 }) => {
+  const { t, i18n } = useTranslation();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -245,7 +247,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             onClick={fetchPhotos}
             className="mt-3"
           >
-            Retry
+            {t('common.retry')}
           </Button>
         </div>
       );
@@ -259,8 +261,8 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           }
-          title="No photos"
-          description="Upload photos to document project progress"
+          title={t('photoGallery.noPhotos')}
+          description={t('photoGallery.uploadPhotosToDocument')}
         />
       );
     }
@@ -269,7 +271,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
       <div className="space-y-4">
         {/* Photo count */}
         <div className="text-sm text-gray-500">
-          {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
+          {photos.length} {photos.length === 1 ? t('photoGallery.photo') : t('photoGallery.photos')}
         </div>
 
         {/* Photo grid */}
@@ -336,7 +338,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   if (showCard) {
     return (
       <Card className={className}>
-        <CardHeader title="Photos" />
+        <CardHeader title={t('photoGallery.title')} />
         <CardContent>{content}</CardContent>
       </Card>
     );

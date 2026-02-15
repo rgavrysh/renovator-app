@@ -85,7 +85,6 @@ const mockTasks = [
     priority: 'high',
     dueDate: '2024-01-10',
     completedDate: '2024-01-09',
-    estimatedPrice: 500,
     actualPrice: 450,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-09T00:00:00Z',

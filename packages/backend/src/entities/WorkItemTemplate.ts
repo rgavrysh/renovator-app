@@ -47,6 +47,9 @@ export class WorkItemTemplate {
   @Column({ name: 'default_price', type: 'decimal', precision: 12, scale: 2, nullable: true })
   defaultPrice?: number;
 
+  @Column({ name: 'unit', type: 'varchar', length: 50, nullable: true })
+  unit?: string;
+
   @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault: boolean;
 

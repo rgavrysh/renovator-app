@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Header } from '../components/layout/Header';
 import { UserDropdown } from '../components/UserDropdown';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
@@ -12,6 +14,7 @@ import { WorkItemTemplateForm } from '../components/WorkItemTemplateForm';
 
 export const WorkItemsLibrary: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,21 +41,7 @@ export const WorkItemsLibrary: React.FC = () => {
   };
 
   const getCategoryLabel = (category: WorkItemCategory): string => {
-    const labels: Record<WorkItemCategory, string> = {
-      [WorkItemCategory.DEMOLITION]: 'Demolition',
-      [WorkItemCategory.FRAMING]: 'Framing',
-      [WorkItemCategory.ELECTRICAL]: 'Electrical',
-      [WorkItemCategory.PLUMBING]: 'Plumbing',
-      [WorkItemCategory.HVAC]: 'HVAC',
-      [WorkItemCategory.DRYWALL]: 'Drywall',
-      [WorkItemCategory.PAINTING]: 'Painting',
-      [WorkItemCategory.FLOORING]: 'Flooring',
-      [WorkItemCategory.FINISHING]: 'Finishing',
-      [WorkItemCategory.CLEANUP]: 'Cleanup',
-      [WorkItemCategory.INSPECTION]: 'Inspection',
-      [WorkItemCategory.OTHER]: 'Other',
-    };
-    return labels[category];
+    return t(`workItemCategory.${category}`);
   };
 
   const formatCurrency = (amount: number): string => {
@@ -116,9 +105,7 @@ export const WorkItemsLibrary: React.FC = () => {
 
   const handleDeleteTemplate = async (template: WorkItemTemplate) => {
     // Show confirmation dialog
-    if (!window.confirm(
-      `Are you sure you want to delete "${template.name}"?\n\nNote: Existing tasks created from this template will be preserved.`
-    )) {
+    if (!window.confirm(t('workItemsLibrary.deleteConfirm', { name: template.name }))) {
       return;
     }
 
@@ -127,7 +114,7 @@ export const WorkItemsLibrary: React.FC = () => {
       await apiClient.delete(`/api/work-items/${template.id}`);
       
       // Show success message
-      window.alert(`Template "${template.name}" has been deleted.\n\nExisting tasks created from this template have been preserved.`);
+      window.alert(t('workItemsLibrary.deleteSuccess', { name: template.name }));
       
       // Reload work items
       loadWorkItems();
@@ -145,27 +132,27 @@ export const WorkItemsLibrary: React.FC = () => {
             onClick={() => navigate('/dashboard')}
             className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
           >
-            Renovator
+            {t('app.name')}
           </button>
         }
-        actions={<UserDropdown />}
+        actions={<><LanguageSwitcher /><UserDropdown /></>}
       />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold text-gray-900">Work Items Library</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('workItemsLibrary.title')}</h1>
             <div className="flex gap-3">
               <Button variant="primary" onClick={handleCreateTemplate}>
-                Create Template
+                {t('workItemsLibrary.createTemplate')}
               </Button>
               <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-                Back to Dashboard
+                {t('workItemsLibrary.backToDashboard')}
               </Button>
             </div>
           </div>
           <p className="text-gray-600">
-            Manage your custom work item templates
+            {t('workItemsLibrary.subtitle')}
           </p>
         </div>
 
@@ -184,7 +171,7 @@ export const WorkItemsLibrary: React.FC = () => {
             {/* Category Filter */}
             <div className="bg-white rounded-linear border border-gray-200 p-4">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium text-gray-700">Category:</span>
+                <span className="text-sm font-medium text-gray-700">{t('common.category')}:</span>
                 <button
                   onClick={() => setSelectedCategory('all')}
                   className={`px-3 py-1.5 text-xs font-medium rounded-linear transition-colors ${
@@ -193,7 +180,7 @@ export const WorkItemsLibrary: React.FC = () => {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  All ({workItems.length})
+                  {t('common.all')} ({workItems.length})
                 </button>
                 {availableCategories.map(category => {
                   const count = workItemsByCategory[category]?.length || 0;
@@ -220,8 +207,8 @@ export const WorkItemsLibrary: React.FC = () => {
                 <div className="col-span-full bg-white rounded-linear border border-gray-200 p-12 text-center">
                   <p className="text-gray-500 mb-4">
                     {selectedCategory === 'all'
-                      ? 'No custom work items found. Create your first custom template to get started.'
-                      : 'No custom work items found in this category.'}
+                      ? t('workItemsLibrary.noCustomItems')
+                      : t('workItemsLibrary.noCustomItemsCategory')}
                   </p>
                 </div>
               ) : (
@@ -249,7 +236,7 @@ export const WorkItemsLibrary: React.FC = () => {
                         }}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
-                        Delete
+                        {t('common.delete')}
                       </Button>
                     </div>
 
@@ -262,17 +249,18 @@ export const WorkItemsLibrary: React.FC = () => {
                     <div className="space-y-2 text-sm">
                       {item.defaultPrice !== undefined && item.defaultPrice !== null && (
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-500">Default Price:</span>
+                          <span className="text-gray-500">{t('workItemsLibrary.defaultPrice')}</span>
                           <span className="font-medium text-gray-900">
                             {formatCurrency(Number(item.defaultPrice))}
+                            {item.unit && <span className="text-gray-500 font-normal"> / {item.unit}</span>}
                           </span>
                         </div>
                       )}
                       {item.estimatedDuration && (
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-500">Est. Duration:</span>
+                          <span className="text-gray-500">{t('workItemsLibrary.estDuration')}</span>
                           <span className="font-medium text-gray-900">
-                            {item.estimatedDuration} hours
+                            {item.estimatedDuration} {t('workItemsLibrary.hours')}
                           </span>
                         </div>
                       )}
@@ -285,9 +273,8 @@ export const WorkItemsLibrary: React.FC = () => {
             {/* Show all work items count */}
             <div className="bg-white rounded-linear border border-gray-200 p-4">
               <div className="text-sm text-gray-600">
-                Showing {customWorkItems.length} custom work item
-                {customWorkItems.length !== 1 ? 's' : ''} 
-                {selectedCategory !== 'all' && ` in ${getCategoryLabel(selectedCategory as WorkItemCategory)}`}
+                {t('workItemsLibrary.showingCustomItems', { count: customWorkItems.length })}
+                {selectedCategory !== 'all' && ` ${t('workItemsLibrary.inCategory', { category: getCategoryLabel(selectedCategory as WorkItemCategory) })}`}
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { Select } from './ui/Select';
@@ -29,6 +30,7 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
   onSuccess,
   template,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<WorkItemTemplateFormData>({
     name: '',
     description: '',
@@ -53,7 +55,7 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
         category: template.category,
         estimatedDuration: template.estimatedDuration != null ? template.estimatedDuration.toString() : '',
         defaultPrice: template.defaultPrice != null ? template.defaultPrice.toString() : '',
-        unit: '',
+        unit: template.unit || '',
       });
     } else {
       setFormData({
@@ -90,20 +92,20 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
     const newErrors: Partial<Record<keyof WorkItemTemplateFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Template name is required';
+      newErrors.name = t('workItemTemplateForm.validation.nameRequired');
     }
 
     if (!formData.category) {
-      newErrors.category = 'Category is required';
+      newErrors.category = t('workItemTemplateForm.validation.categoryRequired');
     }
 
     // Validate estimated duration if provided
     if (formData.estimatedDuration) {
       const duration = parseFloat(formData.estimatedDuration);
       if (isNaN(duration)) {
-        newErrors.estimatedDuration = 'Estimated duration must be a valid number';
+        newErrors.estimatedDuration = t('workItemTemplateForm.validation.durationInvalid');
       } else if (duration < 0) {
-        newErrors.estimatedDuration = 'Estimated duration cannot be negative';
+        newErrors.estimatedDuration = t('workItemTemplateForm.validation.durationNegative');
       }
     }
 
@@ -111,9 +113,9 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
     if (formData.defaultPrice) {
       const price = parseFloat(formData.defaultPrice);
       if (isNaN(price)) {
-        newErrors.defaultPrice = 'Default price must be a valid number';
+        newErrors.defaultPrice = t('workItemTemplateForm.validation.priceInvalid');
       } else if (price < 0) {
-        newErrors.defaultPrice = 'Default price cannot be negative';
+        newErrors.defaultPrice = t('workItemTemplateForm.validation.priceNegative');
       }
     }
 
@@ -174,26 +176,16 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
     onClose();
   };
 
-  const categoryOptions = [
-    { value: WorkItemCategory.DEMOLITION, label: 'Demolition' },
-    { value: WorkItemCategory.FRAMING, label: 'Framing' },
-    { value: WorkItemCategory.ELECTRICAL, label: 'Electrical' },
-    { value: WorkItemCategory.PLUMBING, label: 'Plumbing' },
-    { value: WorkItemCategory.HVAC, label: 'HVAC' },
-    { value: WorkItemCategory.DRYWALL, label: 'Drywall' },
-    { value: WorkItemCategory.PAINTING, label: 'Painting' },
-    { value: WorkItemCategory.FLOORING, label: 'Flooring' },
-    { value: WorkItemCategory.FINISHING, label: 'Finishing' },
-    { value: WorkItemCategory.CLEANUP, label: 'Cleanup' },
-    { value: WorkItemCategory.INSPECTION, label: 'Inspection' },
-    { value: WorkItemCategory.OTHER, label: 'Other' },
-  ];
+  const categoryOptions = Object.values(WorkItemCategory).map(cat => ({
+    value: cat,
+    label: t(`workItemCategory.${cat}`),
+  }));
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit Work Item Template' : 'Create Work Item Template'}
+      title={isEditMode ? t('workItemTemplateForm.editTitle') : t('workItemTemplateForm.createTitle')}
       size="md"
     >
       <form onSubmit={handleSubmit} noValidate>
@@ -205,30 +197,30 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
           )}
 
           <Input
-            label="Template Name"
+            label={t('workItemTemplateForm.templateName')}
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={errors.name}
-            placeholder="e.g., Install kitchen cabinets"
+            placeholder={t('workItemTemplateForm.templateNamePlaceholder')}
             fullWidth
             required
             autoFocus
           />
 
           <Textarea
-            label="Description"
+            label={t('common.description')}
             name="description"
             value={formData.description}
             onChange={handleChange}
             error={errors.description}
-            placeholder="Add details about this work item..."
+            placeholder={t('workItemTemplateForm.descriptionPlaceholder')}
             rows={3}
             fullWidth
           />
 
           <Select
-            label="Category"
+            label={t('common.category')}
             name="category"
             value={formData.category}
             onChange={handleChange}
@@ -239,7 +231,7 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
           />
 
           <Input
-            label="Estimated Duration (hours)"
+            label={t('workItemTemplateForm.estimatedDuration')}
             name="estimatedDuration"
             type="number"
             step="0.5"
@@ -247,13 +239,13 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
             value={formData.estimatedDuration}
             onChange={handleChange}
             error={errors.estimatedDuration}
-            placeholder="e.g., 8"
+            placeholder={t('workItemTemplateForm.estimatedDurationPlaceholder')}
             fullWidth
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Default Price"
+              label={t('workItemTemplateForm.defaultPrice')}
               name="defaultPrice"
               type="number"
               step="0.01"
@@ -266,12 +258,12 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
             />
 
             <Input
-              label="Unit"
+              label={t('workItemTemplateForm.unit')}
               name="unit"
               value={formData.unit}
               onChange={handleChange}
               error={errors.unit}
-              placeholder="e.g., sq ft, each"
+              placeholder={t('workItemTemplateForm.unitPlaceholder')}
               fullWidth
             />
           </div>
@@ -284,7 +276,7 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -292,7 +284,7 @@ export const WorkItemTemplateForm: React.FC<WorkItemTemplateFormProps> = ({
             loading={isSubmitting}
             disabled={isSubmitting}
           >
-            {isEditMode ? 'Update Template' : 'Create Template'}
+            {isEditMode ? t('workItemTemplateForm.updateButton') : t('workItemTemplateForm.createButton')}
           </Button>
         </ModalFooter>
       </form>

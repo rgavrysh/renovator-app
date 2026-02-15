@@ -48,7 +48,6 @@ describe('TaskForm', () => {
       expect(screen.getByLabelText(/priority/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/milestone/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/due date/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/estimated price/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/actual price/i)).toBeInTheDocument();
     });
 
@@ -103,10 +102,6 @@ describe('TaskForm', () => {
         target: { value: '2026-12-31' },
       });
 
-      fireEvent.change(screen.getByLabelText(/estimated price/i), {
-        target: { value: '1500.50' },
-      });
-
       fireEvent.change(screen.getByLabelText(/actual price/i), {
         target: { value: '1600.00' },
       });
@@ -122,7 +117,6 @@ describe('TaskForm', () => {
             status: TaskStatus.TODO,
             priority: TaskPriority.HIGH,
             dueDate: '2026-12-31',
-            estimatedPrice: 1500.50,
             actualPrice: 1600.00,
           })
         );
@@ -195,7 +189,6 @@ describe('TaskForm', () => {
         expect(apiClient.post).toHaveBeenCalledWith(
           `/api/projects/${projectId}/tasks`,
           expect.not.objectContaining({
-            estimatedPrice: expect.anything(),
             actualPrice: expect.anything(),
           })
         );
@@ -220,43 +213,6 @@ describe('TaskForm', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Task name is required')).toBeInTheDocument();
-      });
-
-      expect(apiClient.post).not.toHaveBeenCalled();
-    });
-
-    it('should validate price fields are numbers', async () => {
-      render(
-        <TaskForm
-          isOpen={true}
-          onClose={mockOnClose}
-          onSuccess={mockOnSuccess}
-          projectId={projectId}
-        />
-      );
-
-      await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /create task/i })).toBeInTheDocument();
-      });
-
-      fireEvent.change(screen.getByLabelText(/task name/i), {
-        target: { value: 'Test task' },
-      });
-
-      // Simulate entering an invalid value by setting it directly
-      const estimatedPriceInput = screen.getByLabelText(/estimated price/i) as HTMLInputElement;
-      Object.defineProperty(estimatedPriceInput, 'value', {
-        writable: true,
-        value: 'abc',
-      });
-      fireEvent.change(estimatedPriceInput, {
-        target: { value: 'abc' },
-      });
-
-      fireEvent.click(screen.getByRole('button', { name: /create task/i }));
-
-      await waitFor(() => {
-        expect(screen.getByText('Estimated price must be a valid number')).toBeInTheDocument();
       });
 
       expect(apiClient.post).not.toHaveBeenCalled();
@@ -303,7 +259,6 @@ describe('TaskForm', () => {
       priority: TaskPriority.HIGH,
       milestoneId: 'milestone-1',
       dueDate: '2024-06-15',
-      estimatedPrice: 1000,
       actualPrice: 1100,
     };
 
@@ -327,7 +282,6 @@ describe('TaskForm', () => {
       expect(screen.getByLabelText(/status/i)).toHaveValue(TaskStatus.IN_PROGRESS);
       expect(screen.getByLabelText(/priority/i)).toHaveValue(TaskPriority.HIGH);
       expect(screen.getByLabelText(/due date/i)).toHaveValue('2024-06-15');
-      expect(screen.getByLabelText(/estimated price/i)).toHaveValue(1000);
       expect(screen.getByLabelText(/actual price/i)).toHaveValue(1100);
     });
 

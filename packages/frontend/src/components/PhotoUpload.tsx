@@ -4,6 +4,7 @@ import { Select } from './ui/Select';
 import { Input } from './ui/Input';
 import { Modal, ModalFooter } from './ui/Modal';
 import { Milestone } from './MilestoneList';
+import { useTranslation } from 'react-i18next';
 
 interface PhotoUploadProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   projectId,
   milestones = [],
 }) => {
+  const { t, i18n } = useTranslation();
   const [selectedPhotos, setSelectedPhotos] = useState<PhotoFile[]>([]);
   const [milestoneId, setMilestoneId] = useState<string>('');
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -139,7 +141,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
   const handleUpload = async () => {
     if (selectedPhotos.length === 0) {
-      setValidationError('Please select at least one photo to upload');
+      setValidationError(t('photoUpload.selectAtLeastOne'));
       return;
     }
 
@@ -244,8 +246,8 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   };
 
   const formatDate = (date: Date | null): string => {
-    if (!date) return 'Unknown date';
-    return new Intl.DateTimeFormat('en-US', {
+    if (!date) return '';
+    return new Intl.DateTimeFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -255,7 +257,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   };
 
   const milestoneOptions = [
-    { value: '', label: 'No milestone' },
+    { value: '', label: t('photoUpload.noMilestone') },
     ...milestones.map(m => ({
       value: m.id,
       label: m.name,
@@ -266,7 +268,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Upload Photos"
+      title={t('photoUpload.title')}
       size="lg"
     >
       <div className="space-y-4">
@@ -279,7 +281,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         {/* File picker area */}
         <div>
           <label htmlFor="photo-file-input" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Select Photos
+            {t('photoUpload.selectPhotos')}
           </label>
           <div
             onDrop={handleDrop}
@@ -322,13 +324,13 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
               </svg>
               <div>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium text-primary-600">Click to browse</span> or drag and drop
+                  <span className="font-medium text-primary-600">{t('photoUpload.clickToBrowse')}</span> {t('photoUpload.orDragDrop')}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Supported formats: JPG, PNG, HEIC
+                  {t('photoUpload.supportedFormats')}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Maximum {MAX_BATCH_SIZE} photos per batch, 50MB per file
+                  {t('photoUpload.maxBatchSize', { max: MAX_BATCH_SIZE })}
                 </p>
               </div>
             </div>
@@ -343,7 +345,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium text-gray-700">
-                Selected Photos ({selectedPhotos.length})
+                {t('photoUpload.selectedPhotos', { count: selectedPhotos.length })}
               </h4>
               {!isUploading && (
                 <Button
@@ -355,7 +357,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
                     setSelectedPhotos([]);
                   }}
                 >
-                  Clear All
+                  {t('photoUpload.clearAll')}
                 </Button>
               )}
             </div>
@@ -383,7 +385,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
                         {(photo.file.size / 1024).toFixed(2)} KB
                       </p>
                       <p className="text-xs text-gray-500">
-                        Captured: {formatDate(photo.captureDate)}
+                        {t('photoUpload.captured')} {formatDate(photo.captureDate)}
                       </p>
                     </div>
 
@@ -391,7 +393,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
                     <Input
                       value={photo.caption}
                       onChange={(e) => updateCaption(index, e.target.value)}
-                      placeholder="Add a caption..."
+                      placeholder={t('photoUpload.captionPlaceholder')}
                       size="sm"
                       fullWidth
                       disabled={isUploading}
@@ -403,7 +405,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
                     <button
                       onClick={() => removePhoto(index)}
                       className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
-                      title="Remove photo"
+                      title={t('common.remove')}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -420,7 +422,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         {isUploading && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Uploading {selectedPhotos.length} photos...</span>
+              <span className="text-gray-600">{t('photoUpload.uploadingPhotos', { count: selectedPhotos.length })}</span>
               <span className="font-medium text-gray-900">{uploadProgress}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -434,13 +436,13 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
         {/* Milestone association */}
         <Select
-          label="Associate with Milestone (Optional)"
+          label={t('photoUpload.associateMilestone')}
           value={milestoneId}
           onChange={(e) => setMilestoneId(e.target.value)}
           options={milestoneOptions}
           fullWidth
           disabled={isUploading}
-          helperText="Link these photos to a specific project milestone"
+          helperText={t('photoUpload.milestoneHelper')}
         />
       </div>
 
@@ -451,7 +453,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
           onClick={handleClose}
           disabled={isUploading}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -460,7 +462,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
           disabled={selectedPhotos.length === 0 || isUploading}
           loading={isUploading}
         >
-          Upload {selectedPhotos.length > 0 && `(${selectedPhotos.length})`}
+          {t('documentUpload.upload')} {selectedPhotos.length > 0 && `(${selectedPhotos.length})`}
         </Button>
       </ModalFooter>
     </Modal>

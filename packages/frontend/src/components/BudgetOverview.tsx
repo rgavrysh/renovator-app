@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { Alert } from './ui/Alert';
 import { Divider } from './ui/Divider';
+import { useTranslation } from 'react-i18next';
 
 export interface Budget {
   id: string;
@@ -27,8 +28,10 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   className = '',
   onViewTasks,
 }) => {
+  const { t, i18n } = useTranslation();
+
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
@@ -59,14 +62,14 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
     if (variancePercentage > 20) {
       return {
         type: 'danger',
-        message: `Critical: Budget exceeded by ${variancePercentage.toFixed(1)}%`,
+        message: t('budgetOverview.criticalExceeded', { percentage: variancePercentage.toFixed(1) }),
       };
     }
     
     if (variancePercentage > 10) {
       return {
         type: 'warning',
-        message: `Warning: Budget exceeded by ${variancePercentage.toFixed(1)}%`,
+        message: t('budgetOverview.warningExceeded', { percentage: variancePercentage.toFixed(1) }),
       };
     }
     
@@ -77,7 +80,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
     if (!budget) {
       return (
         <div className="text-center py-8">
-          <p className="text-sm text-gray-500">No budget set</p>
+          <p className="text-sm text-gray-500">{t('budgetOverview.noBudgetSet')}</p>
         </div>
       );
     }
@@ -90,14 +93,14 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       <div className="space-y-4">
         {/* Budget Alert */}
         {alert && (
-          <Alert variant={alert.type} title={alert.type === 'danger' ? 'Critical Alert' : 'Budget Alert'}>
+          <Alert variant={alert.type} title={alert.type === 'danger' ? t('budgetOverview.criticalAlert') : t('budgetOverview.budgetAlert')}>
             {alert.message}
           </Alert>
         )}
 
         {/* Total Estimated */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Total Estimated</p>
+          <p className="text-xs text-gray-500 mb-1">{t('budgetOverview.totalEstimated')}</p>
           <p className="text-xl font-bold text-gray-900">
             {formatCurrency(budget.totalEstimated)}
           </p>
@@ -105,7 +108,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
         {/* Total Actual */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Total Actual</p>
+          <p className="text-xs text-gray-500 mb-1">{t('budgetOverview.totalActual')}</p>
           <p className="text-xl font-bold text-gray-900">
             {formatCurrency(budget.totalActual)}
           </p>
@@ -113,13 +116,13 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           {/* Breakdown of actual costs */}
           <div className="mt-2 space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">From Budget Items:</span>
+              <span className="text-gray-500">{t('budgetOverview.fromBudgetItems')}</span>
               <span className="font-medium text-gray-700">
                 {formatCurrency(budget.totalActualFromItems)}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">From Tasks:</span>
+              <span className="text-gray-500">{t('budgetOverview.fromTasks')}</span>
               <span className="font-medium text-gray-700">
                 {formatCurrency(budget.totalActualFromTasks)}
               </span>
@@ -128,7 +131,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                   onClick={onViewTasks}
                   className="ml-2 text-primary-600 hover:text-primary-700 underline"
                 >
-                  View Tasks
+                  {t('budgetOverview.viewTasks')}
                 </button>
               )}
             </div>
@@ -139,7 +142,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
         {/* Variance */}
         <div>
-          <p className="text-xs text-gray-500 mb-1">Variance</p>
+          <p className="text-xs text-gray-500 mb-1">{t('budgetOverview.variance')}</p>
           <p
             className={`text-lg font-bold ${
               variance > 0 ? 'text-red-600' : variance < 0 ? 'text-green-600' : 'text-gray-900'
@@ -152,7 +155,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         {/* Percentage Spent */}
         {budget.totalEstimated > 0 && (
           <div>
-            <p className="text-xs text-gray-500 mb-1">Percentage Spent</p>
+            <p className="text-xs text-gray-500 mb-1">{t('budgetOverview.percentageSpent')}</p>
             <div className="space-y-2">
               <p className="text-lg font-bold text-gray-900">
                 {percentageSpent}%
@@ -180,7 +183,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   if (showCard) {
     return (
       <Card className={className}>
-        <CardHeader title="Budget Overview" />
+        <CardHeader title={t('budgetOverview.title')} />
         <CardContent>
           {renderContent()}
         </CardContent>

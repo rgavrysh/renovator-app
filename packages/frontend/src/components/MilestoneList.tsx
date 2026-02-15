@@ -1,6 +1,7 @@
 import React from 'react';
 import { Badge } from './ui/Badge';
 import { Divider } from './ui/Divider';
+import { useTranslation } from 'react-i18next';
 
 export interface Milestone {
   id: string;
@@ -35,6 +36,8 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
   onEdit,
   onComplete,
 }) => {
+  const { t, i18n } = useTranslation();
+
   // Sort milestones in chronological order by target date
   const sortedMilestones = [...milestones].sort((a, b) => {
     return new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime();
@@ -42,7 +45,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -65,18 +68,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
   };
 
   const getMilestoneStatusLabel = (status: MilestoneStatus) => {
-    switch (status) {
-      case MilestoneStatus.NOT_STARTED:
-        return 'Not Started';
-      case MilestoneStatus.IN_PROGRESS:
-        return 'In Progress';
-      case MilestoneStatus.COMPLETED:
-        return 'Completed';
-      case MilestoneStatus.OVERDUE:
-        return 'Overdue';
-      default:
-        return status;
-    }
+    return t(`milestoneStatus.${status}`);
   };
 
   const calculateProgress = () => {
@@ -94,12 +86,13 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
   if (sortedMilestones.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-gray-500">No milestones yet</p>
+        <p className="text-sm text-gray-500">{t('milestoneList.noMilestones')}</p>
       </div>
     );
   }
 
   const progress = calculateProgress();
+  const completedCount = sortedMilestones.filter((m) => m.status === MilestoneStatus.COMPLETED).length;
 
   return (
     <div className="space-y-4">
@@ -107,7 +100,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
       {showProgress && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Overall Progress</span>
+            <span className="text-sm font-medium text-gray-700">{t('milestoneList.overallProgress')}</span>
             <span className="text-sm font-semibold text-gray-900">{progress}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -118,8 +111,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
           </div>
           <div className="flex items-center justify-between mt-1 text-xs text-gray-500">
             <span>
-              {sortedMilestones.filter((m) => m.status === MilestoneStatus.COMPLETED).length} of{' '}
-              {sortedMilestones.length} completed
+              {t('milestoneList.completedOf', { completed: completedCount, total: sortedMilestones.length })}
             </span>
           </div>
         </div>
@@ -180,13 +172,13 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                   }`}
                 >
                   <span className={isOverdue(milestone) ? 'font-medium' : ''}>
-                    Target: {formatDate(milestone.targetDate)}
+                    {t('milestoneList.target')} {formatDate(milestone.targetDate)}
                   </span>
                   {milestone.completedDate && (
-                    <span>Completed: {formatDate(milestone.completedDate)}</span>
+                    <span>{t('milestoneList.completed')} {formatDate(milestone.completedDate)}</span>
                   )}
                   {isOverdue(milestone) && !milestone.completedDate && (
-                    <span className="font-medium text-red-600">⚠ Overdue</span>
+                    <span className="font-medium text-red-600">⚠ {t('common.overdue')}</span>
                   )}
                 </div>
               </div>
@@ -198,9 +190,9 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                   <button
                     onClick={() => onComplete(milestone)}
                     className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors"
-                    title="Mark as complete"
+                    title={t('common.complete')}
                   >
-                    Complete
+                    {t('common.complete')}
                   </button>
                 )}
                 
@@ -209,7 +201,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                   <button
                     onClick={() => onEdit(milestone)}
                     className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                    title="Edit milestone"
+                    title={t('common.edit')}
                   >
                     <svg
                       className="w-4 h-4"

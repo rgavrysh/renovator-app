@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
 export const UserDropdown: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -65,14 +67,14 @@ export const UserDropdown: React.FC = () => {
             onClick={handleWorkItemsLibrary}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Work Items Library
+            {t('userDropdown.workItemsLibrary')}
           </button>
           <div className="border-t border-gray-200 my-1" />
           <button
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            Logout
+            {t('userDropdown.logout')}
           </button>
         </div>
       )}

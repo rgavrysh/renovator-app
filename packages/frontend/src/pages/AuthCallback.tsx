@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import config from '../config';
 
 const TOKEN_STORAGE_KEY = 'auth_tokens';
@@ -11,6 +12,7 @@ export const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const hasProcessed = useRef(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Prevent duplicate processing (React StrictMode runs effects twice in dev)
@@ -108,11 +110,11 @@ export const AuthCallback: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Authentication Error
+            {t('authCallback.error')}
           </h2>
           <p className="text-gray-600">{error}</p>
           <p className="text-sm text-gray-500 mt-4">
-            Redirecting to login page...
+            {t('authCallback.redirecting')}
           </p>
         </div>
       </div>
@@ -124,9 +126,9 @@ export const AuthCallback: React.FC = () => {
       <div className="max-w-md w-full p-8 bg-white rounded-lg shadow text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Completing sign in...
+          {t('authCallback.completing')}
         </h2>
-        <p className="text-gray-600">Please wait while we authenticate you.</p>
+        <p className="text-gray-600">{t('authCallback.pleaseWait')}</p>
       </div>
     </div>
   );

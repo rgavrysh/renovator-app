@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageLayout } from '../components/layout/Container';
 import { Header } from '../components/layout/Header';
 import { Container } from '../components/layout/Container';
@@ -10,6 +11,7 @@ import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { UserDropdown } from '../components/UserDropdown';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
@@ -33,18 +35,19 @@ interface FormErrors {
   estimatedEndDate?: string;
 }
 
-const PROJECT_STATUS_OPTIONS = [
-  { value: 'planning', label: 'Planning' },
-  { value: 'active', label: 'Active' },
-  { value: 'on_hold', label: 'On Hold' },
-  { value: 'completed', label: 'Completed' },
-];
-
 export const ProjectForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const isEditMode = !!id;
+
+  const PROJECT_STATUS_OPTIONS = [
+    { value: 'planning', label: t('projectStatus.planning') },
+    { value: 'active', label: t('projectStatus.active') },
+    { value: 'on_hold', label: t('projectStatus.on_hold') },
+    { value: 'completed', label: t('projectStatus.completed') },
+  ];
 
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
@@ -108,24 +111,24 @@ export const ProjectForm: React.FC = () => {
 
     // Required fields
     if (!formData.name.trim()) {
-      newErrors.name = 'Project name is required';
+      newErrors.name = t('projectForm.validation.nameRequired');
     }
 
     if (!formData.clientName.trim()) {
-      newErrors.clientName = 'Client name is required';
+      newErrors.clientName = t('projectForm.validation.clientNameRequired');
     }
 
     if (!formData.startDate) {
-      newErrors.startDate = 'Start date is required';
+      newErrors.startDate = t('projectForm.validation.startDateRequired');
     }
 
     if (!formData.estimatedEndDate) {
-      newErrors.estimatedEndDate = 'Estimated end date is required';
+      newErrors.estimatedEndDate = t('projectForm.validation.endDateRequired');
     }
 
     // Email validation (if provided)
     if (formData.clientEmail && !isValidEmail(formData.clientEmail)) {
-      newErrors.clientEmail = 'Please enter a valid email address';
+      newErrors.clientEmail = t('projectForm.validation.invalidEmail');
     }
 
     // Date validation
@@ -134,7 +137,7 @@ export const ProjectForm: React.FC = () => {
       const endDate = new Date(formData.estimatedEndDate);
       
       if (endDate < startDate) {
-        newErrors.estimatedEndDate = 'End date must be after start date';
+        newErrors.estimatedEndDate = t('projectForm.validation.endDateAfterStart');
       }
     }
 
@@ -207,10 +210,10 @@ export const ProjectForm: React.FC = () => {
                 <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
                   <span className="text-white font-bold text-lg">R</span>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">Renovator</span>
+                <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
               </div>
             }
-            actions={<UserDropdown />}
+            actions={<><LanguageSwitcher /><UserDropdown /></>}
           />
         }
       >
@@ -232,22 +235,22 @@ export const ProjectForm: React.FC = () => {
               <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
                 <span className="text-white font-bold text-lg">R</span>
               </div>
-              <span className="text-lg font-semibold text-gray-900">Renovator</span>
+              <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
             </div>
           }
-          actions={<UserDropdown />}
+          actions={<><LanguageSwitcher /><UserDropdown /></>}
         />
       }
     >
       <Container size="md">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {isEditMode ? 'Edit Project' : 'Create New Project'}
+            {isEditMode ? t('projectForm.editTitle') : t('projectForm.createTitle')}
           </h1>
           <p className="text-sm text-gray-600">
             {isEditMode
-              ? 'Update project details and information'
-              : 'Enter project details to get started'}
+              ? t('projectForm.editSubtitle')
+              : t('projectForm.createSubtitle')}
           </p>
         </div>
 
@@ -263,32 +266,32 @@ export const ProjectForm: React.FC = () => {
               {/* Project Information Section */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">
-                  Project Information
+                  {t('projectForm.projectInformation')}
                 </h3>
                 <div className="space-y-4">
                   <Input
-                    label="Project Name"
+                    label={t('projectForm.projectName')}
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
                     error={errors.name}
-                    placeholder="e.g., Kitchen Renovation"
+                    placeholder={t('projectForm.projectNamePlaceholder')}
                     fullWidth
                     required
                   />
 
                   <Textarea
-                    label="Description"
+                    label={t('common.description')}
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    placeholder="Brief description of the project..."
+                    placeholder={t('projectForm.descriptionPlaceholder')}
                     rows={4}
                     fullWidth
                   />
 
                   <Select
-                    label="Status"
+                    label={t('common.status')}
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
@@ -301,40 +304,40 @@ export const ProjectForm: React.FC = () => {
               {/* Client Information Section */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">
-                  Client Information
+                  {t('projectForm.clientInformation')}
                 </h3>
                 <div className="space-y-4">
                   <Input
-                    label="Client Name"
+                    label={t('projectForm.clientName')}
                     name="clientName"
                     value={formData.clientName}
                     onChange={handleChange}
                     error={errors.clientName}
-                    placeholder="e.g., John Smith"
+                    placeholder={t('projectForm.clientNamePlaceholder')}
                     fullWidth
                     required
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
-                      label="Client Email"
+                      label={t('projectForm.clientEmail')}
                       name="clientEmail"
                       type="email"
                       value={formData.clientEmail}
                       onChange={handleChange}
                       error={errors.clientEmail}
-                      placeholder="client@example.com"
+                      placeholder={t('projectForm.clientEmailPlaceholder')}
                       fullWidth
                     />
 
                     <Input
-                      label="Client Phone"
+                      label={t('projectForm.clientPhone')}
                       name="clientPhone"
                       type="tel"
                       value={formData.clientPhone}
                       onChange={handleChange}
                       error={errors.clientPhone}
-                      placeholder="(555) 123-4567"
+                      placeholder={t('projectForm.clientPhonePlaceholder')}
                       fullWidth
                     />
                   </div>
@@ -344,11 +347,11 @@ export const ProjectForm: React.FC = () => {
               {/* Timeline Section */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">
-                  Project Timeline
+                  {t('projectForm.projectTimeline')}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Start Date"
+                    label={t('projectForm.startDate')}
                     name="startDate"
                     type="date"
                     value={formData.startDate}
@@ -359,7 +362,7 @@ export const ProjectForm: React.FC = () => {
                   />
 
                   <Input
-                    label="Estimated End Date"
+                    label={t('projectForm.estimatedEndDate')}
                     name="estimatedEndDate"
                     type="date"
                     value={formData.estimatedEndDate}
@@ -379,7 +382,7 @@ export const ProjectForm: React.FC = () => {
                   onClick={handleCancel}
                   disabled={isLoading}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
@@ -387,7 +390,7 @@ export const ProjectForm: React.FC = () => {
                   loading={isLoading}
                   disabled={isLoading}
                 >
-                  {isEditMode ? 'Update Project' : 'Create Project'}
+                  {isEditMode ? t('projectForm.updateButton') : t('projectForm.createButton')}
                 </Button>
               </div>
             </form>

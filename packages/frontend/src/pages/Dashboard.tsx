@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PageLayout } from '../components/layout/Container';
 import { Header } from '../components/layout/Header';
 import { Container } from '../components/layout/Container';
@@ -10,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { UserDropdown } from '../components/UserDropdown';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
@@ -40,6 +42,7 @@ enum ProjectStatus {
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, i18n } = useTranslation();
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,25 +107,13 @@ export const Dashboard: React.FC = () => {
   };
 
   const getStatusLabel = (status: ProjectStatus) => {
-    switch (status) {
-      case ProjectStatus.PLANNING:
-        return 'Planning';
-      case ProjectStatus.ACTIVE:
-        return 'Active';
-      case ProjectStatus.ON_HOLD:
-        return 'On Hold';
-      case ProjectStatus.COMPLETED:
-        return 'Completed';
-      case ProjectStatus.ARCHIVED:
-        return 'Archived';
-      default:
-        return status;
-    }
+    return t(`projectStatus.${status}`);
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -146,18 +137,18 @@ export const Dashboard: React.FC = () => {
               <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
                 <span className="text-white font-bold text-lg">R</span>
               </div>
-              <span className="text-lg font-semibold text-gray-900">Renovator</span>
+              <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
             </div>
           }
-          actions={<UserDropdown />}
+          actions={<><LanguageSwitcher /><UserDropdown /></>}
         />
       }
     >
       <Container>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Projects</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('dashboard.title')}</h1>
           <p className="text-sm text-gray-600">
-            Manage your renovation projects
+            {t('dashboard.subtitle')}
           </p>
         </div>
 
@@ -165,14 +156,14 @@ export const Dashboard: React.FC = () => {
           <div className="flex-1">
             <Input
               type="text"
-              placeholder="Search projects by name, client, or description..."
+              placeholder={t('dashboard.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               fullWidth
             />
           </div>
           <Button variant="primary" onClick={handleCreateProject}>
-            New Project
+            {t('dashboard.newProject')}
           </Button>
         </div>
 
@@ -186,7 +177,7 @@ export const Dashboard: React.FC = () => {
               <div className="text-center py-8">
                 <p className="text-red-600 mb-4">{error}</p>
                 <Button variant="primary" onClick={loadProjects}>
-                  Retry
+                  {t('common.retry')}
                 </Button>
               </div>
             </CardContent>
@@ -197,18 +188,18 @@ export const Dashboard: React.FC = () => {
               <EmptyState
                 title={
                   searchQuery
-                    ? 'No projects found'
-                    : 'No active projects'
+                    ? t('dashboard.noProjectsFound')
+                    : t('dashboard.noActiveProjects')
                 }
                 description={
                   searchQuery
-                    ? 'Try adjusting your search query'
-                    : 'Get started by creating your first renovation project'
+                    ? t('dashboard.adjustSearch')
+                    : t('dashboard.getStarted')
                 }
                 action={
                   !searchQuery && (
                     <Button variant="primary" onClick={handleCreateProject}>
-                      Create Project
+                      {t('dashboard.createProject')}
                     </Button>
                   )
                 }
@@ -238,7 +229,7 @@ export const Dashboard: React.FC = () => {
                 <CardContent>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Client</p>
+                      <p className="text-xs text-gray-500 mb-1">{t('dashboard.client')}</p>
                       <p className="text-sm font-medium text-gray-900">
                         {project.clientName}
                       </p>
@@ -246,7 +237,7 @@ export const Dashboard: React.FC = () => {
 
                     {project.description && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Description</p>
+                        <p className="text-xs text-gray-500 mb-1">{t('common.description')}</p>
                         <p className="text-sm text-gray-700 line-clamp-2">
                           {project.description}
                         </p>
@@ -255,13 +246,13 @@ export const Dashboard: React.FC = () => {
 
                     <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                       <div>
-                        <p className="text-xs text-gray-500">Start Date</p>
+                        <p className="text-xs text-gray-500">{t('dashboard.startDate')}</p>
                         <p className="text-sm font-medium text-gray-900">
                           {formatDate(project.startDate)}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">Est. End</p>
+                        <p className="text-xs text-gray-500">{t('dashboard.estEnd')}</p>
                         <p className="text-sm font-medium text-gray-900">
                           {formatDate(project.estimatedEndDate)}
                         </p>
@@ -276,7 +267,7 @@ export const Dashboard: React.FC = () => {
 
         {!isLoading && !error && filteredProjects.length > 0 && (
           <div className="mt-6 text-center text-sm text-gray-500">
-            Showing {filteredProjects.length} of {projects.length} active projects
+            {t('dashboard.showingProjects', { filtered: filteredProjects.length, total: projects.length })}
           </div>
         )}
       </Container>

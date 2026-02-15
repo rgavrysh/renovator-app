@@ -5,6 +5,7 @@ import { EmptyState } from './ui/EmptyState';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 
 export enum DocumentType {
   CONTRACT = 'contract',
@@ -52,6 +53,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   onDocumentClick,
   showTrash = false,
 }) => {
+  const { t, i18n } = useTranslation();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,7 +193,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   const handleDelete = async (document: Document, e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!confirm(`Are you sure you want to delete "${document.name}"? It will be moved to trash.`)) {
+    if (!confirm(t('documentList.deleteConfirm', { name: document.name }))) {
       return;
     }
 
@@ -269,7 +271,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -279,16 +281,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   };
 
   const getDocumentTypeLabel = (type: DocumentType): string => {
-    const labels: Record<DocumentType, string> = {
-      [DocumentType.CONTRACT]: 'Contract',
-      [DocumentType.INVOICE]: 'Invoice',
-      [DocumentType.RECEIPT]: 'Receipt',
-      [DocumentType.PHOTO]: 'Photo',
-      [DocumentType.PERMIT]: 'Permit',
-      [DocumentType.WARRANTY]: 'Warranty',
-      [DocumentType.OTHER]: 'Other',
-    };
-    return labels[type];
+    return t(`documentType.${type}`);
   };
 
   const getDocumentTypeColor = (type: DocumentType): 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' => {
@@ -347,22 +340,22 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   };
 
   const typeOptions = [
-    { value: 'all', label: 'All Types' },
-    { value: DocumentType.CONTRACT, label: 'Contract' },
-    { value: DocumentType.INVOICE, label: 'Invoice' },
-    { value: DocumentType.RECEIPT, label: 'Receipt' },
-    { value: DocumentType.PHOTO, label: 'Photo' },
-    { value: DocumentType.PERMIT, label: 'Permit' },
-    { value: DocumentType.WARRANTY, label: 'Warranty' },
-    { value: DocumentType.OTHER, label: 'Other' },
+    { value: 'all', label: t('documentList.allTypes') },
+    { value: DocumentType.CONTRACT, label: t('documentType.contract') },
+    { value: DocumentType.INVOICE, label: t('documentType.invoice') },
+    { value: DocumentType.RECEIPT, label: t('documentType.receipt') },
+    { value: DocumentType.PHOTO, label: t('documentType.photo') },
+    { value: DocumentType.PERMIT, label: t('documentType.permit') },
+    { value: DocumentType.WARRANTY, label: t('documentType.warranty') },
+    { value: DocumentType.OTHER, label: t('documentType.other') },
   ];
 
   const dateOptions = [
-    { value: 'all', label: 'All Time' },
-    { value: 'today', label: 'Today' },
-    { value: 'week', label: 'Last 7 Days' },
-    { value: 'month', label: 'Last 30 Days' },
-    { value: 'year', label: 'Last Year' },
+    { value: 'all', label: t('documentList.allTime') },
+    { value: 'today', label: t('documentList.today') },
+    { value: 'week', label: t('documentList.last7Days') },
+    { value: 'month', label: t('documentList.last30Days') },
+    { value: 'year', label: t('documentList.lastYear') },
   ];
 
   const renderContent = () => {
@@ -384,7 +377,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
             onClick={fetchDocuments}
             className="mt-3"
           >
-            Retry
+            {t('common.retry')}
           </Button>
         </div>
       );
@@ -400,17 +393,17 @@ export const DocumentList: React.FC<DocumentListProps> = ({
           }
           title={
             viewingTrash
-              ? 'Trash is empty'
+              ? t('documentList.trashEmpty')
               : searchQuery || typeFilter !== 'all' || dateFilter !== 'all'
-              ? 'No documents found'
-              : 'No documents'
+              ? t('documentList.noDocumentsFound')
+              : t('documentList.noDocuments')
           }
           description={
             viewingTrash
-              ? 'Deleted documents will appear here'
+              ? t('documentList.deletedDocsAppear')
               : searchQuery || typeFilter !== 'all' || dateFilter !== 'all'
-              ? 'Try adjusting your filters'
-              : 'Upload documents to get started'
+              ? t('documentList.adjustFilters')
+              : t('documentList.uploadToStart')
           }
         />
       );
@@ -476,7 +469,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                   <button
                     onClick={(e) => handleRestore(document, e)}
                     className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                    title="Restore"
+                    title={t('common.retry')}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -490,7 +483,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                         handleDownload(document);
                       }}
                       className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="Download"
+                      title={t('common.view')}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -499,7 +492,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                     <button
                       onClick={(e) => handleDelete(document, e)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete"
+                      title={t('common.delete')}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -528,7 +521,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Documents
+            {t('documentList.documents')}
           </button>
           <button
             onClick={() => setViewingTrash(true)}
@@ -538,7 +531,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Trash
+            {t('documentList.trash')}
           </button>
         </div>
       </div>
@@ -547,7 +540,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       {!viewingTrash && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Input
-            placeholder="Search documents..."
+            placeholder={t('documentList.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             fullWidth
@@ -571,8 +564,8 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       {!loading && !error && !viewingTrash && (
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span>
-            {filteredDocuments.length} {filteredDocuments.length === 1 ? 'document' : 'documents'}
-            {(searchQuery || typeFilter !== 'all' || dateFilter !== 'all') && ` found`}
+            {filteredDocuments.length} {filteredDocuments.length === 1 ? t('documentList.document') : t('documentList.documents_count')}
+            {(searchQuery || typeFilter !== 'all' || dateFilter !== 'all') && ` ${t('common.found')}`}
           </span>
           {(searchQuery || typeFilter !== 'all' || dateFilter !== 'all') && (
             <button
@@ -583,7 +576,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
               }}
               className="text-primary-600 hover:text-primary-700 font-medium"
             >
-              Clear filters
+              {t('common.clearFilters')}
             </button>
           )}
         </div>
@@ -593,7 +586,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       {!loading && !error && viewingTrash && (
         <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
-            Documents in trash will be permanently deleted after 30 days.
+            {t('documentList.trashNotice')}
           </p>
         </div>
       )}
@@ -606,7 +599,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
   if (showCard) {
     return (
       <Card className={className}>
-        <CardHeader title="Documents" />
+        <CardHeader title={t('documentList.title')} />
         <CardContent>{content}</CardContent>
       </Card>
     );

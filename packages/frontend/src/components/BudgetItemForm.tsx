@@ -6,6 +6,7 @@ import { Button } from './ui/Button';
 import { Modal, ModalFooter } from './ui/Modal';
 import { apiClient } from '../utils/api';
 import { BudgetCategory } from './BudgetItemsList';
+import { useTranslation } from 'react-i18next';
 
 export interface BudgetItemFormData {
   name: string;
@@ -37,6 +38,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
   budgetId,
   budgetItem,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<BudgetItemFormData>({
     name: '',
     category: BudgetCategory.MATERIALS,
@@ -95,23 +97,23 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
     const newErrors: Partial<Record<keyof BudgetItemFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Item name is required';
+      newErrors.name = t('budgetItemForm.validation.nameRequired');
     }
 
     if (!formData.estimatedCost) {
-      newErrors.estimatedCost = 'Estimated cost is required';
+      newErrors.estimatedCost = t('budgetItemForm.validation.estimatedCostRequired');
     } else if (isNaN(parseFloat(formData.estimatedCost))) {
-      newErrors.estimatedCost = 'Estimated cost must be a valid number';
+      newErrors.estimatedCost = t('budgetItemForm.validation.estimatedCostInvalid');
     } else if (parseFloat(formData.estimatedCost) < 0) {
-      newErrors.estimatedCost = 'Estimated cost cannot be negative';
+      newErrors.estimatedCost = t('budgetItemForm.validation.estimatedCostNegative');
     }
 
     if (!formData.actualCost) {
-      newErrors.actualCost = 'Actual cost is required';
+      newErrors.actualCost = t('budgetItemForm.validation.actualCostRequired');
     } else if (isNaN(parseFloat(formData.actualCost))) {
-      newErrors.actualCost = 'Actual cost must be a valid number';
+      newErrors.actualCost = t('budgetItemForm.validation.actualCostInvalid');
     } else if (parseFloat(formData.actualCost) < 0) {
-      newErrors.actualCost = 'Actual cost cannot be negative';
+      newErrors.actualCost = t('budgetItemForm.validation.actualCostNegative');
     }
 
     setErrors(newErrors);
@@ -149,7 +151,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       onClose();
     } catch (error: any) {
       console.error('Error saving budget item:', error);
-      setSubmitError(error.message || 'Failed to save budget item. Please try again.');
+      setSubmitError(error.message || t('common.retry'));
     } finally {
       setIsSubmitting(false);
     }
@@ -160,20 +162,20 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
   };
 
   const categoryOptions = [
-    { value: BudgetCategory.LABOR, label: 'Labor' },
-    { value: BudgetCategory.MATERIALS, label: 'Materials' },
-    { value: BudgetCategory.EQUIPMENT, label: 'Equipment' },
-    { value: BudgetCategory.SUBCONTRACTORS, label: 'Subcontractors' },
-    { value: BudgetCategory.PERMITS, label: 'Permits' },
-    { value: BudgetCategory.CONTINGENCY, label: 'Contingency' },
-    { value: BudgetCategory.OTHER, label: 'Other' },
+    { value: BudgetCategory.LABOR, label: t('budgetCategory.labor') },
+    { value: BudgetCategory.MATERIALS, label: t('budgetCategory.materials') },
+    { value: BudgetCategory.EQUIPMENT, label: t('budgetCategory.equipment') },
+    { value: BudgetCategory.SUBCONTRACTORS, label: t('budgetCategory.subcontractors') },
+    { value: BudgetCategory.PERMITS, label: t('budgetCategory.permits') },
+    { value: BudgetCategory.CONTINGENCY, label: t('budgetCategory.contingency') },
+    { value: BudgetCategory.OTHER, label: t('budgetCategory.other') },
   ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit Budget Item' : 'Add Budget Item'}
+      title={isEditMode ? t('budgetItemForm.editTitle') : t('budgetItemForm.addTitle')}
       size="md"
     >
       <form onSubmit={handleSubmit} noValidate>
@@ -185,19 +187,19 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
           )}
 
           <Input
-            label="Item Name"
+            label={t('budgetItemForm.itemName')}
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={errors.name}
-            placeholder="e.g., Lumber materials"
+            placeholder={t('budgetItemForm.itemNamePlaceholder')}
             fullWidth
             required
             autoFocus
           />
 
           <Select
-            label="Category"
+            label={t('common.category')}
             name="category"
             value={formData.category}
             onChange={handleChange}
@@ -208,7 +210,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Estimated Cost"
+              label={t('budgetItemForm.estimatedCost')}
               name="estimatedCost"
               type="number"
               step="0.01"
@@ -222,7 +224,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
             />
 
             <Input
-              label="Actual Cost"
+              label={t('budgetItemForm.actualCost')}
               name="actualCost"
               type="number"
               step="0.01"
@@ -237,12 +239,12 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
           </div>
 
           <Textarea
-            label="Notes"
+            label={t('common.notes')}
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             error={errors.notes}
-            placeholder="Add any additional notes..."
+            placeholder={t('budgetItemForm.notesPlaceholder')}
             rows={3}
             fullWidth
           />
@@ -255,7 +257,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -263,7 +265,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
             loading={isSubmitting}
             disabled={isSubmitting}
           >
-            {isEditMode ? 'Update Item' : 'Add Item'}
+            {isEditMode ? t('budgetItemForm.updateButton') : t('budgetItemForm.addButton')}
           </Button>
         </ModalFooter>
       </form>

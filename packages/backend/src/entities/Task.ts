@@ -64,14 +64,17 @@ export class Task {
   @Column({ name: 'completed_date', type: 'date', nullable: true })
   completedDate?: Date;
 
-  @Column({ name: 'estimated_price', type: 'decimal', precision: 12, scale: 2, nullable: true })
-  estimatedPrice?: number;
+  @Column({ name: 'price', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  price?: number;
+
+  @Column({ name: 'amount', type: 'decimal', precision: 12, scale: 2, default: 1 })
+  amount: number;
 
   @Column({ name: 'actual_price', type: 'decimal', precision: 12, scale: 2, nullable: true })
   actualPrice?: number;
 
-  @Column({ name: 'per_unit', type: 'varchar', length: 50, nullable: true })
-  perUnit?: string;
+  @Column({ name: 'unit', type: 'varchar', length: 50, nullable: true })
+  unit?: string;
 
   @Column({ name: 'assigned_to', type: 'uuid', nullable: true })
   assignedTo?: string;

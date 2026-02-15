@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from './ui/Badge';
 import { Divider } from './ui/Divider';
 import { Select } from './ui/Select';
@@ -13,9 +14,10 @@ export interface Task {
   priority: TaskPriority;
   dueDate?: string;
   completedDate?: string;
-  estimatedPrice?: number;
+  price?: number;
+  amount?: number;
   actualPrice?: number;
-  perUnit?: string;
+  unit?: string;
   notes: string[];
   createdAt: string;
   updatedAt: string;
@@ -52,12 +54,14 @@ export const TaskList: React.FC<TaskListProps> = ({
   onViewDetails,
   onStatusChange,
 }) => {
+  const { t, i18n } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -90,18 +94,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   };
 
   const getTaskStatusLabel = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.TODO:
-        return 'To Do';
-      case TaskStatus.IN_PROGRESS:
-        return 'In Progress';
-      case TaskStatus.COMPLETED:
-        return 'Completed';
-      case TaskStatus.BLOCKED:
-        return 'Blocked';
-      default:
-        return status;
-    }
+    return t(`taskStatus.${status}`);
   };
 
   const getTaskPriorityBadgeVariant = (priority: TaskPriority) => {
@@ -120,18 +113,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   };
 
   const getTaskPriorityLabel = (priority: TaskPriority) => {
-    switch (priority) {
-      case TaskPriority.LOW:
-        return 'Low';
-      case TaskPriority.MEDIUM:
-        return 'Medium';
-      case TaskPriority.HIGH:
-        return 'High';
-      case TaskPriority.URGENT:
-        return 'Urgent';
-      default:
-        return priority;
-    }
+    return t(`taskPriority.${priority}`);
   };
 
   // Filter tasks based on selected filters
@@ -150,25 +132,25 @@ export const TaskList: React.FC<TaskListProps> = ({
   }, [tasks, statusFilter, priorityFilter]);
 
   const statusOptions = [
-    { value: 'all', label: 'All Statuses' },
-    { value: TaskStatus.TODO, label: 'To Do' },
-    { value: TaskStatus.IN_PROGRESS, label: 'In Progress' },
-    { value: TaskStatus.COMPLETED, label: 'Completed' },
-    { value: TaskStatus.BLOCKED, label: 'Blocked' },
+    { value: 'all', label: t('taskList.allStatuses') },
+    { value: TaskStatus.TODO, label: t('taskStatus.todo') },
+    { value: TaskStatus.IN_PROGRESS, label: t('taskStatus.in_progress') },
+    { value: TaskStatus.COMPLETED, label: t('taskStatus.completed') },
+    { value: TaskStatus.BLOCKED, label: t('taskStatus.blocked') },
   ];
 
   const priorityOptions = [
-    { value: 'all', label: 'All Priorities' },
-    { value: TaskPriority.LOW, label: 'Low' },
-    { value: TaskPriority.MEDIUM, label: 'Medium' },
-    { value: TaskPriority.HIGH, label: 'High' },
-    { value: TaskPriority.URGENT, label: 'Urgent' },
+    { value: 'all', label: t('taskList.allPriorities') },
+    { value: TaskPriority.LOW, label: t('taskPriority.low') },
+    { value: TaskPriority.MEDIUM, label: t('taskPriority.medium') },
+    { value: TaskPriority.HIGH, label: t('taskPriority.high') },
+    { value: TaskPriority.URGENT, label: t('taskPriority.urgent') },
   ];
 
   if (tasks.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-gray-500">No tasks yet</p>
+        <p className="text-sm text-gray-500">{t('taskList.noTasks')}</p>
       </div>
     );
   }
@@ -179,7 +161,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       <div className="flex gap-4 items-end">
         <div className="flex-1">
           <Select
-            label="Status"
+            label={t('common.status')}
             options={statusOptions}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -188,7 +170,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         </div>
         <div className="flex-1">
           <Select
-            label="Priority"
+            label={t('common.priority')}
             options={priorityOptions}
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
@@ -199,13 +181,13 @@ export const TaskList: React.FC<TaskListProps> = ({
 
       {/* Task Count */}
       <div className="text-sm text-gray-600">
-        Showing {filteredTasks.length} of {tasks.length} tasks
+        {t('taskList.showingTasks', { filtered: filteredTasks.length, total: tasks.length })}
       </div>
 
       {/* Task List */}
       {filteredTasks.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-sm text-gray-500">No tasks match the selected filters</p>
+          <p className="text-sm text-gray-500">{t('taskList.noTasksMatch')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -253,10 +235,10 @@ export const TaskList: React.FC<TaskListProps> = ({
                           className="text-xs px-2 py-1 rounded border border-gray-300 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <option value={TaskStatus.TODO}>To Do</option>
-                          <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
-                          <option value={TaskStatus.COMPLETED}>Completed</option>
-                          <option value={TaskStatus.BLOCKED}>Blocked</option>
+                          <option value={TaskStatus.TODO}>{t('taskStatus.todo')}</option>
+                          <option value={TaskStatus.IN_PROGRESS}>{t('taskStatus.in_progress')}</option>
+                          <option value={TaskStatus.COMPLETED}>{t('taskStatus.completed')}</option>
+                          <option value={TaskStatus.BLOCKED}>{t('taskStatus.blocked')}</option>
                         </select>
                       ) : (
                         <Badge
@@ -292,26 +274,20 @@ export const TaskList: React.FC<TaskListProps> = ({
                     >
                       {task.dueDate && (
                         <span className={taskIsOverdue ? 'font-medium' : ''}>
-                          Due: {formatDate(task.dueDate)}
+                          {t('taskList.due')} {formatDate(task.dueDate)}
                         </span>
                       )}
                       {task.completedDate && (
-                        <span>Completed: {formatDate(task.completedDate)}</span>
-                      )}
-                      {task.estimatedPrice !== undefined && task.estimatedPrice !== null && (
-                        <span>
-                          Est: ${Number(task.estimatedPrice).toFixed(2)}
-                          {task.perUnit && ` / ${task.perUnit}`}
-                        </span>
+                        <span>{t('taskList.completed')} {formatDate(task.completedDate)}</span>
                       )}
                       {task.actualPrice !== undefined && task.actualPrice !== null && (
                         <span>
-                          Actual: ${Number(task.actualPrice).toFixed(2)}
-                          {task.perUnit && ` / ${task.perUnit}`}
+                          {t('taskList.actual')} ${Number(task.actualPrice).toFixed(2)}
+                          {task.unit && ` (${Number(task.amount || 1)} ${task.unit})`}
                         </span>
                       )}
                       {taskIsOverdue && (
-                        <span className="font-medium text-red-600">⚠ Overdue</span>
+                        <span className="font-medium text-red-600">⚠ {t('common.overdue')}</span>
                       )}
                     </div>
                   </div>
@@ -323,9 +299,9 @@ export const TaskList: React.FC<TaskListProps> = ({
                       <button
                         onClick={() => onViewDetails(task)}
                         className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                        title="View details"
+                        title={t('common.details')}
                       >
-                        Details
+                        {t('common.details')}
                       </button>
                     )}
 
@@ -334,9 +310,9 @@ export const TaskList: React.FC<TaskListProps> = ({
                       <button
                         onClick={() => onComplete(task)}
                         className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors"
-                        title="Mark as complete"
+                        title={t('common.complete')}
                       >
-                        Complete
+                        {t('common.complete')}
                       </button>
                     )}
 
@@ -345,7 +321,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                       <button
                         onClick={() => onEdit(task)}
                         className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                        title="Edit task"
+                        title={t('common.edit')}
                       >
                         <svg
                           className="w-4 h-4"
@@ -368,7 +344,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                       <button
                         onClick={() => onDelete(task)}
                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Delete task"
+                        title={t('common.delete')}
                       >
                         <svg
                           className="w-4 h-4"

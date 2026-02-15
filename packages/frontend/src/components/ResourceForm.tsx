@@ -6,6 +6,7 @@ import { Button } from './ui/Button';
 import { Modal, ModalFooter } from './ui/Modal';
 import { apiClient } from '../utils/api';
 import { ResourceType, ResourceStatus, Resource, Supplier } from './ResourceList';
+import { useTranslation } from 'react-i18next';
 
 export interface ResourceFormData {
   name: string;
@@ -36,6 +37,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
   projectId,
   resource,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ResourceFormData>({
     name: '',
     type: ResourceType.MATERIAL,
@@ -133,42 +135,42 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
     const newErrors: Partial<Record<keyof ResourceFormData, string>> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Resource name is required';
+      newErrors.name = t('resourceForm.validation.nameRequired');
     }
 
     if (!formData.quantity) {
-      newErrors.quantity = 'Quantity is required';
+      newErrors.quantity = t('resourceForm.validation.quantityRequired');
     } else if (isNaN(parseFloat(formData.quantity))) {
-      newErrors.quantity = 'Quantity must be a valid number';
+      newErrors.quantity = t('resourceForm.validation.quantityInvalid');
     } else if (parseFloat(formData.quantity) <= 0) {
-      newErrors.quantity = 'Quantity must be greater than zero';
+      newErrors.quantity = t('resourceForm.validation.quantityPositive');
     }
 
     if (!formData.unit.trim()) {
-      newErrors.unit = 'Unit is required';
+      newErrors.unit = t('resourceForm.validation.unitRequired');
     }
 
     if (!formData.cost) {
-      newErrors.cost = 'Cost is required';
+      newErrors.cost = t('resourceForm.validation.costRequired');
     } else if (isNaN(parseFloat(formData.cost))) {
-      newErrors.cost = 'Cost must be a valid number';
+      newErrors.cost = t('resourceForm.validation.costInvalid');
     } else if (parseFloat(formData.cost) < 0) {
-      newErrors.cost = 'Cost cannot be negative';
+      newErrors.cost = t('resourceForm.validation.costNegative');
     }
 
     // Validate status transitions
     if (formData.status === ResourceStatus.ORDERED) {
       if (!formData.orderDate) {
-        newErrors.orderDate = 'Order date is required when status is Ordered';
+        newErrors.orderDate = t('resourceForm.validation.orderDateRequired');
       }
       if (!formData.expectedDeliveryDate) {
-        newErrors.expectedDeliveryDate = 'Expected delivery date is required when status is Ordered';
+        newErrors.expectedDeliveryDate = t('resourceForm.validation.expectedDeliveryRequired');
       }
     }
 
     if (formData.status === ResourceStatus.RECEIVED) {
       if (!formData.actualDeliveryDate) {
-        newErrors.actualDeliveryDate = 'Actual delivery date is required when status is Received';
+        newErrors.actualDeliveryDate = t('resourceForm.validation.actualDeliveryRequired');
       }
     }
 
@@ -224,21 +226,21 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
   };
 
   const typeOptions = [
-    { value: ResourceType.MATERIAL, label: 'Material' },
-    { value: ResourceType.EQUIPMENT, label: 'Equipment' },
-    { value: ResourceType.SUBCONTRACTOR, label: 'Subcontractor' },
-    { value: ResourceType.OTHER, label: 'Other' },
+    { value: ResourceType.MATERIAL, label: t('resourceType.material') },
+    { value: ResourceType.EQUIPMENT, label: t('resourceType.equipment') },
+    { value: ResourceType.SUBCONTRACTOR, label: t('resourceType.subcontractor') },
+    { value: ResourceType.OTHER, label: t('resourceType.other') },
   ];
 
   const statusOptions = [
-    { value: ResourceStatus.NEEDED, label: 'Needed' },
-    { value: ResourceStatus.ORDERED, label: 'Ordered' },
-    { value: ResourceStatus.RECEIVED, label: 'Received' },
-    { value: ResourceStatus.CANCELLED, label: 'Cancelled' },
+    { value: ResourceStatus.NEEDED, label: t('resourceStatus.needed') },
+    { value: ResourceStatus.ORDERED, label: t('resourceStatus.ordered') },
+    { value: ResourceStatus.RECEIVED, label: t('resourceStatus.received') },
+    { value: ResourceStatus.CANCELLED, label: t('resourceStatus.cancelled') },
   ];
 
   const supplierOptions = [
-    { value: '', label: 'No supplier' },
+    { value: '', label: t('resourceForm.noSupplier') },
     ...suppliers.map((supplier) => ({
       value: supplier.id,
       label: supplier.name,
@@ -249,7 +251,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit Resource' : 'Add Resource'}
+      title={isEditMode ? t('resourceForm.editTitle') : t('resourceForm.addTitle')}
       size="lg"
     >
       <form onSubmit={handleSubmit} noValidate>
@@ -261,12 +263,12 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
           )}
 
           <Input
-            label="Resource Name"
+            label={t('resourceForm.resourceName')}
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={errors.name}
-            placeholder="e.g., Hardwood flooring"
+            placeholder={t('resourceForm.resourceNamePlaceholder')}
             fullWidth
             required
             autoFocus
@@ -274,7 +276,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <Select
-              label="Type"
+              label={t('common.type')}
               name="type"
               value={formData.type}
               onChange={handleChange}
@@ -284,7 +286,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             />
 
             <Select
-              label="Status"
+              label={t('common.status')}
               name="status"
               value={formData.status}
               onChange={handleChange}
@@ -296,7 +298,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Quantity"
+              label={t('resourceForm.quantity')}
               name="quantity"
               type="number"
               step="0.01"
@@ -310,19 +312,19 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             />
 
             <Input
-              label="Unit"
+              label={t('resourceForm.unit')}
               name="unit"
               value={formData.unit}
               onChange={handleChange}
               error={errors.unit}
-              placeholder="e.g., sq ft, boxes, hours"
+              placeholder={t('resourceForm.unitPlaceholder')}
               fullWidth
               required
             />
           </div>
 
           <Input
-            label="Cost"
+            label={t('resourceForm.cost')}
             name="cost"
             type="number"
             step="0.01"
@@ -336,7 +338,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
           />
 
           <Select
-            label="Supplier"
+            label={t('resourceForm.supplier')}
             name="supplierId"
             value={formData.supplierId}
             onChange={handleChange}
@@ -349,7 +351,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
           {(formData.status === ResourceStatus.ORDERED || formData.status === ResourceStatus.RECEIVED) && (
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Order Date"
+                label={t('resourceForm.orderDate')}
                 name="orderDate"
                 type="date"
                 value={formData.orderDate}
@@ -360,7 +362,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
               />
 
               <Input
-                label="Expected Delivery Date"
+                label={t('resourceForm.expectedDeliveryDate')}
                 name="expectedDeliveryDate"
                 type="date"
                 value={formData.expectedDeliveryDate}
@@ -374,7 +376,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
 
           {formData.status === ResourceStatus.RECEIVED && (
             <Input
-              label="Actual Delivery Date"
+              label={t('resourceForm.actualDeliveryDate')}
               name="actualDeliveryDate"
               type="date"
               value={formData.actualDeliveryDate}
@@ -386,12 +388,12 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
           )}
 
           <Textarea
-            label="Notes"
+            label={t('common.notes')}
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             error={errors.notes}
-            placeholder="Add any additional notes..."
+            placeholder={t('resourceForm.notesPlaceholder')}
             rows={3}
             fullWidth
           />
@@ -404,7 +406,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             onClick={handleCancel}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -412,7 +414,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             loading={isSubmitting}
             disabled={isSubmitting}
           >
-            {isEditMode ? 'Update Resource' : 'Add Resource'}
+            {isEditMode ? t('resourceForm.updateButton') : t('resourceForm.addButton')}
           </Button>
         </ModalFooter>
       </form>

@@ -113,7 +113,7 @@ describe('TaskService', () => {
         description: 'Install drywall in living room',
         priority: TaskPriority.HIGH,
         dueDate: new Date('2024-03-15'),
-        estimatedPrice: 1500,
+        actualPrice: 1500,
       };
 
       const task = await taskService.createTask(taskData);
@@ -124,7 +124,7 @@ describe('TaskService', () => {
       expect(task.description).toBe(taskData.description);
       expect(task.priority).toBe(taskData.priority);
       expect(task.status).toBe(TaskStatus.TODO);
-      expect(task.estimatedPrice).toBe(taskData.estimatedPrice);
+      expect(task.actualPrice).toBe(taskData.actualPrice);
       expect(task.notes).toEqual([]);
     });
 
@@ -149,7 +149,6 @@ describe('TaskService', () => {
 
       const task = await taskService.createTask(taskData);
 
-      expect(task.estimatedPrice).toBeNull();
       expect(task.actualPrice).toBeNull();
     });
 
@@ -229,12 +228,13 @@ describe('TaskService', () => {
       const updated = await taskService.updateTask(task.id, {
         name: 'Updated Name',
         priority: TaskPriority.HIGH,
-        estimatedPrice: 2000,
+        price: 2000,
+        amount: 1,
       });
 
       expect(updated.name).toBe('Updated Name');
       expect(updated.priority).toBe(TaskPriority.HIGH);
-      expect(updated.estimatedPrice).toBe(2000);
+      expect(updated.actualPrice).toBe(2000);
     });
 
     it('should set completedDate when status changes to COMPLETED', async () => {
@@ -427,24 +427,23 @@ describe('TaskService', () => {
   });
 
   describe('calculateTotalTaskCosts', () => {
-    it('should calculate total estimated and actual costs', async () => {
+    it('should calculate total actual costs', async () => {
       await taskService.createTask({
         projectId: testProjectId,
         name: 'Task 1',
-        estimatedPrice: 1000,
-        actualPrice: 900,
+        price: 900,
+        amount: 1,
       });
 
       await taskService.createTask({
         projectId: testProjectId,
         name: 'Task 2',
-        estimatedPrice: 2000,
-        actualPrice: 2100,
+        price: 2100,
+        amount: 1,
       });
 
       const costs = await taskService.calculateTotalTaskCosts(testProjectId);
 
-      expect(costs.estimated).toBe(3000);
       expect(costs.actual).toBe(3000);
     });
 
@@ -452,8 +451,8 @@ describe('TaskService', () => {
       await taskService.createTask({
         projectId: testProjectId,
         name: 'Task 1',
-        estimatedPrice: 1000,
-        actualPrice: 900,
+        price: 900,
+        amount: 1,
       });
 
       await taskService.createTask({
@@ -463,7 +462,6 @@ describe('TaskService', () => {
 
       const costs = await taskService.calculateTotalTaskCosts(testProjectId);
 
-      expect(costs.estimated).toBe(1000);
       expect(costs.actual).toBe(900);
     });
 
@@ -478,7 +476,6 @@ describe('TaskService', () => {
 
       const costs = await taskService.calculateTotalTaskCosts(project.id);
 
-      expect(costs.estimated).toBe(0);
       expect(costs.actual).toBe(0);
     });
   });
@@ -512,9 +509,9 @@ describe('TaskService', () => {
       expect(tasks.length).toBe(2);
       expect(tasks[0].name).toBe('Template Task 1');
       expect(tasks[0].description).toBe('Description 1');
-      expect(Number(tasks[0].estimatedPrice)).toBe(500);
+      expect(Number(tasks[0].actualPrice)).toBe(500);
       expect(tasks[1].name).toBe('Template Task 2');
-      expect(Number(tasks[1].estimatedPrice)).toBe(1000);
+      expect(Number(tasks[1].actualPrice)).toBe(1000);
     });
 
     it('should set default status and priority for bulk created tasks', async () => {

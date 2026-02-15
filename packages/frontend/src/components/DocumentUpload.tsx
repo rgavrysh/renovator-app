@@ -4,6 +4,7 @@ import { Select } from './ui/Select';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { Modal, ModalFooter } from './ui/Modal';
+import { useTranslation } from 'react-i18next';
 
 export enum DocumentType {
   CONTRACT = 'contract',
@@ -31,6 +32,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   onSuccess,
   projectId,
 }) => {
+  const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>(DocumentType.OTHER);
   const [description, setDescription] = useState('');
@@ -102,7 +104,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setValidationError('Please select a file to upload');
+      setValidationError(t('documentUpload.selectFile'));
       return;
     }
 
@@ -198,20 +200,20 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   };
 
   const documentTypeOptions = [
-    { value: DocumentType.CONTRACT, label: 'Contract' },
-    { value: DocumentType.INVOICE, label: 'Invoice' },
-    { value: DocumentType.RECEIPT, label: 'Receipt' },
-    { value: DocumentType.PHOTO, label: 'Photo' },
-    { value: DocumentType.PERMIT, label: 'Permit' },
-    { value: DocumentType.WARRANTY, label: 'Warranty' },
-    { value: DocumentType.OTHER, label: 'Other' },
+    { value: DocumentType.CONTRACT, label: t('documentType.contract') },
+    { value: DocumentType.INVOICE, label: t('documentType.invoice') },
+    { value: DocumentType.RECEIPT, label: t('documentType.receipt') },
+    { value: DocumentType.PHOTO, label: t('documentType.photo') },
+    { value: DocumentType.PERMIT, label: t('documentType.permit') },
+    { value: DocumentType.WARRANTY, label: t('documentType.warranty') },
+    { value: DocumentType.OTHER, label: t('documentType.other') },
   ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Upload Document"
+      title={t('documentUpload.title')}
       size="md"
     >
       <div className="space-y-4">
@@ -224,7 +226,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         {/* File picker area */}
         <div>
           <label htmlFor="document-file-input" className="block text-sm font-medium text-gray-700 mb-1.5">
-            Document File
+            {t('documentUpload.documentFile')}
           </label>
           <div
             onDrop={handleDrop}
@@ -287,13 +289,13 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                 </svg>
                 <div>
                   <p className="text-sm text-gray-600">
-                    <span className="font-medium text-primary-600">Click to browse</span> or drag and drop
+                    <span className="font-medium text-primary-600">{t('documentUpload.clickToBrowse')}</span> {t('documentUpload.orDragDrop')}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    Supported formats: PDF, JPG, PNG, HEIC, DOC, DOCX, XLS, XLSX
+                    {t('documentUpload.supportedFormats')}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Maximum file size: 50MB
+                    {t('documentUpload.maxFileSize')}
                   </p>
                 </div>
               </div>
@@ -308,7 +310,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         {isUploading && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Uploading...</span>
+              <span className="text-gray-600">{t('common.uploading')}</span>
               <span className="font-medium text-gray-900">{uploadProgress}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -322,7 +324,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
         {/* Document type */}
         <Select
-          label="Document Type"
+          label={t('documentUpload.documentType')}
           value={documentType}
           onChange={(e) => setDocumentType(e.target.value as DocumentType)}
           options={documentTypeOptions}
@@ -333,10 +335,10 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
         {/* Description */}
         <Textarea
-          label="Description"
+          label={t('common.description')}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add a description for this document..."
+          placeholder={t('documentUpload.descriptionPlaceholder')}
           rows={3}
           fullWidth
           disabled={isUploading}
@@ -344,11 +346,11 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
         {/* Tags */}
         <Input
-          label="Tags"
+          label={t('documentUpload.tags')}
           value={tags}
           onChange={(e) => setTags(e.target.value)}
-          placeholder="e.g., important, client-facing, final"
-          helperText="Separate multiple tags with commas"
+          placeholder={t('documentUpload.tagsPlaceholder')}
+          helperText={t('documentUpload.tagsHelper')}
           fullWidth
           disabled={isUploading}
         />
@@ -361,7 +363,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           onClick={handleClose}
           disabled={isUploading}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           type="button"
@@ -370,7 +372,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           disabled={!selectedFile || isUploading}
           loading={isUploading}
         >
-          Upload
+          {t('documentUpload.upload')}
         </Button>
       </ModalFooter>
     </Modal>

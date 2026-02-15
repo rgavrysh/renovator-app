@@ -20,7 +20,7 @@ const budgetService = new BudgetService();
 router.post('/:projectId/tasks', authenticate, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
-    const { name, description, milestoneId, status, priority, dueDate, estimatedPrice, actualPrice, assignedTo } = req.body;
+    const { name, description, milestoneId, status, priority, dueDate, price, amount, unit, assignedTo } = req.body;
 
     // Validate required fields
     if (!name) {
@@ -58,14 +58,15 @@ router.post('/:projectId/tasks', authenticate, async (req: Request, res: Respons
       }
     }
 
-    // Validate pricing if provided
-    if (estimatedPrice !== undefined && (typeof estimatedPrice !== 'number' || estimatedPrice < 0)) {
-      res.status(400).json({ error: 'estimatedPrice must be a non-negative number' });
+    // Validate price if provided
+    if (price !== undefined && price !== null && (typeof price !== 'number' || price < 0)) {
+      res.status(400).json({ error: 'price must be a non-negative number' });
       return;
     }
 
-    if (actualPrice !== undefined && (typeof actualPrice !== 'number' || actualPrice < 0)) {
-      res.status(400).json({ error: 'actualPrice must be a non-negative number' });
+    // Validate amount if provided
+    if (amount !== undefined && amount !== null && (typeof amount !== 'number' || amount < 0)) {
+      res.status(400).json({ error: 'amount must be a non-negative number' });
       return;
     }
 
@@ -77,13 +78,14 @@ router.post('/:projectId/tasks', authenticate, async (req: Request, res: Respons
       status,
       priority,
       dueDate: parsedDueDate,
-      estimatedPrice,
-      actualPrice,
+      price,
+      amount,
+      unit,
       assignedTo,
     });
 
     // Recalculate budget totals if task has pricing
-    if (actualPrice !== undefined && actualPrice !== null) {
+    if (price !== undefined && price !== null) {
       try {
         await budgetService.recalculateBudgetTotalsForProject(projectId);
       } catch (error) {
@@ -238,7 +240,7 @@ router.get('/:projectId/tasks', authenticate, async (req: Request, res: Response
 router.put('/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, description, status, priority, dueDate, completedDate, estimatedPrice, actualPrice, assignedTo, milestoneId } = req.body;
+    const { name, description, status, priority, dueDate, completedDate, price, amount, unit, assignedTo, milestoneId } = req.body;
 
     // Get task to verify it exists
     let task;
@@ -307,27 +309,30 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
       }
     }
 
-    // Validate pricing if provided
-    if (estimatedPrice !== undefined) {
-      if (estimatedPrice === null) {
-        updateData.estimatedPrice = null;
-      } else if (typeof estimatedPrice !== 'number' || estimatedPrice < 0) {
-        res.status(400).json({ error: 'estimatedPrice must be a non-negative number' });
+    // Validate price if provided
+    if (price !== undefined) {
+      if (price === null) {
+        updateData.price = null;
+      } else if (typeof price !== 'number' || price < 0) {
+        res.status(400).json({ error: 'price must be a non-negative number' });
         return;
       } else {
-        updateData.estimatedPrice = estimatedPrice;
+        updateData.price = price;
       }
     }
 
-    if (actualPrice !== undefined) {
-      if (actualPrice === null) {
-        updateData.actualPrice = null;
-      } else if (typeof actualPrice !== 'number' || actualPrice < 0) {
-        res.status(400).json({ error: 'actualPrice must be a non-negative number' });
+    // Validate amount if provided
+    if (amount !== undefined) {
+      if (typeof amount !== 'number' || amount < 0) {
+        res.status(400).json({ error: 'amount must be a non-negative number' });
         return;
-      } else {
-        updateData.actualPrice = actualPrice;
       }
+      updateData.amount = amount;
+    }
+
+    // Handle unit
+    if (unit !== undefined) {
+      updateData.unit = unit;
     }
 
     if (assignedTo !== undefined) {
@@ -341,7 +346,7 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
     const updatedTask = await taskService.updateTask(id, updateData);
 
     // Recalculate budget totals if task pricing was updated
-    if (actualPrice !== undefined) {
+    if (price !== undefined || amount !== undefined) {
       try {
         await budgetService.recalculateBudgetTotalsForProject(task.projectId);
       } catch (error) {
@@ -494,7 +499,7 @@ router.get('/work-items/:id', authenticate, async (req: Request, res: Response) 
  */
 router.post('/work-items', authenticate, async (req: Request, res: Response) => {
   try {
-    const { name, description, category, estimatedDuration, defaultPrice } = req.body;
+    const { name, description, category, estimatedDuration, defaultPrice, unit } = req.body;
 
     // Validate required fields
     if (!name || !category) {
@@ -526,6 +531,7 @@ router.post('/work-items', authenticate, async (req: Request, res: Response) => 
       category,
       estimatedDuration,
       defaultPrice,
+      unit: unit || undefined,
       isDefault: false,
       ownerId: req.userId,
     });

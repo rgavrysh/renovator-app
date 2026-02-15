@@ -3,6 +3,7 @@ import { Card, CardHeader, CardContent } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { Alert } from './ui/Alert';
+import { useTranslation } from 'react-i18next';
 
 export enum ResourceType {
   MATERIAL = 'material',
@@ -58,6 +59,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
   className = '',
   onResourceClick,
 }) => {
+  const { t, i18n } = useTranslation();
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +130,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
   };
 
   const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
@@ -138,7 +140,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -146,13 +148,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
   };
 
   const getStatusLabel = (status: ResourceStatus): string => {
-    const labels: Record<ResourceStatus, string> = {
-      [ResourceStatus.NEEDED]: 'Needed',
-      [ResourceStatus.ORDERED]: 'Ordered',
-      [ResourceStatus.RECEIVED]: 'Received',
-      [ResourceStatus.CANCELLED]: 'Cancelled',
-    };
-    return labels[status];
+    return t(`resourceStatus.${status}`);
   };
 
   const getStatusColor = (status: ResourceStatus): 'default' | 'primary' | 'success' | 'warning' | 'danger' => {
@@ -166,13 +162,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
   };
 
   const getTypeLabel = (type: ResourceType): string => {
-    const labels: Record<ResourceType, string> = {
-      [ResourceType.MATERIAL]: 'Material',
-      [ResourceType.EQUIPMENT]: 'Equipment',
-      [ResourceType.SUBCONTRACTOR]: 'Subcontractor',
-      [ResourceType.OTHER]: 'Other',
-    };
-    return labels[type];
+    return t(`resourceType.${type}`);
   };
 
   const getTypeIcon = (type: ResourceType): React.ReactNode => {
@@ -247,8 +237,8 @@ export const ResourceList: React.FC<ResourceListProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           }
-          title="No resources"
-          description="Add resources to track materials, equipment, and subcontractors"
+          title={t('resourceList.noResources')}
+          description={t('resourceList.addResources')}
         />
       );
     }
@@ -266,7 +256,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span className="font-medium">
-                {overdueCount} {overdueCount === 1 ? 'resource' : 'resources'} overdue for delivery
+                {t('resourceList.overdueDelivery', { count: overdueCount })}
               </span>
             </div>
           </Alert>
@@ -288,7 +278,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                   {getStatusLabel(status)}
                 </Badge>
                 <span className="text-xs text-gray-500">
-                  {statusResources.length} {statusResources.length === 1 ? 'item' : 'items'}
+                  {statusResources.length} {statusResources.length === 1 ? t('common.item') : t('common.items')}
                 </span>
               </div>
 
@@ -314,7 +304,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span className="text-xs font-medium">
-                            Delivery overdue by more than 2 days
+                            {t('resourceList.deliveryOverdue')}
                           </span>
                         </div>
                       )}
@@ -342,7 +332,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
                             {/* Quantity */}
                             <div>
-                              <p className="text-xs text-gray-500 mb-0.5">Quantity</p>
+                              <p className="text-xs text-gray-500 mb-0.5">{t('resourceList.quantity')}</p>
                               <p className="text-sm font-medium text-gray-900">
                                 {resource.quantity} {resource.unit}
                               </p>
@@ -350,7 +340,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
 
                             {/* Cost */}
                             <div>
-                              <p className="text-xs text-gray-500 mb-0.5">Cost</p>
+                              <p className="text-xs text-gray-500 mb-0.5">{t('resourceList.cost')}</p>
                               <p className="text-sm font-medium text-gray-900">
                                 {formatCurrency(resource.cost)}
                               </p>
@@ -359,7 +349,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                             {/* Supplier */}
                             {resource.supplier && (
                               <div>
-                                <p className="text-xs text-gray-500 mb-0.5">Supplier</p>
+                                <p className="text-xs text-gray-500 mb-0.5">{t('resourceList.supplier')}</p>
                                 <p className="text-sm font-medium text-gray-900 truncate">
                                   {resource.supplier.name}
                                 </p>
@@ -371,8 +361,8 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                               <div>
                                 <p className="text-xs text-gray-500 mb-0.5">
                                   {resource.status === ResourceStatus.RECEIVED
-                                    ? 'Delivered'
-                                    : 'Expected Delivery'}
+                                    ? t('resourceList.delivered')
+                                    : t('resourceList.expectedDelivery')}
                                 </p>
                                 <p className={`text-sm font-medium ${isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
                                   {formatDate(
@@ -405,7 +395,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
   if (showCard) {
     return (
       <Card className={className}>
-        <CardHeader title="Resources" />
+        <CardHeader title={t('resourceList.title')} />
         <CardContent>{renderContent()}</CardContent>
       </Card>
     );
