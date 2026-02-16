@@ -26,6 +26,7 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-renovator}
       KC_DB_USERNAME: ${POSTGRES_USER:-renovator}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-renovator123}
+      KC_HOSTNAME: localhost
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
@@ -58,7 +59,8 @@ services:
       DATABASE_NAME: ${POSTGRES_DB:-renovator}
       DATABASE_USER: ${POSTGRES_USER:-renovator}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-renovator123}
-      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080}
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_URL:-http://localhost:8080}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-renovator}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-renovator-app}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}

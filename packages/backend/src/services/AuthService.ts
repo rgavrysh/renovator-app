@@ -47,12 +47,17 @@ export class AuthService {
     this.clientId = config.keycloak.clientId;
     this.clientSecret = config.keycloak.clientSecret;
 
-    const realmUrl = `${this.keycloakUrl}/realms/${this.realm}`;
-    this.authorizationEndpoint = `${realmUrl}/protocol/openid-connect/auth`;
-    this.tokenEndpoint = `${realmUrl}/protocol/openid-connect/token`;
-    this.userInfoEndpoint = `${realmUrl}/protocol/openid-connect/userinfo`;
-    this.tokenIntrospectionEndpoint = `${realmUrl}/protocol/openid-connect/token/introspect`;
-    this.logoutEndpoint = `${realmUrl}/protocol/openid-connect/logout`;
+    // Internal URL for server-to-server calls (e.g. http://keycloak:8080 in Docker)
+    const internalRealmUrl = `${this.keycloakUrl}/realms/${this.realm}`;
+    // Public URL for browser-facing redirects (e.g. http://localhost:8080)
+    const publicRealmUrl = `${config.keycloak.publicUrl}/realms/${this.realm}`;
+
+    this.authorizationEndpoint = `${publicRealmUrl}/protocol/openid-connect/auth`;
+    this.tokenEndpoint = `${internalRealmUrl}/protocol/openid-connect/token`;
+    this.userInfoEndpoint = `${internalRealmUrl}/protocol/openid-connect/userinfo`;
+    this.tokenIntrospectionEndpoint = `${internalRealmUrl}/protocol/openid-connect/token/introspect`;
+    this.logoutEndpoint = `${internalRealmUrl}/protocol/openid-connect/logout`;
+
     this.sessionService = new SessionService();
   }
 

@@ -16,6 +16,7 @@ interface Config {
   };
   keycloak: {
     url: string;
+    publicUrl: string;
     realm: string;
     clientId: string;
     clientSecret: string;
@@ -45,6 +46,7 @@ const config: Config = {
   },
   keycloak: {
     url: process.env.KEYCLOAK_URL || 'http://localhost:8080',
+    publicUrl: process.env.KEYCLOAK_PUBLIC_URL || process.env.KEYCLOAK_URL || 'http://localhost:8080',
     realm: process.env.KEYCLOAK_REALM || 'renovator',
     clientId: process.env.KEYCLOAK_CLIENT_ID || 'renovator-app',
     clientSecret: process.env.KEYCLOAK_CLIENT_SECRET || '',
