@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
 import { Divider } from '../components/ui/Divider';
+import { formatCurrency } from '../utils/currency';
 import { MilestoneList, type Milestone, MilestoneStatus } from '../components/MilestoneList';
 import { MilestoneForm } from '../components/MilestoneForm';
 import { TaskList } from '../components/TaskList';
@@ -460,8 +461,9 @@ export const ProjectDetail: React.FC = () => {
         throw new Error('Not authenticated');
       }
       
-      // Call the export API endpoint
-      const response = await fetch(`${config.api.url}/api/projects/${id}/budget/export`, {
+      // Call the export API endpoint with current language
+      const currentLang = i18n.language?.startsWith('uk') ? 'uk' : 'en';
+      const response = await fetch(`${config.api.url}/api/projects/${id}/budget/export?lang=${currentLang}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -552,12 +554,7 @@ export const ProjectDetail: React.FC = () => {
     });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const fmtCurrency = (amount: number) => formatCurrency(amount, i18n.language);
 
   const calculateProgress = () => {
     if (milestones.length === 0) return 0;
@@ -915,14 +912,14 @@ export const ProjectDetail: React.FC = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">{t('projectDetail.totalEstimated')}</p>
                       <p className="text-xl font-bold text-gray-900">
-                        {formatCurrency(budget.totalEstimated)}
+                        {fmtCurrency(budget.totalEstimated)}
                       </p>
                     </div>
                     
                     <div>
                       <p className="text-xs text-gray-500 mb-1">{t('projectDetail.totalActual')}</p>
                       <p className="text-xl font-bold text-gray-900">
-                        {formatCurrency(budget.totalActual)}
+                        {fmtCurrency(budget.totalActual)}
                       </p>
                       
                       {/* Breakdown of actual costs */}
@@ -930,7 +927,7 @@ export const ProjectDetail: React.FC = () => {
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-gray-500">{t('projectDetail.fromBudgetItems')}</span>
                           <span className="font-medium text-gray-700">
-                            {formatCurrency(budget.totalActualFromItems || 0)}
+                            {fmtCurrency(budget.totalActualFromItems || 0)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
@@ -959,7 +956,7 @@ export const ProjectDetail: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-700">
-                              {formatCurrency(budget.totalActualFromTasks || 0)}
+                              {fmtCurrency(budget.totalActualFromTasks || 0)}
                             </span>
                             {budget.totalActualFromTasks > 0 && (
                               <button
@@ -985,7 +982,7 @@ export const ProjectDetail: React.FC = () => {
                             : 'text-green-600'
                         }`}
                       >
-                        {formatCurrency(budget.totalActual - budget.totalEstimated)}
+                        {fmtCurrency(budget.totalActual - budget.totalEstimated)}
                       </p>
                     </div>
 

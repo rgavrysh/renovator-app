@@ -320,8 +320,11 @@ router.get('/:projectId/budget/export', authenticate, async (req: Request, res: 
       return;
     }
 
+    // Get language from query parameter (default to 'en')
+    const lang = (req.query.lang as string) || 'en';
+
     // Generate PDF
-    const pdfBuffer = await budgetService.exportBudgetToPDF(projectId);
+    const pdfBuffer = await budgetService.exportBudgetToPDF(projectId, lang);
 
     // Set response headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');

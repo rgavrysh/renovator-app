@@ -3,6 +3,7 @@ import { Card, CardHeader, CardContent } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/currency';
 
 export enum BudgetCategory {
   LABOR = 'labor',
@@ -43,14 +44,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
+  const fmtCurrency = (amount: number): string => formatCurrency(amount, i18n.language);
 
   const calculateVariance = (item: BudgetItem): number => {
     return item.actualCost - item.estimatedCost;
@@ -163,7 +157,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
                       <div>
                         <p className="text-xs text-gray-500 mb-1">{t('budgetItemsList.estimated')}</p>
                         <p className="text-sm font-medium text-gray-900">
-                          {formatCurrency(item.estimatedCost)}
+                          {fmtCurrency(item.estimatedCost)}
                         </p>
                       </div>
 
@@ -171,7 +165,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
                       <div>
                         <p className="text-xs text-gray-500 mb-1">{t('budgetItemsList.actual')}</p>
                         <p className="text-sm font-medium text-gray-900">
-                          {formatCurrency(item.actualCost)}
+                          {fmtCurrency(item.actualCost)}
                         </p>
                       </div>
 
@@ -189,7 +183,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
                             }`}
                           >
                             {variance > 0 ? '+' : ''}
-                            {formatCurrency(variance)}
+                            {fmtCurrency(variance)}
                           </p>
                           <p
                             className={`text-xs ${

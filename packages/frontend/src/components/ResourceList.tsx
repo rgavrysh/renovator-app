@@ -4,6 +4,7 @@ import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { Alert } from './ui/Alert';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/currency';
 
 export enum ResourceType {
   MATERIAL = 'material',
@@ -129,14 +130,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
     setOverdueResources(overdue);
   };
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
+  const fmtCurrency = (amount: number): string => formatCurrency(amount, i18n.language);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -342,7 +336,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
                             <div>
                               <p className="text-xs text-gray-500 mb-0.5">{t('resourceList.cost')}</p>
                               <p className="text-sm font-medium text-gray-900">
-                                {formatCurrency(resource.cost)}
+                                {fmtCurrency(resource.cost)}
                               </p>
                             </div>
 

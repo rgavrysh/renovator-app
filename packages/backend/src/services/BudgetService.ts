@@ -5,6 +5,8 @@ import { BudgetItem, BudgetCategory } from '../entities/BudgetItem';
 import { TaskService } from './TaskService';
 import { ProjectService } from './ProjectService';
 import PDFDocument from 'pdfkit';
+import path from 'path';
+import { getPdfTranslations, translateCategory, formatPdfCurrency } from '../i18n/pdfTranslations';
 
 // UUID validation regex
 const UUID_REGEX =
@@ -289,10 +291,12 @@ export class BudgetService {
     await this.budgetRepository.save(budget);
   }
 
-  async exportBudgetToPDF(projectId: string): Promise<Buffer> {
+  async exportBudgetToPDF(projectId: string, lang: string = 'en'): Promise<Buffer> {
     if (!isValidUUID(projectId)) {
       throw new Error('Invalid project ID');
     }
+
+    const t = getPdfTranslations(lang);
 
     // Get project details
     const project = await this.projectService.getProject(projectId);
@@ -304,31 +308,43 @@ export class BudgetService {
     const tasks = await this.taskService.listTasks(projectId, {});
     const tasksWithPricing = tasks.filter(task => task.actualPrice !== null && task.actualPrice !== undefined);
 
+    // Resolve font paths (Roboto supports Cyrillic)
+    // Works in both dev (src/services/) and prod (dist/services/) by going up to package root
+    const fontsDir = path.resolve(__dirname, '..', '..', 'assets', 'fonts');
+    const fontRegular = path.join(fontsDir, 'Roboto-Regular.ttf');
+    const fontBold = path.join(fontsDir, 'Roboto-Bold.ttf');
+
     // Create PDF document
     const doc = new PDFDocument({ margin: 50 });
     const chunks: Buffer[] = [];
 
+    // Register custom fonts with Cyrillic support
+    doc.registerFont('Roboto', fontRegular);
+    doc.registerFont('Roboto-Bold', fontBold);
+
     // Collect PDF data
     doc.on('data', (chunk) => chunks.push(chunk));
 
+    // Set locale for date formatting
+    const dateLocale = lang === 'uk' ? 'uk-UA' : 'en-US';
+
     // Header Section
-    doc.fontSize(20).text('Budget Report', { align: 'center' });
+    doc.font('Roboto-Bold').fontSize(20).text(t.budgetReport, { align: 'center' });
     doc.moveDown();
     
-    doc.fontSize(12).text(`Project: ${project.name}`, { align: 'left' });
-    doc.text(`Client: ${project.clientName}`);
+    doc.font('Roboto').fontSize(12).text(`${t.project}: ${project.name}`, { align: 'left' });
+    doc.text(`${t.client}: ${project.clientName}`);
     if (project.clientEmail) {
-      doc.text(`Email: ${project.clientEmail}`);
+      doc.text(`${t.email}: ${project.clientEmail}`);
     }
     if (project.clientPhone) {
-      doc.text(`Phone: ${project.clientPhone}`);
+      doc.text(`${t.phone}: ${project.clientPhone}`);
     }
-    doc.text(`Total Budget: $${Number(budget.totalEstimated).toFixed(2)}`);
-    doc.text(`Export Date: ${new Date().toLocaleDateString()}`);
+    doc.text(`${t.exportDate}: ${new Date().toLocaleDateString(dateLocale)}`);
     doc.moveDown(2);
 
     // Items Table
-    doc.fontSize(14).text('Budget Items', { underline: true });
+    doc.font('Roboto-Bold').fontSize(14).text(t.budgetItems, { underline: true });
     doc.moveDown();
 
     // Table headers
@@ -336,18 +352,21 @@ export class BudgetService {
     const colWidths = { id: 60, name: 180, quantity: 60, unit: 80, price: 80 };
     let currentY = tableTop;
 
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('ID', 50, currentY, { width: colWidths.id });
-    doc.text('Name', 110, currentY, { width: colWidths.name });
-    doc.text('Amount', 290, currentY, { width: colWidths.quantity });
-    doc.text('Unit', 350, currentY, { width: colWidths.unit });
-    doc.text('Price', 430, currentY, { width: colWidths.price });
+    doc.fontSize(10).font('Roboto-Bold');
+    doc.text('#', 50, currentY, { width: colWidths.id });
+    doc.text(t.name, 110, currentY, { width: colWidths.name });
+    doc.text(t.amount, 290, currentY, { width: colWidths.quantity });
+    doc.text(t.unit, 350, currentY, { width: colWidths.unit });
+    doc.text(t.price, 430, currentY, { width: colWidths.price });
     
     currentY += 20;
-    doc.font('Helvetica');
+    doc.font('Roboto');
 
     // Draw line under headers
     doc.moveTo(50, currentY - 5).lineTo(550, currentY - 5).stroke();
+
+    // Sequential row number across tasks and budget items
+    let rowNumber = 1;
 
     // Add tasks with pricing
     for (let i = 0; i < tasksWithPricing.length; i++) {
@@ -359,18 +378,18 @@ export class BudgetService {
         currentY = 50;
       }
 
-      const shortId = task.id.substring(0, 8);
       const amount = task.amount ? String(Number(task.amount)) : '1';
       const unit = task.unit || '-';
-      const price = task.actualPrice ? `$${Number(task.actualPrice).toFixed(2)}` : '$0.00';
+      const price = task.actualPrice ? formatPdfCurrency(Number(task.actualPrice), lang) : formatPdfCurrency(0, lang);
 
-      doc.text(`${shortId}`, 50, currentY, { width: colWidths.id });
-      doc.text(`[Task] ${task.name}`, 110, currentY, { width: colWidths.name });
+      doc.text(`${rowNumber}`, 50, currentY, { width: colWidths.id });
+      doc.text(`[${t.task}] ${task.name}`, 110, currentY, { width: colWidths.name });
       doc.text(amount, 290, currentY, { width: colWidths.quantity });
       doc.text(unit, 350, currentY, { width: colWidths.unit });
       doc.text(price, 430, currentY, { width: colWidths.price });
       
       currentY += 20;
+      rowNumber++;
     }
 
     // Add budget items
@@ -383,16 +402,17 @@ export class BudgetService {
         currentY = 50;
       }
 
-      const shortId = item.id.substring(0, 8);
-      const price = `$${Number(item.actualCost).toFixed(2)}`;
+      const price = formatPdfCurrency(Number(item.actualCost), lang);
+      const categoryLabel = translateCategory(item.category, t);
 
-      doc.text(`${shortId}`, 50, currentY, { width: colWidths.id });
-      doc.text(`[${item.category}] ${item.name}`, 110, currentY, { width: colWidths.name });
+      doc.text(`${rowNumber}`, 50, currentY, { width: colWidths.id });
+      doc.text(`[${categoryLabel}] ${item.name}`, 110, currentY, { width: colWidths.name });
       doc.text('-', 290, currentY, { width: colWidths.quantity });
       doc.text('-', 350, currentY, { width: colWidths.unit });
       doc.text(price, 430, currentY, { width: colWidths.price });
       
       currentY += 20;
+      rowNumber++;
     }
 
     doc.moveDown(2);
@@ -403,18 +423,17 @@ export class BudgetService {
     currentY += 20;
 
     // Footer Section - Category Subtotals
-    doc.fontSize(12).font('Helvetica-Bold').text('Summary by Category', 50, currentY);
+    doc.fontSize(12).font('Roboto-Bold').text(t.summaryByCategory, 50, currentY);
     currentY += 25;
-    doc.font('Helvetica');
+    doc.font('Roboto');
 
     // Calculate category totals
-    const categoryTotals: Record<string, number> = {
-      Tasks: Number(budget.totalActualFromTasks),
-    };
+    const categoryTotals: Record<string, number> = {};
+    categoryTotals[t.tasks] = Number(budget.totalActualFromTasks);
 
     // Aggregate budget items by category
     for (const item of budget.items) {
-      const category = item.category.charAt(0).toUpperCase() + item.category.slice(1).toLowerCase();
+      const category = translateCategory(item.category, t);
       if (!categoryTotals[category]) {
         categoryTotals[category] = 0;
       }
@@ -425,7 +444,7 @@ export class BudgetService {
     for (const [category, total] of Object.entries(categoryTotals)) {
       if (total > 0) {
         doc.text(`${category}:`, 50, currentY, { continued: true });
-        doc.text(`$${total.toFixed(2)}`, { align: 'right' });
+        doc.text(formatPdfCurrency(total, lang), { align: 'right' });
         currentY += 20;
       }
     }
@@ -435,22 +454,9 @@ export class BudgetService {
     currentY += 20;
 
     // Total Summary
-    doc.font('Helvetica-Bold');
-    doc.text(`Total Estimated:`, 50, currentY, { continued: true });
-    doc.text(`$${Number(budget.totalEstimated).toFixed(2)}`, { align: 'right' });
-    currentY += 20;
-
-    doc.text(`Total Actual:`, 50, currentY, { continued: true });
-    doc.text(`$${Number(budget.totalActual).toFixed(2)}`, { align: 'right' });
-    currentY += 20;
-
-    const variance = Number(budget.totalActual) - Number(budget.totalEstimated);
-    const variancePercentage = Number(budget.totalEstimated) > 0 
-      ? ((variance / Number(budget.totalEstimated)) * 100).toFixed(1)
-      : '0.0';
-    
-    doc.text(`Variance:`, 50, currentY, { continued: true });
-    doc.text(`$${variance.toFixed(2)} (${variancePercentage}%)`, { align: 'right' });
+    doc.font('Roboto-Bold');
+    doc.text(`${t.totalActual}:`, 50, currentY, { continued: true });
+    doc.text(formatPdfCurrency(Number(budget.totalActual), lang), { align: 'right' });
 
     // Finalize PDF
     doc.end();

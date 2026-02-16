@@ -7,6 +7,7 @@ import { Button } from './ui/Button';
 import { Modal, ModalFooter } from './ui/Modal';
 import { apiClient } from '../utils/api';
 import { TaskStatus, TaskPriority } from './TaskList';
+import { formatCurrency } from '../utils/currency';
 
 export interface TaskFormData {
   name: string;
@@ -52,7 +53,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
   projectId,
   task,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [formData, setFormData] = useState<TaskFormData>({
     name: '',
     description: '',
@@ -392,7 +393,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">{t('taskForm.actualPrice')}</span>
                 <span className="text-sm font-semibold text-gray-900">
-                  ${computedActualPrice}
+                  {formatCurrency(Number(computedActualPrice), i18n.language)}
                 </span>
               </div>
             </div>

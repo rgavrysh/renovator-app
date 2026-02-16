@@ -7,6 +7,7 @@ import { Textarea } from './ui/Textarea';
 import { Divider } from './ui/Divider';
 import { apiClient } from '../utils/api';
 import { Task, TaskStatus, TaskPriority } from './TaskList';
+import { formatCurrency } from '../utils/currency';
 
 interface TaskDetailProps {
   isOpen: boolean;
@@ -224,7 +225,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
             <div>
               <p className="text-xs text-gray-500 mb-1">{t('taskDetail.price')}</p>
               <p className="text-sm font-medium text-gray-900">
-                ${Number(task.price).toFixed(2)}
+                {formatCurrency(Number(task.price), i18n.language)}
                 {task.unit && <span className="text-gray-500"> / {task.unit}</span>}
               </p>
             </div>
@@ -241,7 +242,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
             <div>
               <p className="text-xs text-gray-500 mb-1">{t('taskDetail.actualPrice')}</p>
               <p className="text-sm font-medium text-gray-900">
-                ${Number(task.actualPrice).toFixed(2)}
+                {formatCurrency(Number(task.actualPrice), i18n.language)}
               </p>
             </div>
           )}

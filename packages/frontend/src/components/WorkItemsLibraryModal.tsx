@@ -6,6 +6,7 @@ import { Spinner } from './ui/Spinner';
 import { Alert } from './ui/Alert';
 import { Badge } from './ui/Badge';
 import { apiClient } from '../utils/api';
+import { formatCurrency } from '../utils/currency';
 
 export enum WorkItemCategory {
   DEMOLITION = 'demolition',
@@ -48,7 +49,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
   onSuccess,
   projectId,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -125,12 +126,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
     return t(`workItemCategory.${category}`);
   };
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const fmtCurrency = (amount: number): string => formatCurrency(amount, i18n.language);
 
   // Group work items by category
   const workItemsByCategory = useMemo(() => {
@@ -308,7 +304,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             {item.defaultPrice !== undefined && item.defaultPrice !== null && (
                               <span>
-                                {t('workItemsModal.defaultPrice')} {formatCurrency(Number(item.defaultPrice))}
+                                {t('workItemsModal.defaultPrice')} {fmtCurrency(Number(item.defaultPrice))}
                                 {item.unit && ` / ${item.unit}`}
                               </span>
                             )}

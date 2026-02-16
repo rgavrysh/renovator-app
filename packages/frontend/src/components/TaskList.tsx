@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from './ui/Badge';
 import { Divider } from './ui/Divider';
 import { Select } from './ui/Select';
+import { formatCurrency } from '../utils/currency';
 
 export interface Task {
   id: string;
@@ -282,7 +283,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                       )}
                       {task.actualPrice !== undefined && task.actualPrice !== null && (
                         <span>
-                          {t('taskList.actual')} ${Number(task.actualPrice).toFixed(2)}
+                          {t('taskList.actual')} {formatCurrency(Number(task.actualPrice), i18n.language)}
                           {task.unit && ` (${Number(task.amount || 1)} ${task.unit})`}
                         </span>
                       )}

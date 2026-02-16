@@ -11,10 +11,11 @@ import { Badge } from '../components/ui/Badge';
 import { apiClient } from '../utils/api';
 import { WorkItemTemplate, WorkItemCategory } from '../components/WorkItemsLibraryModal';
 import { WorkItemTemplateForm } from '../components/WorkItemTemplateForm';
+import { formatCurrency } from '../utils/currency';
 
 export const WorkItemsLibrary: React.FC = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,12 +45,7 @@ export const WorkItemsLibrary: React.FC = () => {
     return t(`workItemCategory.${category}`);
   };
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const fmtCurrency = (amount: number): string => formatCurrency(amount, i18n.language);
 
   // Group work items by category
   const workItemsByCategory = useMemo(() => {
@@ -251,7 +247,7 @@ export const WorkItemsLibrary: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">{t('workItemsLibrary.defaultPrice')}</span>
                           <span className="font-medium text-gray-900">
-                            {formatCurrency(Number(item.defaultPrice))}
+                            {fmtCurrency(Number(item.defaultPrice))}
                             {item.unit && <span className="text-gray-500 font-normal"> / {item.unit}</span>}
                           </span>
                         </div>

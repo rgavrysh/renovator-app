@@ -3,6 +3,7 @@ import { Card, CardHeader, CardContent } from './ui/Card';
 import { Alert } from './ui/Alert';
 import { Divider } from './ui/Divider';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/currency';
 
 export interface Budget {
   id: string;
@@ -30,14 +31,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat(i18n.language === 'uk' ? 'uk-UA' : 'en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
+  const fmtCurrency = (amount: number): string => formatCurrency(amount, i18n.language);
 
   const calculateVariance = (): number => {
     if (!budget) return 0;
@@ -102,7 +96,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         <div>
           <p className="text-xs text-gray-500 mb-1">{t('budgetOverview.totalEstimated')}</p>
           <p className="text-xl font-bold text-gray-900">
-            {formatCurrency(budget.totalEstimated)}
+            {fmtCurrency(budget.totalEstimated)}
           </p>
         </div>
 
@@ -110,7 +104,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         <div>
           <p className="text-xs text-gray-500 mb-1">{t('budgetOverview.totalActual')}</p>
           <p className="text-xl font-bold text-gray-900">
-            {formatCurrency(budget.totalActual)}
+            {fmtCurrency(budget.totalActual)}
           </p>
           
           {/* Breakdown of actual costs */}
@@ -118,13 +112,13 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">{t('budgetOverview.fromBudgetItems')}</span>
               <span className="font-medium text-gray-700">
-                {formatCurrency(budget.totalActualFromItems)}
+                {fmtCurrency(budget.totalActualFromItems)}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">{t('budgetOverview.fromTasks')}</span>
               <span className="font-medium text-gray-700">
-                {formatCurrency(budget.totalActualFromTasks)}
+                {fmtCurrency(budget.totalActualFromTasks)}
               </span>
               {onViewTasks && budget.totalActualFromTasks > 0 && (
                 <button
@@ -148,7 +142,7 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               variance > 0 ? 'text-red-600' : variance < 0 ? 'text-green-600' : 'text-gray-900'
             }`}
           >
-            {variance > 0 ? '+' : ''}{formatCurrency(variance)}
+            {variance > 0 ? '+' : ''}{fmtCurrency(variance)}
           </p>
         </div>
 
