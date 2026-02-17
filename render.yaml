@@ -55,8 +55,9 @@ services:
       mountPath: /data/uploads
       sizeGB: 1
 
-staticSites:
-  - name: renovator-frontend
+  - type: web
+    name: renovator-frontend
+    runtime: static
     rootDir: packages/frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
