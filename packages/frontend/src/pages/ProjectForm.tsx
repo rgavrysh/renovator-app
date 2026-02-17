@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { PageLayout } from '../components/layout/Container';
 import { Header } from '../components/layout/Header';
 import { Container } from '../components/layout/Container';
-import { Card, CardHeader, CardContent } from '../components/ui/Card';
+import { Card, CardContent } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
 import { Select } from '../components/ui/Select';
@@ -12,7 +12,6 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { UserDropdown } from '../components/UserDropdown';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
-import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
 interface ProjectFormData {
@@ -38,7 +37,6 @@ interface FormErrors {
 export const ProjectForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const { t } = useTranslation();
   const isEditMode = !!id;
 

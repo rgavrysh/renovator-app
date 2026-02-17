@@ -394,7 +394,6 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
                       value={photo.caption}
                       onChange={(e) => updateCaption(index, e.target.value)}
                       placeholder={t('photoUpload.captionPlaceholder')}
-                      size="sm"
                       fullWidth
                       disabled={isUploading}
                     />

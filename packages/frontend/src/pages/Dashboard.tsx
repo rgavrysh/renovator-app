@@ -12,7 +12,6 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { UserDropdown } from '../components/UserDropdown';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
-import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 
 interface Project {
@@ -41,7 +40,6 @@ enum ProjectStatus {
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { t, i18n } = useTranslation();
   const [projects, setProjects] = useState<Project[]>([]);
   const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);

@@ -143,6 +143,10 @@ router.get('/me', async (req: Request, res: Response) => {
     // Validate token and get user
     const user = await authService.getUserFromToken(token);
     
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
     res.json({
       id: user.id,
       email: user.email,

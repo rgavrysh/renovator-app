@@ -42,18 +42,6 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
     });
   };
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
-    return date.toLocaleString(locale, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   const getTaskStatusLabel = (status: TaskStatus) => {
     return t(`taskStatus.${status}`);
   };

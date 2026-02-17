@@ -21,12 +21,11 @@ import { DocumentUpload } from '../components/DocumentUpload';
 import { DocumentList } from '../components/DocumentList';
 import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
-import { BudgetOverview } from '../components/BudgetOverview';
 import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
 import { BudgetItemForm } from '../components/BudgetItemForm';
 import { UserDropdown } from '../components/UserDropdown';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
-import { useAuth, getAccessToken } from '../contexts/AuthContext';
+import { getAccessToken } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 import config from '../config';
 
@@ -101,7 +100,6 @@ interface Budget {
 export const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const { t, i18n } = useTranslation();
 
   const [project, setProject] = useState<Project | null>(null);
@@ -250,7 +248,7 @@ export const ProjectDetail: React.FC = () => {
     setSelectedTask(null);
   };
 
-  const handleTaskDelete = async (taskId: string) => {
+  const handleTaskDelete = async (_taskId: string) => {
     // Reload project data to get updated task list and recalculated progress
     await loadProjectData();
   };
@@ -525,25 +523,6 @@ export const ProjectDetail: React.FC = () => {
     return t(`projectStatus.${status}`);
   };
 
-  const getTaskStatusBadgeVariant = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.TODO:
-        return 'default';
-      case TaskStatus.IN_PROGRESS:
-        return 'info';
-      case TaskStatus.COMPLETED:
-        return 'success';
-      case TaskStatus.BLOCKED:
-        return 'danger';
-      default:
-        return 'default';
-    }
-  };
-
-  const getTaskStatusLabel = (status: TaskStatus) => {
-    return t(`taskStatus.${status}`);
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const locale = i18n.language === 'uk' ? 'uk-UA' : 'en-US';
@@ -560,15 +539,6 @@ export const ProjectDetail: React.FC = () => {
     if (milestones.length === 0) return 0;
     const completed = milestones.filter(m => m.status === MilestoneStatus.COMPLETED).length;
     return Math.round((completed / milestones.length) * 100);
-  };
-
-  const getTaskStats = () => {
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.status === TaskStatus.COMPLETED).length;
-    const inProgress = tasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length;
-    const todo = tasks.filter(t => t.status === TaskStatus.TODO).length;
-    
-    return { total, completed, inProgress, todo };
   };
 
   if (isLoading) {
@@ -626,7 +596,6 @@ export const ProjectDetail: React.FC = () => {
     );
   }
 
-  const taskStats = getTaskStats();
   const progress = calculateProgress();
 
   return (
