@@ -50,10 +50,10 @@ services:
         sync: false # Optional: Sentry DSN for error tracking
       - key: SENTRY_ENVIRONMENT
         value: production
-    disk:
-      name: uploads
-      mountPath: /data/uploads
-      sizeGB: 1
+    # disk:
+    #   name: uploads
+    #   mountPath: /data/uploads
+    #   sizeGB: 1
 
   - type: web
     name: renovator-frontend
