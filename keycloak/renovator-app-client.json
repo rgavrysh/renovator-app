@@ -1,0 +1,108 @@
+{
+    "clientId": "renovator-app",
+    "name": "Renovator Application",
+    "description": "Main application client for the Renovator Platform",
+    "enabled": true,
+    "clientAuthenticatorType": "client-secret",
+    "secret": "renovator-client-secret-change-in-production",
+    "redirectUris": [
+      "http://localhost:3000/*",
+      "http://localhost:4000/*",
+      "http://localhost:3000/auth/callback",
+      "http://localhost:4000/auth/callback"
+    ],
+    "webOrigins": [
+      "http://localhost:3000",
+      "http://localhost:4000"
+    ],
+    "protocol": "openid-connect",
+    "publicClient": false,
+    "standardFlowEnabled": true,
+    "implicitFlowEnabled": false,
+    "directAccessGrantsEnabled": true,
+    "serviceAccountsEnabled": false,
+    "authorizationServicesEnabled": false,
+    "fullScopeAllowed": true,
+    "consentRequired": false,
+    "attributes": {
+      "access.token.lifespan": "3600",
+      "client.secret.creation.time": "1234567890",
+      "oauth2.device.authorization.grant.enabled": "false",
+      "oidc.ciba.grant.enabled": "false",
+      "backchannel.logout.session.required": "true",
+      "backchannel.logout.revoke.offline.tokens": "false",
+      "display.on.consent.screen": "false"
+    },
+    "protocolMappers": [
+      {
+        "name": "email",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-property-mapper",
+        "consentRequired": false,
+        "config": {
+          "userinfo.token.claim": "true",
+          "user.attribute": "email",
+          "id.token.claim": "true",
+          "access.token.claim": "true",
+          "claim.name": "email",
+          "jsonType.label": "String"
+        }
+      },
+      {
+        "name": "given_name",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-property-mapper",
+        "consentRequired": false,
+        "config": {
+          "userinfo.token.claim": "true",
+          "user.attribute": "firstName",
+          "id.token.claim": "true",
+          "access.token.claim": "true",
+          "claim.name": "given_name",
+          "jsonType.label": "String"
+        }
+      },
+      {
+        "name": "family_name",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-property-mapper",
+        "consentRequired": false,
+        "config": {
+          "userinfo.token.claim": "true",
+          "user.attribute": "lastName",
+          "id.token.claim": "true",
+          "access.token.claim": "true",
+          "claim.name": "family_name",
+          "jsonType.label": "String"
+        }
+      },
+      {
+        "name": "phone",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-attribute-mapper",
+        "consentRequired": false,
+        "config": {
+          "userinfo.token.claim": "true",
+          "user.attribute": "phone",
+          "id.token.claim": "true",
+          "access.token.claim": "true",
+          "claim.name": "phone",
+          "jsonType.label": "String"
+        }
+      },
+      {
+        "name": "company",
+        "protocol": "openid-connect",
+        "protocolMapper": "oidc-usermodel-attribute-mapper",
+        "consentRequired": false,
+        "config": {
+          "userinfo.token.claim": "true",
+          "user.attribute": "company",
+          "id.token.claim": "true",
+          "access.token.claim": "true",
+          "claim.name": "company",
+          "jsonType.label": "String"
+        }
+      }
+    ]
+  }

@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import path from 'path';
 import cors from 'cors';
 import config from './config';
 import { initSentry, Sentry } from './utils/sentry';
@@ -33,6 +34,10 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files at /files (documents, photos, thumbnails)
+const uploadsPath = path.resolve(config.fileStorage.storagePath);
+app.use('/files', express.static(uploadsPath));
 
 // Health check endpoint (public)
 app.get('/health', (_req: Request, res: Response) => {
