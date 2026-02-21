@@ -11,6 +11,7 @@ export interface PdfTranslations {
   name: string;
   amount: string;
   unit: string;
+  pricePerUnit: string;
   price: string;
   task: string;
   summaryByCategory: string;
@@ -42,6 +43,7 @@ const en: PdfTranslations = {
   name: 'Name',
   amount: 'Amount',
   unit: 'Unit',
+  pricePerUnit: 'Price/Unit',
   price: 'Price',
   task: 'Task',
   summaryByCategory: 'Summary by Category',
@@ -72,6 +74,7 @@ const uk: PdfTranslations = {
   name: 'Назва',
   amount: 'Кількість',
   unit: 'Одиниця',
+  pricePerUnit: 'Ціна/Од.',
   price: 'Ціна',
   task: 'Завдання',
   summaryByCategory: 'Підсумок за категоріями',

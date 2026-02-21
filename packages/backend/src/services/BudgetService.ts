@@ -349,15 +349,17 @@ export class BudgetService {
 
     // Table headers
     const tableTop = doc.y;
-    const colWidths = { id: 60, name: 180, quantity: 60, unit: 80, price: 80 };
+    const colWidths = { id: 30, name: 155, quantity: 50, unit: 55, pricePerUnit: 75, price: 80 };
+    const colX = { id: 50, name: 80, quantity: 240, unit: 290, pricePerUnit: 345, price: 420 };
     let currentY = tableTop;
 
     doc.fontSize(10).font('Roboto-Bold');
-    doc.text('#', 50, currentY, { width: colWidths.id });
-    doc.text(t.name, 110, currentY, { width: colWidths.name });
-    doc.text(t.amount, 290, currentY, { width: colWidths.quantity });
-    doc.text(t.unit, 350, currentY, { width: colWidths.unit });
-    doc.text(t.price, 430, currentY, { width: colWidths.price });
+    doc.text('#', colX.id, currentY, { width: colWidths.id });
+    doc.text(t.name, colX.name, currentY, { width: colWidths.name });
+    doc.text(t.amount, colX.quantity, currentY, { width: colWidths.quantity });
+    doc.text(t.unit, colX.unit, currentY, { width: colWidths.unit });
+    doc.text(t.pricePerUnit, colX.pricePerUnit, currentY, { width: colWidths.pricePerUnit });
+    doc.text(t.price, colX.price, currentY, { width: colWidths.price });
     
     currentY += 20;
     doc.font('Roboto');
@@ -380,13 +382,15 @@ export class BudgetService {
 
       const amount = task.amount ? String(Number(task.amount)) : '1';
       const unit = task.unit || '-';
+      const pricePerUnit = task.price != null ? formatPdfCurrency(Number(task.price), lang) : '-';
       const price = task.actualPrice ? formatPdfCurrency(Number(task.actualPrice), lang) : formatPdfCurrency(0, lang);
 
-      doc.text(`${rowNumber}`, 50, currentY, { width: colWidths.id });
-      doc.text(`[${t.task}] ${task.name}`, 110, currentY, { width: colWidths.name });
-      doc.text(amount, 290, currentY, { width: colWidths.quantity });
-      doc.text(unit, 350, currentY, { width: colWidths.unit });
-      doc.text(price, 430, currentY, { width: colWidths.price });
+      doc.text(`${rowNumber}`, colX.id, currentY, { width: colWidths.id });
+      doc.text(`[${t.task}] ${task.name}`, colX.name, currentY, { width: colWidths.name });
+      doc.text(amount, colX.quantity, currentY, { width: colWidths.quantity });
+      doc.text(unit, colX.unit, currentY, { width: colWidths.unit });
+      doc.text(pricePerUnit, colX.pricePerUnit, currentY, { width: colWidths.pricePerUnit });
+      doc.text(price, colX.price, currentY, { width: colWidths.price });
       
       currentY += 20;
       rowNumber++;
@@ -405,11 +409,12 @@ export class BudgetService {
       const price = formatPdfCurrency(Number(item.actualCost), lang);
       const categoryLabel = translateCategory(item.category, t);
 
-      doc.text(`${rowNumber}`, 50, currentY, { width: colWidths.id });
-      doc.text(`[${categoryLabel}] ${item.name}`, 110, currentY, { width: colWidths.name });
-      doc.text('-', 290, currentY, { width: colWidths.quantity });
-      doc.text('-', 350, currentY, { width: colWidths.unit });
-      doc.text(price, 430, currentY, { width: colWidths.price });
+      doc.text(`${rowNumber}`, colX.id, currentY, { width: colWidths.id });
+      doc.text(`[${categoryLabel}] ${item.name}`, colX.name, currentY, { width: colWidths.name });
+      doc.text('-', colX.quantity, currentY, { width: colWidths.quantity });
+      doc.text('-', colX.unit, currentY, { width: colWidths.unit });
+      doc.text('-', colX.pricePerUnit, currentY, { width: colWidths.pricePerUnit });
+      doc.text(price, colX.price, currentY, { width: colWidths.price });
       
       currentY += 20;
       rowNumber++;
