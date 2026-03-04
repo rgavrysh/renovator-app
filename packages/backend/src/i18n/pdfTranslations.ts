@@ -4,6 +4,7 @@ export interface PdfTranslations {
   client: string;
   email: string;
   phone: string;
+  milestone: string;
   totalBudget: string;
   exportDate: string;
   budgetItems: string;
@@ -36,6 +37,7 @@ const en: PdfTranslations = {
   client: 'Client',
   email: 'Email',
   phone: 'Phone',
+  milestone: 'Milestone',
   totalBudget: 'Total Budget',
   exportDate: 'Export Date',
   budgetItems: 'Budget Items',
@@ -67,6 +69,7 @@ const uk: PdfTranslations = {
   client: 'Клієнт',
   email: 'Ел. пошта',
   phone: 'Телефон',
+  milestone: 'Етап',
   totalBudget: 'Загальний бюджет',
   exportDate: 'Дата експорту',
   budgetItems: 'Бюджетні статті',

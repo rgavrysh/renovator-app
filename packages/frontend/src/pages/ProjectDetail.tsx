@@ -23,6 +23,8 @@ import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
 import { BudgetItemForm } from '../components/BudgetItemForm';
+import { Modal, ModalFooter } from '../components/ui/Modal';
+import { Select } from '../components/ui/Select';
 import { UserDropdown } from '../components/UserDropdown';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { getAccessToken } from '../contexts/AuthContext';
@@ -128,6 +130,12 @@ export const ProjectDetail: React.FC = () => {
   const [isPhotoUploadOpen, setIsPhotoUploadOpen] = useState(false);
   const [documentsKey, setDocumentsKey] = useState(0);
   const [photosKey, setPhotosKey] = useState(0);
+  const [isExportMilestoneSelectOpen, setIsExportMilestoneSelectOpen] = useState(false);
+  const [exportMilestoneId, setExportMilestoneId] = useState<string>('');
+  const [isEditingEstimatedBudget, setIsEditingEstimatedBudget] = useState(false);
+  const [estimatedBudgetInput, setEstimatedBudgetInput] = useState<string>('');
+  const [isSavingEstimatedBudget, setIsSavingEstimatedBudget] = useState(false);
+  const [createBudgetEstimated, setCreateBudgetEstimated] = useState<string>('');
 
   useEffect(() => {
     if (id) {
@@ -363,15 +371,53 @@ export const ProjectDetail: React.FC = () => {
     
     try {
       setIsCreatingBudget(true);
-      const newBudget = await apiClient.post<Budget>(`/api/projects/${id}/budget`);
+      const payload: any = {};
+      if (createBudgetEstimated) {
+        const parsed = parseFloat(createBudgetEstimated);
+        if (!isNaN(parsed) && parsed >= 0) {
+          payload.totalEstimated = parsed;
+        }
+      }
+      const newBudget = await apiClient.post<Budget>(`/api/projects/${id}/budget`, payload);
       setBudget(newBudget);
       setBudgetItems([]);
+      setCreateBudgetEstimated('');
     } catch (err: any) {
       console.error('Error creating budget:', err);
       setError(err.message || 'Failed to create budget. Please try again.');
     } finally {
       setIsCreatingBudget(false);
     }
+  };
+
+  const handleStartEditEstimatedBudget = () => {
+    setEstimatedBudgetInput(budget ? String(budget.totalEstimated) : '0');
+    setIsEditingEstimatedBudget(true);
+  };
+
+  const handleSaveEstimatedBudget = async () => {
+    if (!id || !budget) return;
+
+    const parsed = parseFloat(estimatedBudgetInput);
+    if (isNaN(parsed) || parsed < 0) return;
+
+    try {
+      setIsSavingEstimatedBudget(true);
+      const updatedBudget = await apiClient.put<Budget>(`/api/projects/${id}/budget`, {
+        totalEstimated: parsed,
+      });
+      setBudget(updatedBudget);
+      setIsEditingEstimatedBudget(false);
+    } catch (err: any) {
+      console.error('Error updating estimated budget:', err);
+      setError(err.message || 'Failed to update estimated budget.');
+    } finally {
+      setIsSavingEstimatedBudget(false);
+    }
+  };
+
+  const handleCancelEditEstimatedBudget = () => {
+    setIsEditingEstimatedBudget(false);
   };
 
   const handleRecalculateTasksCosts = async () => {
@@ -445,7 +491,22 @@ export const ProjectDetail: React.FC = () => {
     }
   };
 
-  const handleExportBudget = async () => {
+  const handleExportBudgetClick = () => {
+    if (!id || !budget) return;
+    if (milestones.length > 0) {
+      setExportMilestoneId('');
+      setIsExportMilestoneSelectOpen(true);
+    } else {
+      doExportBudget();
+    }
+  };
+
+  const handleExportWithMilestone = () => {
+    setIsExportMilestoneSelectOpen(false);
+    doExportBudget(exportMilestoneId || undefined);
+  };
+
+  const doExportBudget = async (milestoneId?: string) => {
     if (!id || !budget) return;
     
     try {
@@ -453,15 +514,18 @@ export const ProjectDetail: React.FC = () => {
       setError(null);
       setExportSuccess(null);
       
-      // Get access token
       const accessToken = getAccessToken();
       if (!accessToken) {
         throw new Error('Not authenticated');
       }
       
-      // Call the export API endpoint with current language
       const currentLang = i18n.language?.startsWith('uk') ? 'uk' : 'en';
-      const response = await fetch(`${config.api.url}/api/projects/${id}/budget/export?lang=${currentLang}`, {
+      let url = `${config.api.url}/api/projects/${id}/budget/export?lang=${currentLang}`;
+      if (milestoneId) {
+        url += `&milestoneId=${milestoneId}`;
+      }
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -472,25 +536,22 @@ export const ProjectDetail: React.FC = () => {
         throw new Error('Failed to export budget');
       }
 
-      // Get the PDF blob
       const blob = await response.blob();
       
-      // Create a download link
-      const url = window.URL.createObjectURL(blob);
+      const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `${project?.name || 'project'}-budget-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.href = downloadUrl;
+      const milestoneSuffix = milestoneId 
+        ? `-${milestones.find(m => m.id === milestoneId)?.name || 'milestone'}` 
+        : '';
+      link.download = `${project?.name || 'project'}-budget${milestoneSuffix}-${new Date().toISOString().split('T')[0]}.pdf`;
       document.body.appendChild(link);
       link.click();
       
-      // Cleanup
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(downloadUrl);
       
-      // Show success message
       setExportSuccess(t('projectDetail.budgetExportSuccess'));
-      
-      // Clear success message after 3 seconds
       setTimeout(() => {
         setExportSuccess(null);
       }, 3000);
@@ -838,7 +899,7 @@ export const ProjectDetail: React.FC = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={handleExportBudget}
+                        onClick={handleExportBudgetClick}
                         loading={isExportingBudget}
                         disabled={isExportingBudget}
                       >
@@ -864,8 +925,22 @@ export const ProjectDetail: React.FC = () => {
                 )}
                 
                 {!budget ? (
-                  <div className="text-center py-8">
-                    <p className="text-sm text-gray-500 mb-4">{t('projectDetail.noBudgetSet')}</p>
+                  <div className="py-4 space-y-4">
+                    <p className="text-sm text-gray-500">{t('projectDetail.noBudgetSet')}</p>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        {t('projectDetail.estimatedBudget')} ({t('projectDetail.optional')})
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={createBudgetEstimated}
+                        onChange={(e) => setCreateBudgetEstimated(e.target.value)}
+                        placeholder="0.00"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      />
+                    </div>
                     <Button
                       variant="primary"
                       size="sm"
@@ -879,10 +954,58 @@ export const ProjectDetail: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.totalEstimated')}</p>
-                      <p className="text-xl font-bold text-gray-900">
-                        {fmtCurrency(budget.totalEstimated)}
-                      </p>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-gray-500">{t('projectDetail.totalEstimated')}</p>
+                        {!isEditingEstimatedBudget && (
+                          <button
+                            onClick={handleStartEditEstimatedBudget}
+                            className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                            title={t('common.edit')}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      {isEditingEstimatedBudget ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={estimatedBudgetInput}
+                            onChange={(e) => setEstimatedBudgetInput(e.target.value)}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveEstimatedBudget();
+                              if (e.key === 'Escape') handleCancelEditEstimatedBudget();
+                            }}
+                          />
+                          <button
+                            onClick={handleSaveEstimatedBudget}
+                            disabled={isSavingEstimatedBudget}
+                            className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={handleCancelEditEstimatedBudget}
+                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xl font-bold text-gray-900">
+                          {budget.totalEstimated > 0 ? fmtCurrency(budget.totalEstimated) : t('projectDetail.notSet')}
+                        </p>
+                      )}
                     </div>
                     
                     <div>
@@ -987,6 +1110,7 @@ export const ProjectDetail: React.FC = () => {
                 <CardContent>
                   <BudgetItemsList 
                     items={budgetItems}
+                    milestones={milestones}
                     showCard={false}
                     onEditItem={handleEditBudgetItem}
                     onDeleteItem={handleDeleteBudgetItem}
@@ -1089,15 +1213,54 @@ export const ProjectDetail: React.FC = () => {
         )}
 
         {/* Budget Item Form Modal */}
-        {budget && (
+        {budget && id && (
           <BudgetItemForm
             isOpen={isBudgetItemFormOpen}
             onClose={handleBudgetItemFormClose}
             onSuccess={handleBudgetItemFormSuccess}
             budgetId={budget.id}
+            projectId={id}
             budgetItem={editingBudgetItem}
           />
         )}
+
+        {/* Export Milestone Selection Modal */}
+        <Modal
+          isOpen={isExportMilestoneSelectOpen}
+          onClose={() => setIsExportMilestoneSelectOpen(false)}
+          title={t('projectDetail.exportToPdf')}
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">{t('projectDetail.exportMilestoneHint')}</p>
+            <Select
+              label={t('projectDetail.exportMilestone')}
+              name="exportMilestoneId"
+              value={exportMilestoneId}
+              onChange={(e) => setExportMilestoneId(e.target.value)}
+              options={[
+                { value: '', label: t('projectDetail.allProject') },
+                ...milestones.map((m) => ({ value: m.id, label: m.name })),
+              ]}
+              fullWidth
+            />
+          </div>
+          <ModalFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setIsExportMilestoneSelectOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleExportWithMilestone}
+              loading={isExportingBudget}
+            >
+              {t('projectDetail.exportToPdf')}
+            </Button>
+          </ModalFooter>
+        </Modal>
       </Container>
     </PageLayout>
   );

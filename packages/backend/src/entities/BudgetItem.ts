@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Budget } from './Budget';
+import { Milestone } from './Milestone';
 
 export enum BudgetCategory {
   LABOR = 'labor',
@@ -27,6 +28,9 @@ export class BudgetItem {
   @Column({ name: 'budget_id', type: 'uuid' })
   budgetId: string;
 
+  @Column({ name: 'milestone_id', type: 'uuid', nullable: true })
+  milestoneId?: string;
+
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
@@ -36,9 +40,6 @@ export class BudgetItem {
     enum: BudgetCategory,
   })
   category: BudgetCategory;
-
-  @Column({ name: 'estimated_cost', type: 'decimal', precision: 12, scale: 2 })
-  estimatedCost: number;
 
   @Column({ name: 'actual_cost', type: 'decimal', precision: 12, scale: 2, default: 0 })
   actualCost: number;
@@ -56,4 +57,8 @@ export class BudgetItem {
   @ManyToOne(() => Budget, (budget) => budget.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'budget_id' })
   budget: Budget;
+
+  @ManyToOne(() => Milestone, (milestone) => milestone.budgetItems, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'milestone_id' })
+  milestone?: Milestone;
 }

@@ -6,6 +6,7 @@ import { apiClient } from '../utils/api';
 
 vi.mock('../utils/api', () => ({
   apiClient: {
+    get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
   },
@@ -18,6 +19,7 @@ describe('BudgetItemForm', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(apiClient.get).mockResolvedValue([]);
   });
 
   describe('Create Mode', () => {
@@ -28,14 +30,14 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 
       expect(screen.getByText('Add Budget Item')).toBeInTheDocument();
       expect(screen.getByLabelText(/item name/i)).toHaveValue('');
       expect(screen.getByLabelText(/category/i)).toHaveValue(BudgetCategory.MATERIALS);
-      expect(screen.getByLabelText(/estimated cost/i)).toHaveValue(null);
-      expect(screen.getByLabelText(/actual cost/i)).toHaveValue(0);
+      expect(screen.getByLabelText(/cost/i)).toHaveValue(0);
     });
 
     it('validates required fields', async () => {
@@ -45,15 +47,18 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 
+      // Clear cost field to trigger "Cost is required" (default is '0')
+      fireEvent.change(screen.getByLabelText(/cost/i), { target: { value: '' } });
       const submitButton = screen.getByRole('button', { name: /add item/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
         expect(screen.getByText('Item name is required')).toBeInTheDocument();
-        expect(screen.getByText('Estimated cost is required')).toBeInTheDocument();
+        expect(screen.getByText('Cost is required')).toBeInTheDocument();
       });
 
       expect(apiClient.post).not.toHaveBeenCalled();
@@ -66,22 +71,21 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 
       const nameInput = screen.getByLabelText(/item name/i);
-      const estimatedCostInput = screen.getByLabelText(/estimated cost/i);
-      const actualCostInput = screen.getByLabelText(/actual cost/i);
+      const costInput = screen.getByLabelText(/cost/i);
 
       fireEvent.change(nameInput, { target: { value: 'Test Item' } });
-      fireEvent.change(estimatedCostInput, { target: { value: '1000' } });
-      fireEvent.change(actualCostInput, { target: { value: '-100' } });
+      fireEvent.change(costInput, { target: { value: '-100' } });
 
       const submitButton = screen.getByRole('button', { name: /add item/i });
       fireEvent.click(submitButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Actual cost cannot be negative')).toBeInTheDocument();
+        expect(screen.getByText('Cost cannot be negative')).toBeInTheDocument();
       });
 
       expect(apiClient.post).not.toHaveBeenCalled();
@@ -93,7 +97,6 @@ describe('BudgetItemForm', () => {
         budgetId,
         name: 'Lumber',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 5000,
         actualCost: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -105,6 +108,7 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 
@@ -114,10 +118,7 @@ describe('BudgetItemForm', () => {
       fireEvent.change(screen.getByLabelText(/category/i), {
         target: { value: BudgetCategory.MATERIALS },
       });
-      fireEvent.change(screen.getByLabelText(/estimated cost/i), {
-        target: { value: '5000' },
-      });
-      fireEvent.change(screen.getByLabelText(/actual cost/i), {
+      fireEvent.change(screen.getByLabelText(/cost/i), {
         target: { value: '0' },
       });
       fireEvent.change(screen.getByLabelText(/notes/i), {
@@ -131,7 +132,7 @@ describe('BudgetItemForm', () => {
         expect(apiClient.post).toHaveBeenCalledWith(`/api/budgets/${budgetId}/items`, {
           name: 'Lumber',
           category: BudgetCategory.MATERIALS,
-          estimatedCost: 5000,
+          milestoneId: undefined,
           actualCost: 0,
           notes: 'For framing',
         });
@@ -149,13 +150,14 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 
       fireEvent.change(screen.getByLabelText(/item name/i), {
         target: { value: 'Test Item' },
       });
-      fireEvent.change(screen.getByLabelText(/estimated cost/i), {
+      fireEvent.change(screen.getByLabelText(/cost/i), {
         target: { value: '1000' },
       });
 
@@ -176,7 +178,6 @@ describe('BudgetItemForm', () => {
       id: 'item-123',
       name: 'Existing Item',
       category: BudgetCategory.LABOR,
-      estimatedCost: 3000,
       actualCost: 2800,
       notes: 'Original notes',
     };
@@ -188,6 +189,7 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
           budgetItem={existingItem}
         />
       );
@@ -195,8 +197,7 @@ describe('BudgetItemForm', () => {
       expect(screen.getByText('Edit Budget Item')).toBeInTheDocument();
       expect(screen.getByLabelText(/item name/i)).toHaveValue('Existing Item');
       expect(screen.getByLabelText(/category/i)).toHaveValue(BudgetCategory.LABOR);
-      expect(screen.getByLabelText(/estimated cost/i)).toHaveValue(3000);
-      expect(screen.getByLabelText(/actual cost/i)).toHaveValue(2800);
+      expect(screen.getByLabelText(/cost/i)).toHaveValue(2800);
       expect(screen.getByLabelText(/notes/i)).toHaveValue('Original notes');
     });
 
@@ -213,6 +214,7 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
           budgetItem={existingItem}
         />
       );
@@ -220,7 +222,7 @@ describe('BudgetItemForm', () => {
       fireEvent.change(screen.getByLabelText(/item name/i), {
         target: { value: 'Updated Item' },
       });
-      fireEvent.change(screen.getByLabelText(/actual cost/i), {
+      fireEvent.change(screen.getByLabelText(/cost/i), {
         target: { value: '3200' },
       });
 
@@ -231,7 +233,7 @@ describe('BudgetItemForm', () => {
         expect(apiClient.put).toHaveBeenCalledWith(`/api/budget-items/${existingItem.id}`, {
           name: 'Updated Item',
           category: BudgetCategory.LABOR,
-          estimatedCost: 3000,
+          milestoneId: undefined,
           actualCost: 3200,
           notes: 'Original notes',
         });
@@ -249,6 +251,7 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 
@@ -274,6 +277,7 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 
@@ -299,6 +303,7 @@ describe('BudgetItemForm', () => {
           onClose={mockOnClose}
           onSuccess={mockOnSuccess}
           budgetId={budgetId}
+          projectId="project-123"
         />
       );
 

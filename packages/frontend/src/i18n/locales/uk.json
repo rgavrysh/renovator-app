@@ -114,7 +114,10 @@
     "addItem": "Додати елемент",
     "noBudgetSet": "Бюджет не встановлено",
     "createBudget": "Створити бюджет",
-    "totalEstimated": "Загальний кошторис",
+    "estimatedBudget": "Кошторис бюджету",
+    "optional": "необов'язково",
+    "notSet": "Не вказано",
+    "totalEstimated": "Кошторис бюджету",
     "totalActual": "Фактичні витрати",
     "fromBudgetItems": "Бюджетні статті:",
     "fromTasks": "Із завдань:",
@@ -127,7 +130,10 @@
     "quickStats": "Статистика",
     "milestones": "Етапи",
     "budgetExportSuccess": "Бюджет успішно експортовано!",
-    "deleteBudgetItemConfirm": "Ви впевнені, що хочете видалити \"{{name}}\" з бюджету?"
+    "deleteBudgetItemConfirm": "Ви впевнені, що хочете видалити \"{{name}}\" з бюджету?",
+    "exportMilestone": "Етап",
+    "exportMilestoneHint": "Оберіть етап для експорту лише його елементів, або експортуйте весь бюджет проєкту.",
+    "allProject": "Весь проєкт"
   },
   "projectForm": {
     "createTitle": "Створити новий проєкт",
@@ -277,28 +283,25 @@
     "editTitle": "Редагувати бюджетну статтю",
     "itemName": "Назва статті",
     "itemNamePlaceholder": "напр., Будівельні матеріали",
-    "estimatedCost": "Орієнтовна вартість",
-    "actualCost": "Фактична вартість",
+    "milestone": "Етап",
+    "noMilestone": "Без етапу",
+    "actualCost": "Вартість",
     "notesPlaceholder": "Додайте додаткові нотатки...",
     "addButton": "Додати статтю",
     "updateButton": "Оновити статтю",
     "validation": {
       "nameRequired": "Назва статті обов'язкова",
-      "estimatedCostRequired": "Орієнтовна вартість обов'язкова",
-      "estimatedCostInvalid": "Орієнтовна вартість повинна бути дійсним числом",
-      "estimatedCostNegative": "Орієнтовна вартість не може бути від'ємною",
-      "actualCostRequired": "Фактична вартість обов'язкова",
-      "actualCostInvalid": "Фактична вартість повинна бути дійсним числом",
-      "actualCostNegative": "Фактична вартість не може бути від'ємною"
+      "actualCostRequired": "Вартість обов'язкова",
+      "actualCostInvalid": "Вартість повинна бути дійсним числом",
+      "actualCostNegative": "Вартість не може бути від'ємною"
     }
   },
   "budgetItemsList": {
     "title": "Бюджетні статті",
     "noBudgetItems": "Бюджетних статей немає",
-    "addBudgetItems": "Додайте бюджетні статті для відстеження кошторису та фактичних витрат",
-    "estimated": "Кошторис",
+    "addBudgetItems": "Додайте бюджетні статті для відстеження фактичних витрат",
     "actual": "Факт",
-    "variance": "Різниця"
+    "general": "Загальні"
   },
   "workItemCategory": {
     "demolition": "Демонтаж",

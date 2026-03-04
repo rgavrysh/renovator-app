@@ -205,6 +205,23 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Implement data aggregation by category for footer
     - Generate PDF buffer for download
     - _Requirements: 4.11, 4.12_
+  
+  - [x] 9.5 Implement milestone-based budget decomposition
+    - Add milestone_id column to budget_items table (migration)
+    - Update BudgetItem entity with milestoneId and Milestone relation
+    - Update Milestone entity with budgetItems back-relation
+    - Update BudgetService to accept milestoneId on create/update budget items
+    - Update budget API routes to accept milestoneId in POST/PUT item requests
+    - _Requirements: 4.2, 4.13, 4.14, 4.15_
+  
+  - [x] 9.6 Implement milestone-filtered budget PDF export
+    - Update BudgetService.exportBudgetToPDF to accept optional milestoneId filter
+    - Filter tasks and budget items by milestone when milestoneId is provided
+    - Recalculate totals from filtered subset
+    - Include milestone name in PDF header when filtering
+    - Update export API route to accept milestoneId query parameter
+    - Add milestone translation key to PDF translations (en/uk)
+    - _Requirements: 4.16, 4.17, 4.18_
 
 - [ ] 10. Document and Photo Management Backend Implementation
   - [x] 10.1 Set up file storage service
@@ -433,14 +450,17 @@ This implementation plan breaks down the development of the Renovator Project Ma
     - Show estimated vs actual costs for each item
     - Display variance for each item
     - Clearly separate budget items from task-based costs
-    - _Requirements: 4.1, 4.2, 4.3, 4.6_
+    - Group items by milestone when milestones exist, with expand/collapse sections and subtotals
+    - Show items without a milestone under "General" section
+    - _Requirements: 4.1, 4.2, 4.3, 4.6, 4.13, 4.14_
   
   - [x] 18.3 Create budget item creation/edit form
     - Build form for budget item details
     - Allow category selection
-    - Handle creation and updates
+    - Allow optional milestone selection (loaded from project milestones)
+    - Handle creation and updates with milestoneId
     - Trigger immediate recalculation of budget totals
-    - _Requirements: 4.1, 4.2, 4.8, 4.9_
+    - _Requirements: 4.1, 4.2, 4.8, 4.9, 4.15_
   
   - [x] 18.4 Display task costs in budget view
     - Show aggregated task actual prices in budget overview
@@ -451,10 +471,12 @@ This implementation plan breaks down the development of the Renovator Project Ma
   
   - [x] 18.5 Implement budget export UI
     - Add "Export to PDF" button to budget overview
+    - Show milestone selection modal when milestones exist, allowing choice of specific milestone or entire project
+    - Pass selected milestoneId to export API endpoint
     - Show loading state during PDF generation
-    - Trigger download of generated PDF file
+    - Trigger download of generated PDF file with milestone name in filename when filtered
     - Display success/error messages
-    - _Requirements: 4.11, 4.12_
+    - _Requirements: 4.11, 4.12, 4.16, 4.17, 4.18_
 
 - [x] 19. Frontend - Document and Photo Management UI
   - [x] 19.1 Create document upload component

@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Project } from './Project';
 import { Task } from './Task';
+import { BudgetItem } from './BudgetItem';
 
 export enum MilestoneStatus {
   NOT_STARTED = 'not_started',
@@ -62,4 +63,7 @@ export class Milestone {
 
   @OneToMany(() => Task, (task) => task.milestone)
   tasks: Task[];
+
+  @OneToMany(() => BudgetItem, (budgetItem) => budgetItem.milestone)
+  budgetItems: BudgetItem[];
 }

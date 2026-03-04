@@ -11,9 +11,15 @@ import { useTranslation } from 'react-i18next';
 export interface BudgetItemFormData {
   name: string;
   category: BudgetCategory;
-  estimatedCost: string;
+  milestoneId: string;
   actualCost: string;
   notes: string;
+}
+
+interface Milestone {
+  id: string;
+  name: string;
+  targetDate: string;
 }
 
 interface BudgetItemFormProps {
@@ -21,11 +27,12 @@ interface BudgetItemFormProps {
   onClose: () => void;
   onSuccess: () => void;
   budgetId: string;
+  projectId: string;
   budgetItem?: {
     id: string;
     name: string;
     category: BudgetCategory;
-    estimatedCost: number;
+    milestoneId?: string;
     actualCost: number;
     notes?: string;
   };
@@ -36,22 +43,31 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
   onClose,
   onSuccess,
   budgetId,
+  projectId,
   budgetItem,
 }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<BudgetItemFormData>({
     name: '',
     category: BudgetCategory.MATERIALS,
-    estimatedCost: '',
+    milestoneId: '',
     actualCost: '0',
     notes: '',
   });
 
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [isLoadingMilestones, setIsLoadingMilestones] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof BudgetItemFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isEditMode = !!budgetItem;
+
+  useEffect(() => {
+    if (isOpen && projectId) {
+      loadMilestones();
+    }
+  }, [isOpen, projectId]);
 
   // Initialize form data when budgetItem prop changes
   useEffect(() => {
@@ -59,7 +75,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       setFormData({
         name: budgetItem.name,
         category: budgetItem.category,
-        estimatedCost: budgetItem.estimatedCost.toString(),
+        milestoneId: budgetItem.milestoneId || '',
         actualCost: budgetItem.actualCost.toString(),
         notes: budgetItem.notes || '',
       });
@@ -67,7 +83,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       setFormData({
         name: '',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: '',
+        milestoneId: '',
         actualCost: '0',
         notes: '',
       });
@@ -75,6 +91,18 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
     setErrors({});
     setSubmitError(null);
   }, [budgetItem, isOpen]);
+
+  const loadMilestones = async () => {
+    try {
+      setIsLoadingMilestones(true);
+      const data = await apiClient.get<Milestone[]>(`/api/projects/${projectId}/milestones`);
+      setMilestones(data);
+    } catch (error: any) {
+      console.error('Error loading milestones:', error);
+    } finally {
+      setIsLoadingMilestones(false);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -100,14 +128,6 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       newErrors.name = t('budgetItemForm.validation.nameRequired');
     }
 
-    if (!formData.estimatedCost) {
-      newErrors.estimatedCost = t('budgetItemForm.validation.estimatedCostRequired');
-    } else if (isNaN(parseFloat(formData.estimatedCost))) {
-      newErrors.estimatedCost = t('budgetItemForm.validation.estimatedCostInvalid');
-    } else if (parseFloat(formData.estimatedCost) < 0) {
-      newErrors.estimatedCost = t('budgetItemForm.validation.estimatedCostNegative');
-    }
-
     if (!formData.actualCost) {
       newErrors.actualCost = t('budgetItemForm.validation.actualCostRequired');
     } else if (isNaN(parseFloat(formData.actualCost))) {
@@ -131,10 +151,10 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
     setSubmitError(null);
 
     try {
-      const payload = {
+      const payload: any = {
         name: formData.name.trim(),
         category: formData.category,
-        estimatedCost: parseFloat(formData.estimatedCost),
+        milestoneId: formData.milestoneId || undefined,
         actualCost: parseFloat(formData.actualCost),
         notes: formData.notes.trim() || undefined,
       };
@@ -169,6 +189,14 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
     { value: BudgetCategory.PERMITS, label: t('budgetCategory.permits') },
     { value: BudgetCategory.CONTINGENCY, label: t('budgetCategory.contingency') },
     { value: BudgetCategory.OTHER, label: t('budgetCategory.other') },
+  ];
+
+  const milestoneOptions = [
+    { value: '', label: t('budgetItemForm.noMilestone') },
+    ...milestones.map((m) => ({
+      value: m.id,
+      label: m.name,
+    })),
   ];
 
   return (
@@ -208,35 +236,29 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
             required
           />
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label={t('budgetItemForm.estimatedCost')}
-              name="estimatedCost"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.estimatedCost}
-              onChange={handleChange}
-              error={errors.estimatedCost}
-              placeholder="0.00"
-              fullWidth
-              required
-            />
+          <Select
+            label={t('budgetItemForm.milestone')}
+            name="milestoneId"
+            value={formData.milestoneId}
+            onChange={handleChange}
+            options={milestoneOptions}
+            fullWidth
+            disabled={isLoadingMilestones}
+          />
 
-            <Input
-              label={t('budgetItemForm.actualCost')}
-              name="actualCost"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.actualCost}
-              onChange={handleChange}
-              error={errors.actualCost}
-              placeholder="0.00"
-              fullWidth
-              required
-            />
-          </div>
+          <Input
+            label={t('budgetItemForm.actualCost')}
+            name="actualCost"
+            type="number"
+            step="0.01"
+            min="0"
+            value={formData.actualCost}
+            onChange={handleChange}
+            error={errors.actualCost}
+            placeholder="0.00"
+            fullWidth
+            required
+          />
 
           <Textarea
             label={t('common.notes')}

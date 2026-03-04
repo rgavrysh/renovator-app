@@ -298,6 +298,7 @@ interface Budget {
 interface BudgetItem {
   id: string;
   budgetId: string;
+  milestoneId?: string; // Optional association with a project milestone
   name: string;
   category: BudgetCategory;
   estimatedCost: number;
@@ -327,7 +328,7 @@ interface BudgetService {
   calculateVariance(budgetId: string): Promise<Budget>;
   calculateTotalsWithTasks(projectId: string): Promise<{ totalActualFromItems: number; totalActualFromTasks: number; totalActual: number }>;
   checkBudgetAlerts(budgetId: string): Promise<BudgetAlert[]>;
-  exportBudgetToPDF(projectId: string): Promise<Buffer>;
+  exportBudgetToPDF(projectId: string, lang?: string, milestoneId?: string): Promise<Buffer>;
 }
 
 interface BudgetAlert {
@@ -352,32 +353,32 @@ This ensures that all project costs, whether tracked as budget items or task act
 
 **Budget Export Format**:
 
+The PDF export supports an optional `milestoneId` filter. When a milestone is selected, only tasks and budget items assigned to that milestone are included; totals are recalculated from the filtered subset. When no milestone is selected, the full project data is exported.
+
 The PDF export includes:
 1. **Header Section**:
    - Project name
    - Client name, email, and phone
-   - Total budget amount (totalEstimated)
+   - Milestone name (if filtering by milestone)
    - Export date
 
 2. **Items Table**:
    - Columns: ID, Name, Quantity, Per Unit, Price
-   - Rows for all tasks (with pricing information)
-   - Rows for all budget items
-   - Each row clearly labeled with type (Task/Budget Item)
+   - Rows for tasks (with pricing information), filtered by milestone if applicable
+   - Rows for budget items, filtered by milestone if applicable
+   - Each row clearly labeled with type (Task/Budget Item category)
 
 3. **Footer Section**:
-   - Subtotal by category:
-     - Tasks (sum of all task actual prices)
-     - Labor (sum of budget items in LABOR category)
-     - Materials (sum of budget items in MATERIALS category)
-     - Equipment (sum of budget items in EQUIPMENT category)
-     - Subcontractors (sum of budget items in SUBCONTRACTORS category)
-     - Permits (sum of budget items in PERMITS category)
-     - Contingency (sum of budget items in CONTINGENCY category)
-     - Other (sum of budget items in OTHER category)
-   - Total Estimated: totalEstimated
-   - Total Actual: totalActual
-   - Variance: variance (with percentage)
+   - Subtotal by category (calculated from filtered data):
+     - Tasks (sum of filtered task actual prices)
+     - Labor (sum of filtered budget items in LABOR category)
+     - Materials (sum of filtered budget items in MATERIALS category)
+     - Equipment (sum of filtered budget items in EQUIPMENT category)
+     - Subcontractors (sum of filtered budget items in SUBCONTRACTORS category)
+     - Permits (sum of filtered budget items in PERMITS category)
+     - Contingency (sum of filtered budget items in CONTINGENCY category)
+     - Other (sum of filtered budget items in OTHER category)
+   - Total Actual: sum of filtered tasks + filtered budget items
 
 
 
@@ -760,6 +761,7 @@ CREATE TABLE budgets (
 CREATE TABLE budget_items (
   id UUID PRIMARY KEY,
   budget_id UUID NOT NULL REFERENCES budgets(id) ON DELETE CASCADE,
+  milestone_id UUID REFERENCES milestones(id) ON DELETE SET NULL,
   name VARCHAR(255) NOT NULL,
   category VARCHAR(50) NOT NULL,
   estimated_cost DECIMAL(12, 2) NOT NULL,
@@ -838,6 +840,7 @@ projects (1) ──── (N) documents
 projects (1) ──── (N) resources
 users (1) ──── (N) suppliers
 milestones (1) ──── (N) tasks
+milestones (1) ──── (N) budget_items
 suppliers (1) ──── (N) resources
 ```
 
@@ -947,8 +950,8 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 #### Budget Management Properties
 
 **Property 19: Budget Item Creation Completeness**
-*For any* valid budget item input containing name, category, and estimated cost, creating a budget item should result in an item with all fields preserved and actual cost initialized to zero.
-**Validates: Requirements 4.1, 4.2**
+*For any* valid budget item input containing name, category, estimated cost, and optional milestone association, creating a budget item should result in an item with all fields preserved, actual cost initialized to zero, and milestoneId set if provided.
+**Validates: Requirements 4.1, 4.2, 4.15**
 
 **Property 20: Budget Variance Calculation**
 *For any* budget item with estimated cost E and actual cost A, the variance should equal (A - E) and the percentage variance should equal ((A - E) / E) × 100.
@@ -963,8 +966,12 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 **Validates: Requirements 4.7**
 
 **Property 23: Budget Export Completeness**
-*For any* project with budget items and tasks, exporting the budget to PDF should generate a document containing a header with project name and client details, a table with all tasks and budget items including ID, name, quantity, per unit, and price columns, and a footer with aggregated sums by type (tasks, labor, materials, subcontractors, equipment, permits, contingency, other).
-**Validates: Requirements 4.11, 4.12**
+*For any* project with budget items and tasks, exporting the budget to PDF should generate a document containing a header with project name and client details (and milestone name if filtering by milestone), a table with tasks and budget items (filtered by milestone if specified) including ID, name, quantity, per unit, and price columns, and a footer with aggregated sums by type computed from the filtered data.
+**Validates: Requirements 4.11, 4.12, 4.16, 4.17, 4.18**
+
+**Property 23a: Budget Milestone Grouping**
+*For any* project with milestones and budget items, viewing the budget items list should display items grouped by their associated milestone with collapsible sections, items without a milestone grouped under "General", and each section showing a subtotal.
+**Validates: Requirements 4.13, 4.14**
 
 #### Document Management Properties
 

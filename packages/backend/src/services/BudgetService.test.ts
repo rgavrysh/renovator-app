@@ -79,6 +79,13 @@ describe('BudgetService', () => {
       expect(budget.updatedAt).toBeInstanceOf(Date);
     });
 
+    test('should create a budget with totalEstimated when provided', async () => {
+      const budget = await budgetService.createBudget(testProjectId, { totalEstimated: 10000 });
+
+      expect(budget).toBeDefined();
+      expect(Number(budget.totalEstimated)).toBe(10000);
+    });
+
     test('should throw error if budget already exists for project', async () => {
       await budgetService.createBudget(testProjectId);
 
@@ -91,6 +98,23 @@ describe('BudgetService', () => {
       await expect(budgetService.createBudget('invalid-id')).rejects.toThrow(
         'Invalid project ID'
       );
+    });
+  });
+
+  describe('updateBudget', () => {
+    test('should update totalEstimated', async () => {
+      await budgetService.createBudget(testProjectId, { totalEstimated: 5000 });
+      const budget = await budgetService.updateBudget(testProjectId, { totalEstimated: 8000 });
+
+      expect(Number(budget.totalEstimated)).toBe(8000);
+    });
+
+    test('should throw error if budget not found', async () => {
+      const nonExistentProjectId = '123e4567-e89b-12d3-a456-426614174999';
+
+      await expect(
+        budgetService.updateBudget(nonExistentProjectId, { totalEstimated: 5000 })
+      ).rejects.toThrow('Budget not found');
     });
   });
 
@@ -134,7 +158,6 @@ describe('BudgetService', () => {
       const itemData = {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
         notes: 'Initial labor estimate',
       };
@@ -146,7 +169,6 @@ describe('BudgetService', () => {
       expect(budgetItem.budgetId).toBe(budgetId);
       expect(budgetItem.name).toBe(itemData.name);
       expect(budgetItem.category).toBe(itemData.category);
-      expect(Number(budgetItem.estimatedCost)).toBe(itemData.estimatedCost);
       expect(Number(budgetItem.actualCost)).toBe(itemData.actualCost);
       expect(budgetItem.notes).toBe(itemData.notes);
     });
@@ -155,7 +177,6 @@ describe('BudgetService', () => {
       const itemData = {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 3000,
       };
 
       const budgetItem = await budgetService.addBudgetItem(budgetId, itemData);
@@ -164,23 +185,23 @@ describe('BudgetService', () => {
     });
 
     test('should update budget totals after adding item', async () => {
+      await budgetService.updateBudget(testProjectId, { totalEstimated: 10000 });
+
       await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
       });
 
       await budgetService.addBudgetItem(budgetId, {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 3000,
         actualCost: 2800,
       });
 
       const budget = await budgetService.getBudget(testProjectId);
 
-      expect(Number(budget.totalEstimated)).toBe(8000);
+      expect(Number(budget.totalEstimated)).toBe(10000);
       expect(Number(budget.totalActual)).toBe(7300);
     });
 
@@ -189,7 +210,6 @@ describe('BudgetService', () => {
         budgetService.addBudgetItem('invalid-id', {
           name: 'Test',
           category: BudgetCategory.LABOR,
-          estimatedCost: 1000,
         })
       ).rejects.toThrow('Invalid budget ID');
     });
@@ -201,7 +221,6 @@ describe('BudgetService', () => {
         budgetService.addBudgetItem(nonExistentBudgetId, {
           name: 'Test',
           category: BudgetCategory.LABOR,
-          estimatedCost: 1000,
         })
       ).rejects.toThrow('Budget not found');
     });
@@ -218,7 +237,6 @@ describe('BudgetService', () => {
       const item = await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
       });
       itemId = item.id;
@@ -235,18 +253,15 @@ describe('BudgetService', () => {
       expect(Number(updatedItem.actualCost)).toBe(5200);
       expect(updatedItem.notes).toBe('Cost increased');
       expect(updatedItem.category).toBe(BudgetCategory.LABOR);
-      expect(Number(updatedItem.estimatedCost)).toBe(5000);
     });
 
     test('should update budget totals after updating item', async () => {
-      await budgetService.updateBudgetItem(itemId, {
-        estimatedCost: 6000,
-        actualCost: 5500,
-      });
+      await budgetService.updateBudget(testProjectId, { totalEstimated: 5000 });
+      await budgetService.updateBudgetItem(itemId, { actualCost: 5500 });
 
       const budget = await budgetService.getBudget(testProjectId);
 
-      expect(Number(budget.totalEstimated)).toBe(6000);
+      expect(Number(budget.totalEstimated)).toBe(5000);
       expect(Number(budget.totalActual)).toBe(5500);
     });
 
@@ -276,7 +291,6 @@ describe('BudgetService', () => {
       const item = await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
       });
       itemId = item.id;
@@ -291,10 +305,10 @@ describe('BudgetService', () => {
     });
 
     test('should update budget totals after deleting item', async () => {
+      await budgetService.updateBudget(testProjectId, { totalEstimated: 5000 });
       await budgetService.addBudgetItem(budgetId, {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 3000,
         actualCost: 2800,
       });
 
@@ -302,7 +316,7 @@ describe('BudgetService', () => {
 
       const budget = await budgetService.getBudget(testProjectId);
 
-      expect(Number(budget.totalEstimated)).toBe(3000);
+      expect(Number(budget.totalEstimated)).toBe(5000);
       expect(Number(budget.totalActual)).toBe(2800);
     });
 
@@ -333,14 +347,12 @@ describe('BudgetService', () => {
       await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 5500,
       });
 
       await budgetService.addBudgetItem(budgetId, {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 3000,
         actualCost: 2800,
       });
 
@@ -363,7 +375,7 @@ describe('BudgetService', () => {
     let budgetId: string;
 
     beforeEach(async () => {
-      const budget = await budgetService.createBudget(testProjectId);
+      const budget = await budgetService.createBudget(testProjectId, { totalEstimated: 5000 });
       budgetId = budget.id;
     });
 
@@ -371,7 +383,6 @@ describe('BudgetService', () => {
       await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
       });
 
@@ -384,7 +395,6 @@ describe('BudgetService', () => {
       await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 5600,
       });
 
@@ -401,7 +411,6 @@ describe('BudgetService', () => {
       await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 6500,
       });
 
@@ -437,25 +446,24 @@ describe('BudgetService', () => {
       budgetId = budget.id;
     });
 
-    test('should aggregate totals from multiple budget items', async () => {
+    test('should aggregate totalActual from multiple budget items', async () => {
+      await budgetService.updateBudget(testProjectId, { totalEstimated: 9500 });
+
       await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4800,
       });
 
       await budgetService.addBudgetItem(budgetId, {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 3000,
         actualCost: 3200,
       });
 
       await budgetService.addBudgetItem(budgetId, {
         name: 'Equipment',
         category: BudgetCategory.EQUIPMENT,
-        estimatedCost: 1500,
         actualCost: 1400,
       });
 
@@ -469,20 +477,17 @@ describe('BudgetService', () => {
       await budgetService.addBudgetItem(budgetId, {
         name: 'Labor',
         category: BudgetCategory.LABOR,
-        estimatedCost: 1234.56,
         actualCost: 1234.78,
       });
 
       await budgetService.addBudgetItem(budgetId, {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 987.65,
         actualCost: 987.43,
       });
 
       const budget = await budgetService.getBudget(testProjectId);
 
-      expect(Number(budget.totalEstimated)).toBeCloseTo(2222.21, 2);
       expect(Number(budget.totalActual)).toBeCloseTo(2222.21, 2);
     });
   });
@@ -495,14 +500,12 @@ describe('BudgetService', () => {
       await budgetService.addBudgetItem(budget.id, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4800,
       });
 
       await budgetService.addBudgetItem(budget.id, {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 3000,
         actualCost: 3200,
       });
 

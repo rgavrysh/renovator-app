@@ -2,8 +2,10 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Budget } from '../entities/Budget';
 import { BudgetItem, BudgetCategory } from '../entities/BudgetItem';
+import { Milestone } from '../entities/Milestone';
 import { TaskService } from './TaskService';
 import { ProjectService } from './ProjectService';
+import { MilestoneService } from './MilestoneService';
 import PDFDocument from 'pdfkit';
 import path from 'path';
 import { getPdfTranslations, translateCategory, formatPdfCurrency } from '../i18n/pdfTranslations';
@@ -16,20 +18,28 @@ function isValidUUID(id: string): boolean {
   return UUID_REGEX.test(id);
 }
 
+export interface CreateBudgetInput {
+  totalEstimated?: number;
+}
+
+export interface UpdateBudgetInput {
+  totalEstimated?: number;
+}
+
 export interface CreateBudgetItemInput {
   name: string;
   category: BudgetCategory;
-  estimatedCost: number;
   actualCost?: number;
   notes?: string;
+  milestoneId?: string;
 }
 
 export interface UpdateBudgetItemInput {
   name?: string;
   category?: BudgetCategory;
-  estimatedCost?: number;
   actualCost?: number;
   notes?: string;
+  milestoneId?: string | null;
 }
 
 export interface BudgetAlert {
@@ -42,17 +52,21 @@ export interface BudgetAlert {
 export class BudgetService {
   private budgetRepository: Repository<Budget>;
   private budgetItemRepository: Repository<BudgetItem>;
+  private milestoneRepository: Repository<Milestone>;
   private taskService: TaskService;
   private projectService: ProjectService;
+  private milestoneService: MilestoneService;
 
   constructor() {
     this.budgetRepository = AppDataSource.getRepository(Budget);
     this.budgetItemRepository = AppDataSource.getRepository(BudgetItem);
+    this.milestoneRepository = AppDataSource.getRepository(Milestone);
     this.taskService = new TaskService();
     this.projectService = new ProjectService();
+    this.milestoneService = new MilestoneService();
   }
 
-  async createBudget(projectId: string): Promise<Budget> {
+  async createBudget(projectId: string, data?: CreateBudgetInput): Promise<Budget> {
     if (!isValidUUID(projectId)) {
       throw new Error('Invalid project ID');
     }
@@ -71,11 +85,32 @@ export class BudgetService {
 
     const budget = this.budgetRepository.create({
       projectId,
-      totalEstimated: 0,
+      totalEstimated: data?.totalEstimated ?? 0,
       totalActual: taskCosts.actual,
       totalActualFromItems: 0,
       totalActualFromTasks: taskCosts.actual,
     });
+
+    return await this.budgetRepository.save(budget);
+  }
+
+  async updateBudget(projectId: string, data: UpdateBudgetInput): Promise<Budget> {
+    if (!isValidUUID(projectId)) {
+      throw new Error('Invalid project ID');
+    }
+
+    const budget = await this.budgetRepository.findOne({
+      where: { projectId },
+      relations: ['items'],
+    });
+
+    if (!budget) {
+      throw new Error('Budget not found');
+    }
+
+    if (data.totalEstimated !== undefined) {
+      budget.totalEstimated = data.totalEstimated;
+    }
 
     return await this.budgetRepository.save(budget);
   }
@@ -114,11 +149,15 @@ export class BudgetService {
       throw new Error('Budget not found');
     }
 
+    if (data.milestoneId && !isValidUUID(data.milestoneId)) {
+      throw new Error('Invalid milestone ID');
+    }
+
     const budgetItem = this.budgetItemRepository.create({
       budgetId,
+      milestoneId: data.milestoneId || undefined,
       name: data.name,
       category: data.category,
-      estimatedCost: data.estimatedCost,
       actualCost: data.actualCost ?? 0,
       notes: data.notes,
     });
@@ -145,6 +184,18 @@ export class BudgetService {
 
     if (!budgetItem) {
       throw new Error('Budget item not found');
+    }
+
+    if (data.milestoneId !== undefined) {
+      if (data.milestoneId === null || data.milestoneId === '') {
+        budgetItem.milestoneId = undefined;
+      } else {
+        if (!isValidUUID(data.milestoneId)) {
+          throw new Error('Invalid milestone ID');
+        }
+        budgetItem.milestoneId = data.milestoneId;
+      }
+      delete (data as any).milestoneId;
     }
 
     Object.assign(budgetItem, data);
@@ -269,12 +320,8 @@ export class BudgetService {
       return;
     }
 
-    // Calculate totals from all budget items
-    let totalEstimated = 0;
     let totalActualFromItems = 0;
-
     for (const item of budget.items) {
-      totalEstimated += Number(item.estimatedCost);
       totalActualFromItems += Number(item.actualCost);
     }
 
@@ -282,8 +329,6 @@ export class BudgetService {
     const taskCosts = await this.taskService.calculateTotalTaskCosts(budget.projectId);
     const totalActualFromTasks = taskCosts.actual;
 
-    // Update budget totals
-    budget.totalEstimated = totalEstimated;
     budget.totalActualFromItems = totalActualFromItems;
     budget.totalActualFromTasks = totalActualFromTasks;
     budget.totalActual = totalActualFromItems + totalActualFromTasks;
@@ -291,9 +336,13 @@ export class BudgetService {
     await this.budgetRepository.save(budget);
   }
 
-  async exportBudgetToPDF(projectId: string, lang: string = 'en'): Promise<Buffer> {
+  async exportBudgetToPDF(projectId: string, lang: string = 'en', milestoneId?: string): Promise<Buffer> {
     if (!isValidUUID(projectId)) {
       throw new Error('Invalid project ID');
+    }
+
+    if (milestoneId && !isValidUUID(milestoneId)) {
+      throw new Error('Invalid milestone ID');
     }
 
     const t = getPdfTranslations(lang);
@@ -306,10 +355,20 @@ export class BudgetService {
     
     // Get tasks with pricing information
     const tasks = await this.taskService.listTasks(projectId, {});
-    const tasksWithPricing = tasks.filter(task => task.actualPrice !== null && task.actualPrice !== undefined);
+    let tasksWithPricing = tasks.filter(task => task.actualPrice !== null && task.actualPrice !== undefined);
+
+    // If filtering by milestone, only include matching tasks and budget items
+    let filteredBudgetItems = budget.items;
+    let milestoneName: string | undefined;
+
+    if (milestoneId) {
+      const milestone = await this.milestoneService.getMilestone(milestoneId);
+      milestoneName = milestone.name;
+      tasksWithPricing = tasksWithPricing.filter(task => task.milestoneId === milestoneId);
+      filteredBudgetItems = budget.items.filter(item => item.milestoneId === milestoneId);
+    }
 
     // Resolve font paths (Roboto supports Cyrillic)
-    // Works in both dev (src/services/) and prod (dist/services/) by going up to package root
     const fontsDir = path.resolve(__dirname, '..', '..', 'assets', 'fonts');
     const fontRegular = path.join(fontsDir, 'Roboto-Regular.ttf');
     const fontBold = path.join(fontsDir, 'Roboto-Bold.ttf');
@@ -339,6 +398,9 @@ export class BudgetService {
     }
     if (project.clientPhone) {
       doc.text(`${t.phone}: ${project.clientPhone}`);
+    }
+    if (milestoneName) {
+      doc.text(`${t.milestone}: ${milestoneName}`);
     }
     doc.text(`${t.exportDate}: ${new Date().toLocaleDateString(dateLocale)}`);
     doc.moveDown(2);
@@ -374,7 +436,6 @@ export class BudgetService {
     for (let i = 0; i < tasksWithPricing.length; i++) {
       const task = tasksWithPricing[i];
       
-      // Check if we need a new page
       if (currentY > 700) {
         doc.addPage();
         currentY = 50;
@@ -397,10 +458,9 @@ export class BudgetService {
     }
 
     // Add budget items
-    for (let i = 0; i < budget.items.length; i++) {
-      const item = budget.items[i];
+    for (let i = 0; i < filteredBudgetItems.length; i++) {
+      const item = filteredBudgetItems[i];
       
-      // Check if we need a new page
       if (currentY > 700) {
         doc.addPage();
         currentY = 50;
@@ -432,12 +492,12 @@ export class BudgetService {
     currentY += 25;
     doc.font('Roboto');
 
-    // Calculate category totals
+    // Calculate category totals from filtered data
     const categoryTotals: Record<string, number> = {};
-    categoryTotals[t.tasks] = Number(budget.totalActualFromTasks);
+    const filteredTasksCost = tasksWithPricing.reduce((sum, task) => sum + (task.actualPrice ? Number(task.actualPrice) : 0), 0);
+    categoryTotals[t.tasks] = filteredTasksCost;
 
-    // Aggregate budget items by category
-    for (const item of budget.items) {
+    for (const item of filteredBudgetItems) {
       const category = translateCategory(item.category, t);
       if (!categoryTotals[category]) {
         categoryTotals[category] = 0;
@@ -459,9 +519,12 @@ export class BudgetService {
     currentY += 20;
 
     // Total Summary
+    const filteredItemsCost = filteredBudgetItems.reduce((sum, item) => sum + Number(item.actualCost), 0);
+    const filteredTotal = filteredTasksCost + filteredItemsCost;
+
     doc.font('Roboto-Bold');
     doc.text(`${t.totalActual}:`, 50, currentY, { continued: true });
-    doc.text(formatPdfCurrency(Number(budget.totalActual), lang), { align: 'right' });
+    doc.text(formatPdfCurrency(filteredTotal, lang), { align: 'right' });
 
     // Finalize PDF
     doc.end();

@@ -24,7 +24,16 @@ router.post('/:projectId/budget', authenticate, async (req: Request, res: Respon
       return;
     }
 
-    const budget = await budgetService.createBudget(projectId);
+    const { totalEstimated } = req.body || {};
+
+    if (totalEstimated !== undefined) {
+      if (typeof totalEstimated !== 'number' || totalEstimated < 0) {
+        res.status(400).json({ error: 'totalEstimated must be a non-negative number' });
+        return;
+      }
+    }
+
+    const budget = await budgetService.createBudget(projectId, { totalEstimated });
     res.status(201).json(budget);
   } catch (error) {
     if (error instanceof Error && error.message === 'Budget already exists for this project') {
@@ -65,6 +74,43 @@ router.get('/:projectId/budget', authenticate, async (req: Request, res: Respons
 });
 
 /**
+ * PUT /api/projects/:projectId/budget
+ * Update a budget (e.g. totalEstimated)
+ */
+router.put('/:projectId/budget', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+
+    // Verify project exists and user owns it
+    try {
+      await projectService.getProject(projectId, req.userId!);
+    } catch (error) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    const { totalEstimated } = req.body;
+
+    if (totalEstimated !== undefined) {
+      if (typeof totalEstimated !== 'number' || totalEstimated < 0) {
+        res.status(400).json({ error: 'totalEstimated must be a non-negative number' });
+        return;
+      }
+    }
+
+    const budget = await budgetService.updateBudget(projectId, { totalEstimated });
+    res.json(budget);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Budget not found') {
+      res.status(404).json({ error: 'Budget not found' });
+      return;
+    }
+    console.error('Error updating budget:', error);
+    res.status(500).json({ error: 'Failed to update budget' });
+  }
+});
+
+/**
  * DELETE /api/projects/:projectId/budget
  * Delete the entire budget for a project (including all budget items)
  */
@@ -99,12 +145,12 @@ router.delete('/:projectId/budget', authenticate, async (req: Request, res: Resp
 router.post('/:budgetId/items', authenticate, async (req: Request, res: Response) => {
   try {
     const { budgetId } = req.params;
-    const { name, category, estimatedCost, actualCost, notes } = req.body;
+    const { name, category, actualCost, notes, milestoneId } = req.body;
 
     // Validate required fields
-    if (!name || !category || estimatedCost === undefined) {
+    if (!name || !category) {
       res.status(400).json({ 
-        error: 'Missing required fields: name, category, estimatedCost' 
+        error: 'Missing required fields: name, category' 
       });
       return;
     }
@@ -112,12 +158,6 @@ router.post('/:budgetId/items', authenticate, async (req: Request, res: Response
     // Validate category
     if (!Object.values(BudgetCategory).includes(category)) {
       res.status(400).json({ error: 'Invalid budget category' });
-      return;
-    }
-
-    // Validate costs are numbers
-    if (typeof estimatedCost !== 'number' || estimatedCost < 0) {
-      res.status(400).json({ error: 'estimatedCost must be a non-negative number' });
       return;
     }
 
@@ -142,9 +182,9 @@ router.post('/:budgetId/items', authenticate, async (req: Request, res: Response
     const budgetItem = await budgetService.addBudgetItem(budgetId, {
       name,
       category,
-      estimatedCost,
       actualCost,
       notes,
+      milestoneId,
     });
 
     res.status(201).json(budgetItem);
@@ -161,12 +201,13 @@ router.post('/:budgetId/items', authenticate, async (req: Request, res: Response
 router.put('/budget-items/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, category, estimatedCost, actualCost, notes } = req.body;
+    const { name, category, actualCost, notes, milestoneId } = req.body;
 
     const updateData: any = {};
 
     if (name !== undefined) updateData.name = name;
     if (notes !== undefined) updateData.notes = notes;
+    if (milestoneId !== undefined) updateData.milestoneId = milestoneId || null;
 
     // Validate category if provided
     if (category !== undefined) {
@@ -175,15 +216,6 @@ router.put('/budget-items/:id', authenticate, async (req: Request, res: Response
         return;
       }
       updateData.category = category;
-    }
-
-    // Validate costs if provided
-    if (estimatedCost !== undefined) {
-      if (typeof estimatedCost !== 'number' || estimatedCost < 0) {
-        res.status(400).json({ error: 'estimatedCost must be a non-negative number' });
-        return;
-      }
-      updateData.estimatedCost = estimatedCost;
     }
 
     if (actualCost !== undefined) {
@@ -322,9 +354,10 @@ router.get('/:projectId/budget/export', authenticate, async (req: Request, res: 
 
     // Get language from query parameter (default to 'en')
     const lang = (req.query.lang as string) || 'en';
+    const milestoneId = req.query.milestoneId as string | undefined;
 
     // Generate PDF
-    const pdfBuffer = await budgetService.exportBudgetToPDF(projectId, lang);
+    const pdfBuffer = await budgetService.exportBudgetToPDF(projectId, lang, milestoneId);
 
     // Set response headers for PDF download
     res.setHeader('Content-Type', 'application/pdf');

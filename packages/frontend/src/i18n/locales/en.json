@@ -114,7 +114,10 @@
     "addItem": "Add Item",
     "noBudgetSet": "No budget set",
     "createBudget": "Create Budget",
-    "totalEstimated": "Total Estimated",
+    "estimatedBudget": "Estimated Budget",
+    "optional": "optional",
+    "notSet": "Not set",
+    "totalEstimated": "Estimated Budget",
     "totalActual": "Total Actual",
     "fromBudgetItems": "From Budget Items:",
     "fromTasks": "From Tasks:",
@@ -127,7 +130,10 @@
     "quickStats": "Quick Stats",
     "milestones": "Milestones",
     "budgetExportSuccess": "Budget exported successfully!",
-    "deleteBudgetItemConfirm": "Are you sure you want to delete \"{{name}}\" from the budget?"
+    "deleteBudgetItemConfirm": "Are you sure you want to delete \"{{name}}\" from the budget?",
+    "exportMilestone": "Milestone",
+    "exportMilestoneHint": "Select a milestone to export only its items, or export the entire project budget.",
+    "allProject": "Entire Project"
   },
   "projectForm": {
     "createTitle": "Create New Project",
@@ -277,28 +283,25 @@
     "editTitle": "Edit Budget Item",
     "itemName": "Item Name",
     "itemNamePlaceholder": "e.g., Lumber materials",
-    "estimatedCost": "Estimated Cost",
-    "actualCost": "Actual Cost",
+    "milestone": "Milestone",
+    "noMilestone": "No Milestone",
+    "actualCost": "Cost",
     "notesPlaceholder": "Add any additional notes...",
     "addButton": "Add Item",
     "updateButton": "Update Item",
     "validation": {
       "nameRequired": "Item name is required",
-      "estimatedCostRequired": "Estimated cost is required",
-      "estimatedCostInvalid": "Estimated cost must be a valid number",
-      "estimatedCostNegative": "Estimated cost cannot be negative",
-      "actualCostRequired": "Actual cost is required",
-      "actualCostInvalid": "Actual cost must be a valid number",
-      "actualCostNegative": "Actual cost cannot be negative"
+      "actualCostRequired": "Cost is required",
+      "actualCostInvalid": "Cost must be a valid number",
+      "actualCostNegative": "Cost cannot be negative"
     }
   },
   "budgetItemsList": {
     "title": "Budget Items",
     "noBudgetItems": "No budget items",
-    "addBudgetItems": "Add budget items to track estimated and actual costs",
-    "estimated": "Estimated",
+    "addBudgetItems": "Add budget items to track actual costs",
     "actual": "Actual",
-    "variance": "Variance"
+    "general": "General"
   },
   "workItemCategory": {
     "demolition": "Demolition",

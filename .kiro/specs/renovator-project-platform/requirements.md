@@ -78,7 +78,7 @@ The Renovator Project Management Platform is an all-in-one digital workspace des
 #### Acceptance Criteria
 
 1. WHEN a renovator creates a project budget, THE Platform SHALL allow entry of estimated costs by category (labor, materials, equipment, subcontractors, permits, contingency)
-2. WHEN a renovator adds a budget item, THE Platform SHALL capture item name, category, estimated cost, and actual cost
+2. WHEN a renovator adds a budget item, THE Platform SHALL capture item name, category, estimated cost, actual cost, and optionally an associated milestone
 3. WHEN actual costs are entered, THE Platform SHALL calculate variance between estimated and actual costs
 4. WHEN viewing budget status, THE Platform SHALL display total estimated budget, total actual costs, remaining budget, and percentage spent
 5. WHEN calculating budget totals, THE Platform SHALL automatically aggregate actual prices from all project tasks and include them in the total actual costs
@@ -89,6 +89,12 @@ The Renovator Project Management Platform is an all-in-one digital workspace des
 10. WHEN a task actual price is added or modified, THE Platform SHALL immediately update budget totals to reflect the change
 11. WHEN a renovator exports a budget, THE Platform SHALL generate a PDF document containing project header with name and client details, a table of all tasks and budget items with columns for ID, name, quantity, per unit, and price, and a footer with aggregated sums by type (tasks, labor, subcontractors, materials, etc.)
 12. THE Platform SHALL allow renovators to download the exported budget PDF to their local device
+13. WHEN a project has milestones, THE Platform SHALL group budget items by their associated milestone in the budget items view, with each milestone section collapsible via an expand/collapse control and displaying a subtotal
+14. WHEN a budget item has no associated milestone, THE Platform SHALL display it under a "General" section in the milestone-grouped budget view
+15. WHEN a renovator adds or edits a budget item, THE Platform SHALL allow optional selection of a milestone to associate the item with, similar to how tasks are associated with milestones
+16. WHEN a renovator exports a budget to PDF and the project has milestones, THE Platform SHALL present a milestone selection dialog allowing the renovator to choose a specific milestone or the entire project
+17. WHEN a specific milestone is selected for PDF export, THE Platform SHALL include only tasks and budget items assigned to that milestone, with totals recalculated for the filtered subset and the milestone name displayed in the PDF header
+18. WHEN no milestone is selected for PDF export (entire project), THE Platform SHALL include all tasks and budget items with full project aggregation, matching the previous default behavior
 
 ### Requirement 5: Document Management
 

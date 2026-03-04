@@ -86,6 +86,13 @@ describe('Budget Routes Integration', () => {
       testBudgetId = budget.id;
     });
 
+    it('should create a budget with totalEstimated', async () => {
+      const budget = await budgetService.createBudget(testProjectId, { totalEstimated: 10000 });
+
+      expect(budget).toBeDefined();
+      expect(Number(budget.totalEstimated)).toBe(10000);
+    });
+
     it('should throw error if budget already exists', async () => {
       // Create first budget
       await budgetService.createBudget(testProjectId);
@@ -148,7 +155,6 @@ describe('Budget Routes Integration', () => {
       const budgetItem = await budgetService.addBudgetItem(testBudgetId, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
         notes: 'Initial labor estimate',
       });
@@ -157,7 +163,6 @@ describe('Budget Routes Integration', () => {
       expect(budgetItem.id).toBeDefined();
       expect(budgetItem.name).toBe('Labor Costs');
       expect(budgetItem.category).toBe(BudgetCategory.LABOR);
-      expect(Number(budgetItem.estimatedCost)).toBe(5000);
       expect(Number(budgetItem.actualCost)).toBe(4500);
       expect(budgetItem.notes).toBe('Initial labor estimate');
     });
@@ -166,7 +171,6 @@ describe('Budget Routes Integration', () => {
       const budgetItem = await budgetService.addBudgetItem(testBudgetId, {
         name: 'Materials',
         category: BudgetCategory.MATERIALS,
-        estimatedCost: 3000,
       });
 
       expect(Number(budgetItem.actualCost)).toBe(0);
@@ -177,7 +181,6 @@ describe('Budget Routes Integration', () => {
         budgetService.addBudgetItem('123e4567-e89b-12d3-a456-426614174999', {
           name: 'Labor Costs',
           category: BudgetCategory.LABOR,
-          estimatedCost: 5000,
         })
       ).rejects.toThrow('Budget not found');
     });
@@ -186,12 +189,10 @@ describe('Budget Routes Integration', () => {
       await budgetService.addBudgetItem(testBudgetId, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
       });
 
       const budget = await budgetService.getBudget(testProjectId);
-      expect(Number(budget.totalEstimated)).toBe(5000);
       expect(Number(budget.totalActual)).toBe(4500);
     });
   });
@@ -206,7 +207,6 @@ describe('Budget Routes Integration', () => {
       const budgetItem = await budgetService.addBudgetItem(testBudgetId, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 0,
       });
       testBudgetItemId = budgetItem.id;
@@ -247,7 +247,6 @@ describe('Budget Routes Integration', () => {
       });
 
       const budget = await budgetService.getBudget(testProjectId);
-      expect(Number(budget.totalEstimated)).toBe(5000);
       expect(Number(budget.totalActual)).toBe(4800);
     });
   });
@@ -262,7 +261,7 @@ describe('Budget Routes Integration', () => {
       const budgetItem = await budgetService.addBudgetItem(testBudgetId, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
+        actualCost: 5000,
       });
       testBudgetItemId = budgetItem.id;
     });
@@ -285,14 +284,13 @@ describe('Budget Routes Integration', () => {
       await budgetService.deleteBudgetItem(testBudgetItemId);
 
       const budget = await budgetService.getBudget(testProjectId);
-      expect(Number(budget.totalEstimated)).toBe(0);
       expect(Number(budget.totalActual)).toBe(0);
     });
   });
 
   describe('GET /api/budgets/:budgetId/alerts - Get Budget Alerts', () => {
     beforeEach(async () => {
-      const budget = await budgetService.createBudget(testProjectId);
+      const budget = await budgetService.createBudget(testProjectId, { totalEstimated: 5000 });
       testBudgetId = budget.id;
     });
 
@@ -300,7 +298,6 @@ describe('Budget Routes Integration', () => {
       await budgetService.addBudgetItem(testBudgetId, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 4500,
       });
 
@@ -313,7 +310,6 @@ describe('Budget Routes Integration', () => {
       await budgetService.addBudgetItem(testBudgetId, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 5600,
       });
 
@@ -328,7 +324,6 @@ describe('Budget Routes Integration', () => {
       await budgetService.addBudgetItem(testBudgetId, {
         name: 'Labor Costs',
         category: BudgetCategory.LABOR,
-        estimatedCost: 5000,
         actualCost: 6500,
       });
 
