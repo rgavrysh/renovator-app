@@ -246,11 +246,6 @@ export const ProjectDetail: React.FC = () => {
     }
   };
 
-  const handleViewTaskDetails = (task: Task) => {
-    setSelectedTask(task);
-    setIsTaskDetailOpen(true);
-  };
-
   const handleTaskDetailClose = () => {
     setIsTaskDetailOpen(false);
     setSelectedTask(null);
@@ -274,28 +269,84 @@ export const ProjectDetail: React.FC = () => {
     }
   };
 
-  const handleTaskStatusChange = async (task: Task, newStatus: TaskStatus) => {
+  const updateTaskLocally = (taskId: string, patch: Partial<Task>) => {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, ...patch } : t))
+    );
+    if (selectedTask?.id === taskId) {
+      setSelectedTask((prev) => (prev ? { ...prev, ...patch } : prev));
+    }
+  };
+
+  const refreshTasks = async () => {
+    if (!id) return;
     try {
-      // Call the API to update task status
+      const tasksData = await apiClient.get<Task[]>(`/api/projects/${id}/tasks`);
+      setTasks(tasksData);
+    } catch {
+      // silently ignore — local state is already updated optimistically
+    }
+  };
+
+  const handleTaskStatusChange = async (task: Task, newStatus: TaskStatus) => {
+    const completedDate = newStatus === TaskStatus.COMPLETED ? new Date().toISOString() : undefined;
+    updateTaskLocally(task.id, {
+      status: newStatus,
+      ...(completedDate ? { completedDate } : { completedDate: undefined }),
+    });
+
+    try {
       await apiClient.put(`/api/tasks/${task.id}`, {
         status: newStatus,
-        // If marking as completed, set the completed date
-        completedDate: newStatus === TaskStatus.COMPLETED ? new Date().toISOString() : null,
+        completedDate: completedDate ?? null,
       });
-
-      // Reload project data to get updated tasks and recalculated progress
-      await loadProjectData();
-
-      // Update the selected task if it's open in the detail view
-      if (selectedTask && selectedTask.id === task.id) {
-        const updatedTask = tasks.find(t => t.id === task.id);
-        if (updatedTask) {
-          setSelectedTask(updatedTask);
-        }
-      }
+      await refreshTasks();
     } catch (err: any) {
+      updateTaskLocally(task.id, { status: task.status, completedDate: task.completedDate });
       console.error('Error updating task status:', err);
       setError(err.message || 'Failed to update task status. Please try again.');
+    }
+  };
+
+  const handleDeleteTaskFromList = async (task: Task) => {
+    if (!globalThis.confirm(t('taskDetail.deleteConfirm', { name: task.name }))) {
+      return;
+    }
+    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+    try {
+      await apiClient.delete(`/api/tasks/${task.id}`);
+      await loadProjectData();
+    } catch (err: any) {
+      setTasks((prev) => [...prev, task]);
+      console.error('Error deleting task:', err);
+      setError(err.message || 'Failed to delete task. Please try again.');
+    }
+  };
+
+  const handleTaskAmountChange = async (task: Task, newAmount: number) => {
+    const newActualPrice = (task.price ?? 0) * newAmount;
+    updateTaskLocally(task.id, { amount: newAmount, actualPrice: newActualPrice });
+
+    try {
+      await apiClient.put(`/api/tasks/${task.id}`, { amount: newAmount });
+      await refreshTasks();
+    } catch (err: any) {
+      updateTaskLocally(task.id, { amount: task.amount, actualPrice: task.actualPrice });
+      console.error('Error updating task amount:', err);
+      setError(err.message || 'Failed to update task amount. Please try again.');
+    }
+  };
+
+  const handleTaskPriorityChange = async (task: Task, newPriority: TaskPriority) => {
+    updateTaskLocally(task.id, { priority: newPriority });
+
+    try {
+      await apiClient.put(`/api/tasks/${task.id}`, { priority: newPriority });
+      await refreshTasks();
+    } catch (err: any) {
+      updateTaskLocally(task.id, { priority: task.priority });
+      console.error('Error updating task priority:', err);
+      setError(err.message || 'Failed to update task priority. Please try again.');
     }
   };
 
@@ -834,8 +885,10 @@ export const ProjectDetail: React.FC = () => {
                 <TaskList 
                   tasks={tasks}
                   onEdit={handleEditTask}
-                  onViewDetails={handleViewTaskDetails}
+                  onDelete={handleDeleteTaskFromList}
                   onStatusChange={handleTaskStatusChange}
+                  onPriorityChange={handleTaskPriorityChange}
+                  onAmountChange={handleTaskAmountChange}
                 />
               </CardContent>
             </Card>
