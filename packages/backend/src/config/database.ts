@@ -15,6 +15,7 @@ import {
 } from '../entities';
 
 const isProduction = config.server.nodeEnv === 'production';
+const sslEnabled = process.env.DATABASE_SSL !== 'false';
 
 // Resolve migration paths: compiled JS in production, TS source in development
 function getMigrationPaths(): string[] {
@@ -48,7 +49,7 @@ export const dataSourceOptions: DataSourceOptions = config.database.url
   ? {
       type: 'postgres' as const,
       url: config.database.url,
-      ssl: { rejectUnauthorized: false },
+      ...(sslEnabled ? { ssl: { rejectUnauthorized: false } } : {}),
       ...sharedOptions,
     }
   : {
