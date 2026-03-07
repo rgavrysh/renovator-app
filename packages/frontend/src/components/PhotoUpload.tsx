@@ -5,6 +5,7 @@ import { Input } from './ui/Input';
 import { Modal, ModalFooter } from './ui/Modal';
 import { Milestone } from './MilestoneList';
 import { useTranslation } from 'react-i18next';
+import { useGoogleDrive } from '../hooks/useGoogleDrive';
 
 interface PhotoUploadProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   milestones = [],
 }) => {
   const { t, i18n } = useTranslation();
+  const { isConnected: isDriveConnected } = useGoogleDrive();
   const [selectedPhotos, setSelectedPhotos] = useState<PhotoFile[]>([]);
   const [milestoneId, setMilestoneId] = useState<string>('');
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -277,6 +279,31 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
             <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
+
+        {/* Storage destination indicator */}
+        <div
+          className={`flex items-center gap-2 px-3 py-2 rounded-linear text-xs font-medium ${
+            isDriveConnected
+              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+              : 'bg-gray-50 text-gray-500 border border-gray-200'
+          }`}
+        >
+          {isDriveConnected ? (
+            <>
+              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
+              </svg>
+              {t('googleDrive.uploadingTo')}
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+              {t('googleDrive.uploadingToLocal')}
+            </>
+          )}
+        </div>
 
         {/* File picker area */}
         <div>

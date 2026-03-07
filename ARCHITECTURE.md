@@ -53,12 +53,15 @@ The Renovator Platform follows a three-tier architecture with clear separation o
 - **Language**: TypeScript
 - **ORM**: TypeORM
 - **Database**: PostgreSQL 16
+- **File Storage**: Local filesystem (default) or Google Drive (per-user opt-in)
+- **Google Drive**: `googleapis` + `google-auth-library` for Drive API v3
 - **Error Tracking**: Sentry
 
 ### Infrastructure
 - **Containerization**: Docker
 - **Orchestration**: Docker Compose
-- **Authentication**: Keycloak (OAuth 2.0)
+- **Authentication**: Keycloak (OAuth 2.0), with Google as Identity Provider
+- **Cloud Storage**: Google Drive API v3 (per-user personal Drive)
 - **Development**: Hot reload for both frontend and backend
 
 ## Monorepo Structure
@@ -69,10 +72,12 @@ renovator-platform/
 │   ├── frontend/              # React application
 │   │   ├── src/
 │   │   │   ├── config/        # Environment configuration
-│   │   │   ├── utils/         # Utility functions
-│   │   │   ├── components/    # React components (to be added)
-│   │   │   ├── pages/         # Page components (to be added)
-│   │   │   ├── services/      # API services (to be added)
+│   │   │   ├── contexts/      # React contexts (AuthContext)
+│   │   │   ├── hooks/         # Custom hooks (useGoogleDrive)
+│   │   │   ├── utils/         # Utility functions (api.ts, currency.ts)
+│   │   │   ├── components/    # UI components
+│   │   │   ├── pages/         # Page components
+│   │   │   ├── i18n/          # Internationalization (en, uk)
 │   │   │   ├── App.tsx        # Root component
 │   │   │   └── main.tsx       # Entry point
 │   │   ├── Dockerfile
@@ -80,20 +85,30 @@ renovator-platform/
 │   │
 │   └── backend/               # Express API
 │       ├── src/
-│       │   ├── config/        # Environment configuration
-│       │   ├── utils/         # Utility functions
-│       │   ├── entities/      # TypeORM entities (to be added)
-│       │   ├── services/      # Business logic (to be added)
-│       │   ├── routes/        # API routes (to be added)
-│       │   ├── middleware/    # Express middleware (to be added)
+│       │   ├── config/        # Environment and database configuration
+│       │   ├── entities/      # TypeORM entities
+│       │   ├── services/      # Business logic services
+│       │   │   ├── AuthService.ts
+│       │   │   ├── FileStorageService.ts       # Local file storage
+│       │   │   ├── GoogleDriveAuthService.ts    # Google OAuth for Drive
+│       │   │   ├── GoogleDriveStorageProvider.ts # Drive API operations
+│       │   │   ├── StorageResolver.ts           # Routes local vs Drive
+│       │   │   ├── TokenEncryptionService.ts    # AES-256-GCM token encryption
+│       │   │   ├── DocumentService.ts
+│       │   │   ├── PhotoService.ts
+│       │   │   └── ...
+│       │   ├── routes/        # API routes (auth, google, projects, documents, photos, ...)
+│       │   ├── middleware/    # Express middleware (auth)
+│       │   ├── migrations/    # TypeORM migrations
 │       │   └── index.ts       # Entry point
 │       ├── Dockerfile
 │       └── package.json
 │
-├── scripts/                   # Setup and utility scripts
+├── keycloak/                  # Keycloak realm configuration
+│   └── renovator-realm.json
 ├── docker-compose.yml         # Container orchestration
 ├── package.json               # Root workspace configuration
-└── README.md
+└── ARCHITECTURE.md
 ```
 
 ## Docker Services
@@ -124,6 +139,8 @@ renovator-platform/
 
 ## Authentication Flow
 
+### Login via Keycloak (with Google as Identity Provider)
+
 ```
 ┌─────────┐                ┌──────────┐                ┌──────────┐
 │ Browser │                │ Backend  │                │ Keycloak │
@@ -135,7 +152,7 @@ renovator-platform/
      │ 2. Redirect to Keycloak  │                           │
      │<─────────────────────────┤                           │
      │                          │                           │
-     │ 3. User authenticates    │                           │
+     │ 3. User authenticates (directly or via Google IdP)   │
      ├──────────────────────────────────────────────────────>│
      │                          │                           │
      │ 4. Authorization code    │                           │
@@ -153,6 +170,88 @@ renovator-platform/
      │<─────────────────────────┤                           │
      │                          │                           │
 ```
+
+### Google Drive Linking (Separate OAuth Flow)
+
+Google Drive access uses a **separate, opt-in OAuth 2.0 consent flow**, distinct from Keycloak login. This requests only the `drive.file` scope for personal Drive access. The same Google Cloud project and OAuth client are reused, so users see the same app name.
+
+Since users typically log in via Google through Keycloak, they already have an active Google session. The Drive consent flow passes `login_hint` (user's email) so Google skips account selection and only shows the Drive scope consent screen.
+
+```
+┌─────────┐                ┌──────────┐                ┌──────────┐
+│ Browser │                │ Backend  │                │  Google  │
+└────┬────┘                └────┬─────┘                └────┬─────┘
+     │                          │                           │
+     │ 1. Click "Connect Drive" │                           │
+     ├─────────────────────────>│                           │
+     │                          │                           │
+     │ 2. Google consent URL    │                           │
+     │   (with login_hint,      │                           │
+     │    scope=drive.file,     │                           │
+     │    access_type=offline)  │                           │
+     │<─────────────────────────┤                           │
+     │                          │                           │
+     │ 3. User consents to      │                           │
+     │    Drive access           │                           │
+     ├──────────────────────────────────────────────────────>│
+     │                          │                           │
+     │ 4. Authorization code    │                           │
+     │<──────────────────────────────────────────────────────┤
+     │                          │                           │
+     │ 5. Send code to backend  │                           │
+     ├─────────────────────────>│                           │
+     │                          │ 6. Exchange code          │
+     │                          ├──────────────────────────>│
+     │                          │                           │
+     │                          │ 7. Access + Refresh tokens│
+     │                          │<──────────────────────────┤
+     │                          │                           │
+     │                          │ 8. Encrypt & store tokens │
+     │                          │    in user_google_drive_   │
+     │                          │    tokens table            │
+     │                          │                           │
+     │ 9. Connection confirmed  │                           │
+     │<─────────────────────────┤                           │
+     │                          │                           │
+```
+
+## File Storage Architecture
+
+The platform supports two storage backends for documents and photos:
+
+### Storage Provider Pattern
+
+```
+┌──────────────────┐     ┌─────────────────────┐
+│ DocumentService  │────>│   StorageResolver    │
+│ PhotoService     │     │  (routing layer)     │
+└──────────────────┘     └──────────┬───────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼                               ▼
+         ┌──────────────────┐            ┌────────────────────┐
+         │ FileStorageService│            │ GoogleDriveStorage  │
+         │ (local filesystem)│            │ Provider (Drive API)│
+         └──────────────────┘            └────────────────────┘
+```
+
+- **StorageResolver** checks if the user has linked Google Drive. If yes, routes to `GoogleDriveStorageProvider`; if no, routes to `FileStorageService`.
+- Each `Document` record stores `storage_provider` (`local` | `google_drive`) and optionally `drive_file_id`, enabling correct retrieval regardless of backend.
+- Existing local files remain accessible. New uploads go to Google Drive only when the user has opted in.
+
+### Project Folder Mapping
+
+When uploading to Google Drive:
+1. Check `project_drive_folders` for an explicit folder mapping
+2. If no mapping exists, auto-create `"Renovator - {Project Name}"` in Drive root
+3. Save the mapping for reuse on subsequent uploads
+
+### Token Security
+
+- Google OAuth refresh tokens are encrypted at rest using AES-256-GCM (`TokenEncryptionService`)
+- Access tokens are auto-refreshed when expired
+- Tokens never reach the frontend; the backend proxies all Drive file operations
+- Disconnect revokes the Google token and permanently deletes stored credentials
 
 ## Configuration Management
 
@@ -187,15 +286,15 @@ Sentry is integrated at both frontend and backend:
 
 ## Security Considerations
 
-- **Authentication**: OAuth 2.0 with Keycloak
-- **Authorization**: Token-based access control
+- **Authentication**: OAuth 2.0 with Keycloak (Google as Identity Provider)
+- **Authorization**: Token-based access control via Keycloak access tokens
+- **Google Drive Tokens**: Encrypted at rest (AES-256-GCM), auto-refreshed, never exposed to frontend
 - **Data Encryption**: TLS for data in transit
 - **Environment Variables**: Sensitive data in `.env` files (not committed)
 - **CORS**: Configured for frontend-backend communication
+- **File Access**: Backend proxies all Google Drive file operations; no direct Drive URLs exposed to clients
 
 ## Next Steps
 
-See `tasks.md` for the implementation roadmap:
-- Task 2: Database Schema and TypeORM Setup
-- Task 3: OAuth 2.0 Authentication Setup
-- Task 4+: Feature implementation
+See `.kiro/specs/renovator-project-platform/tasks.md` for the full implementation roadmap.
+Current focus: Tasks 24-28 (Google Drive Integration).

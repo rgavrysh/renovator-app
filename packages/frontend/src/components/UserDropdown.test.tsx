@@ -14,6 +14,18 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+vi.mock('../hooks/useGoogleDrive', () => ({
+  useGoogleDrive: () => ({
+    isConnected: false,
+    googleEmail: null,
+    loading: false,
+    error: null,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    refreshStatus: vi.fn(),
+  }),
+}));
+
 describe('UserDropdown', () => {
   const mockLogout = vi.fn();
   const mockUser = {

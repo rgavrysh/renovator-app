@@ -8,6 +8,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ProjectForm } from './pages/ProjectForm';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { WorkItemsLibrary } from './pages/WorkItemsLibrary';
+import { GoogleDriveCallback } from './pages/GoogleDriveCallback';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 const NotFound = () => {
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
   {
     path: '/auth/callback',
     element: <AuthCallback />,
+  },
+  {
+    path: '/google/callback',
+    element: <GoogleDriveCallback />,
   },
   {
     path: '/',

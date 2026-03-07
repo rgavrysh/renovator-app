@@ -3,14 +3,15 @@ import { Repository } from 'typeorm';
 import { DocumentService, UploadDocumentInput, DocumentFilters } from './DocumentService';
 import { Document, DocumentType } from '../entities/Document';
 import { FileStorageService } from './FileStorageService';
+import { StorageResolver } from './StorageResolver';
 
 describe('DocumentService', () => {
   let documentService: DocumentService;
   let mockDocumentRepository: Partial<Repository<Document>>;
   let mockFileStorageService: Partial<FileStorageService>;
+  let mockStorageResolver: Partial<StorageResolver>;
 
   beforeEach(() => {
-    // Mock repository
     mockDocumentRepository = {
       create: vi.fn((data) => data as Document),
       save: vi.fn((doc) => Promise.resolve(doc as Document)),
@@ -19,16 +20,22 @@ describe('DocumentService', () => {
       createQueryBuilder: vi.fn(),
     };
 
-    // Mock file storage service
     mockFileStorageService = {
       uploadFile: vi.fn(),
       deleteFile: vi.fn(),
       generatePresignedDownloadUrl: vi.fn(),
     };
 
+    mockStorageResolver = {
+      uploadFile: vi.fn(),
+      getDownloadUrl: vi.fn(),
+      deleteFile: vi.fn(),
+    };
+
     documentService = new DocumentService(
       mockDocumentRepository as Repository<Document>,
-      mockFileStorageService as FileStorageService
+      mockFileStorageService as FileStorageService,
+      mockStorageResolver as StorageResolver,
     );
   });
 
@@ -36,6 +43,7 @@ describe('DocumentService', () => {
     it('should upload a document with valid format', async () => {
       const input: UploadDocumentInput = {
         projectId: 'project-1',
+        projectName: 'Test Project',
         name: 'contract.pdf',
         type: DocumentType.CONTRACT,
         fileBuffer: Buffer.from('test file content'),
@@ -51,16 +59,20 @@ describe('DocumentService', () => {
         storageUrl: 'http://localhost:4000/files/contract.pdf',
         fileSize: 1024,
         fileType: 'application/pdf',
+        storageProvider: 'local' as const,
       };
 
-      vi.mocked(mockFileStorageService.uploadFile!).mockResolvedValue(uploadResult);
+      vi.mocked(mockStorageResolver.uploadFile!).mockResolvedValue(uploadResult);
 
       const result = await documentService.uploadDocument(input);
 
-      expect(mockFileStorageService.uploadFile).toHaveBeenCalledWith(
+      expect(mockStorageResolver.uploadFile).toHaveBeenCalledWith(
+        input.uploadedBy,
+        input.projectId,
+        input.projectName,
         input.fileBuffer,
         input.name,
-        input.fileType
+        input.fileType,
       );
 
       expect(mockDocumentRepository.create).toHaveBeenCalledWith({
@@ -72,6 +84,8 @@ describe('DocumentService', () => {
         storageUrl: uploadResult.storageUrl,
         uploadedBy: input.uploadedBy,
         metadata: input.metadata,
+        storageProvider: 'local',
+        driveFileId: undefined,
       });
 
       expect(mockDocumentRepository.save).toHaveBeenCalled();
@@ -80,6 +94,7 @@ describe('DocumentService', () => {
     it('should reject invalid file formats', async () => {
       const input: UploadDocumentInput = {
         projectId: 'project-1',
+        projectName: 'Test Project',
         name: 'malware.exe',
         type: DocumentType.OTHER,
         fileBuffer: Buffer.from('test'),
@@ -91,7 +106,7 @@ describe('DocumentService', () => {
         'Invalid file format'
       );
 
-      expect(mockFileStorageService.uploadFile).not.toHaveBeenCalled();
+      expect(mockStorageResolver.uploadFile).not.toHaveBeenCalled();
     });
 
     it('should accept all allowed file formats', async () => {
@@ -111,13 +126,15 @@ describe('DocumentService', () => {
         storageUrl: 'http://localhost:4000/files/test',
         fileSize: 1024,
         fileType: 'application/octet-stream',
+        storageProvider: 'local' as const,
       };
 
-      vi.mocked(mockFileStorageService.uploadFile!).mockResolvedValue(uploadResult);
+      vi.mocked(mockStorageResolver.uploadFile!).mockResolvedValue(uploadResult);
 
       for (const fileName of allowedFormats) {
         const input: UploadDocumentInput = {
           projectId: 'project-1',
+          projectName: 'Test Project',
           name: fileName,
           type: DocumentType.OTHER,
           fileBuffer: Buffer.from('test'),
@@ -359,6 +376,7 @@ describe('DocumentService', () => {
         name: 'contract.pdf',
         type: DocumentType.CONTRACT,
         storageUrl: 'http://localhost:4000/files/contract.pdf',
+        storageProvider: 'local',
       };
 
       vi.mocked(mockDocumentRepository.findOne!).mockResolvedValue(
@@ -382,6 +400,7 @@ describe('DocumentService', () => {
         name: 'contract.pdf',
         type: DocumentType.CONTRACT,
         storageUrl: 'http://localhost:4000/files/contract.pdf',
+        storageProvider: 'local',
       };
 
       vi.mocked(mockDocumentRepository.findOne!).mockResolvedValue(
@@ -389,17 +408,11 @@ describe('DocumentService', () => {
       );
 
       const presignedUrl = 'http://localhost:4000/files/download/contract.pdf?token=abc';
-      vi.mocked(mockFileStorageService.generatePresignedDownloadUrl!).mockReturnValue({
-        url: presignedUrl,
-        expiresAt: new Date(),
-      });
+      vi.mocked(mockStorageResolver.getDownloadUrl!).mockReturnValue(presignedUrl);
 
       const result = await documentService.generatePresignedUrl('doc-1');
 
-      expect(mockFileStorageService.generatePresignedDownloadUrl).toHaveBeenCalledWith(
-        mockDocument.storageUrl,
-        3600
-      );
+      expect(mockStorageResolver.getDownloadUrl).toHaveBeenCalledWith(mockDocument);
       expect(result).toBe(presignedUrl);
     });
   });

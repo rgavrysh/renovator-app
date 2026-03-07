@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { DocumentService } from '../services/DocumentService';
 import { ProjectService } from '../services/ProjectService';
+import { StorageResolver } from '../services/StorageResolver';
 import { authenticate } from '../middleware';
 import { DocumentType } from '../entities/Document';
 import multer from 'multer';
@@ -8,6 +9,7 @@ import multer from 'multer';
 const router = Router();
 const documentService = new DocumentService();
 const projectService = new ProjectService();
+const storageResolver = new StorageResolver();
 
 // Configure multer for file uploads (memory storage)
 const upload = multer({
@@ -31,8 +33,9 @@ router.post(
       const { type, description, tags } = req.body;
 
       // Verify project exists and user owns it
+      let project;
       try {
-        await projectService.getProject(projectId, req.userId!);
+        project = await projectService.getProject(projectId, req.userId!);
       } catch (error) {
         res.status(404).json({ error: 'Project not found' });
         return;
@@ -63,6 +66,7 @@ router.post(
 
       const document = await documentService.uploadDocument({
         projectId,
+        projectName: project.name,
         name: req.file.originalname,
         type,
         fileBuffer: req.file.buffer,
@@ -187,7 +191,8 @@ router.get('/documents/:id', authenticate, async (req: Request, res: Response) =
 
 /**
  * GET /api/documents/:id/download
- * Get a presigned download URL for a document
+ * Download a document. For local files returns a presigned URL.
+ * For Google Drive files, streams the content through the backend.
  */
 router.get('/documents/:id/download', authenticate, async (req: Request, res: Response) => {
   try {
@@ -203,6 +208,17 @@ router.get('/documents/:id/download', authenticate, async (req: Request, res: Re
       return;
     }
 
+    // For Google Drive files, stream the content directly
+    if (document.storageProvider === 'google_drive' && document.driveFileId) {
+      const buffer = await storageResolver.readFile(document, req.userId!);
+      res.setHeader('Content-Type', document.fileType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(document.name)}"`);
+      res.setHeader('Content-Length', buffer.length);
+      res.send(buffer);
+      return;
+    }
+
+    // For local files, return presigned URL
     const url = await documentService.generatePresignedUrl(id);
     res.json({ url });
   } catch (error) {
@@ -210,8 +226,8 @@ router.get('/documents/:id/download', authenticate, async (req: Request, res: Re
       res.status(404).json({ error: 'Document not found' });
       return;
     }
-    console.error('Error generating download URL:', error);
-    res.status(500).json({ error: 'Failed to generate download URL' });
+    console.error('Error downloading document:', error);
+    res.status(500).json({ error: 'Failed to download document' });
   }
 });
 

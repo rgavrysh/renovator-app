@@ -138,6 +138,25 @@ The Renovator Project Management Platform is an all-in-one digital workspace des
 6. THE Platform SHALL allow renovators to attach supplier invoices and receipts to resource entries
 7. IF a resource delivery is overdue by more than 2 days, THEN THE Platform SHALL display a delivery warning
 
+### Requirement 9: Google Drive Integration
+
+**User Story:** As a renovator, I want to link my personal Google Drive account to the platform, so that documents and photos are stored in my own cloud storage for reliability, scalability, and direct access from Google Drive.
+
+#### Acceptance Criteria
+
+1. THE Platform SHALL allow a logged-in user to link their personal Google Drive via an opt-in OAuth 2.0 consent flow requesting only the `drive.file` scope
+2. WHEN a user initiates Google Drive linking, THE Platform SHALL use the user's email as a `login_hint` to pre-select the correct Google account, avoiding re-login for users who authenticated via Google through Keycloak
+3. THE Platform SHALL store the user's Google Drive OAuth refresh token encrypted at rest using AES-256-GCM, and automatically refresh access tokens when they expire
+4. WHEN a user has linked Google Drive, THE Platform SHALL display the connected Google email and provide a "Disconnect" option that revokes access and deletes stored tokens
+5. WHEN a user with linked Google Drive uploads a document or photo to a project, THE Platform SHALL upload the file to the user's personal Google Drive instead of local server storage
+6. WHEN uploading to Google Drive, THE Platform SHALL place the file in the project's designated Drive folder
+7. IF the user has not explicitly selected a Drive folder for a project, THEN THE Platform SHALL automatically create a folder named "Renovator - {Project Name}" in the user's Google Drive root and use it for that project's files
+8. THE Platform SHALL allow users to select an existing Google Drive folder for each project via a folder picker, or reset to automatic folder creation
+9. WHEN retrieving documents or photos stored in Google Drive, THE Platform SHALL proxy file access through the backend using the user's stored tokens, without exposing Google Drive URLs or tokens to the frontend
+10. THE Platform SHALL maintain backward compatibility: existing files stored locally (with `storage_provider = 'local'`) SHALL continue to be accessible and served as before
+11. WHEN a user has not linked Google Drive, THE Platform SHALL continue using local file storage for uploads (existing behavior)
+12. THE Platform SHALL track the storage provider (`local` or `google_drive`) and Google Drive file ID for each document, enabling correct retrieval regardless of storage backend
+
 ### Requirement 8: User Authentication and Security
 
 **User Story:** As a renovator, I want my project data to be secure and accessible only to authorized users, so that I can protect sensitive client and financial information.

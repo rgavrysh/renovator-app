@@ -7,6 +7,12 @@ import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import { useTranslation } from 'react-i18next';
 
+const DriveIcon: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
+  </svg>
+);
+
 export enum DocumentType {
   CONTRACT = 'contract',
   INVOICE = 'invoice',
@@ -29,6 +35,7 @@ export interface Document {
   uploadedBy: string;
   uploadedAt: string;
   deletedAt?: string;
+  storageProvider?: 'local' | 'google_drive';
   metadata?: {
     tags?: string[];
     description?: string;
@@ -166,7 +173,6 @@ export const DocumentList: React.FC<DocumentListProps> = ({
       const authTokens = localStorage.getItem('auth_tokens');
       const accessToken = authTokens ? JSON.parse(authTokens).accessToken : null;
 
-      // Get presigned URL
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/documents/${document.id}/download`,
         {
@@ -180,10 +186,19 @@ export const DocumentList: React.FC<DocumentListProps> = ({
         throw new Error('Failed to get download URL');
       }
 
-      const { url } = await response.json();
-
-      // Open download URL in new tab
-      window.open(url, '_blank');
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const { url } = await response.json();
+        window.open(url, '_blank');
+      } else {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = window.document.createElement('a');
+        link.href = url;
+        link.download = document.name;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
     } catch (err: any) {
       console.error('Error downloading document:', err);
       alert('Failed to download document');
@@ -436,9 +451,16 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                       </p>
                     )}
                   </div>
-                  <Badge variant={getDocumentTypeColor(document.type)} size="sm">
-                    {getDocumentTypeLabel(document.type)}
-                  </Badge>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {document.storageProvider === 'google_drive' && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs bg-blue-50 text-blue-600" title={t('googleDrive.storedInDrive')}>
+                        <DriveIcon />
+                      </span>
+                    )}
+                    <Badge variant={getDocumentTypeColor(document.type)} size="sm">
+                      {getDocumentTypeLabel(document.type)}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Tags */}

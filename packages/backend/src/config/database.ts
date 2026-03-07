@@ -12,6 +12,8 @@ import {
   Document,
   Resource,
   Supplier,
+  UserGoogleDriveToken,
+  ProjectDriveFolder,
 } from '../entities';
 
 const isProduction = config.server.nodeEnv === 'production';
@@ -39,6 +41,8 @@ const sharedOptions = {
     Document,
     Resource,
     Supplier,
+    UserGoogleDriveToken,
+    ProjectDriveFolder,
   ],
   migrations: getMigrationPaths(),
   subscribers: [] as string[],

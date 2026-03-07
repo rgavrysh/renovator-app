@@ -14,6 +14,7 @@ export interface Photo {
   thumbnailUrl?: string;
   uploadedBy: string;
   uploadedAt: string;
+  storageProvider?: 'local' | 'google_drive';
   metadata?: {
     captureDate?: string;
     milestoneId?: string;
@@ -312,14 +313,23 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                   {captureDate}
                 </div>
 
-                {/* Caption indicator */}
-                {photo.metadata?.caption && (
-                  <div className="absolute top-2 right-2 bg-black/70 text-white p-1 rounded">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                  </div>
-                )}
+                {/* Badges (top-right corner) */}
+                <div className="absolute top-2 right-2 flex items-center gap-1">
+                  {photo.storageProvider === 'google_drive' && (
+                    <div className="bg-blue-500/80 text-white p-1 rounded">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
+                      </svg>
+                    </div>
+                  )}
+                  {photo.metadata?.caption && (
+                    <div className="bg-black/70 text-white p-1 rounded">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

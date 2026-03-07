@@ -3,6 +3,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { PhotoUpload } from './PhotoUpload';
 import { MilestoneStatus } from './MilestoneList';
 
+vi.mock('../hooks/useGoogleDrive', () => ({
+  useGoogleDrive: () => ({
+    isConnected: false,
+    googleEmail: null,
+    loading: false,
+    error: null,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    refreshStatus: vi.fn(),
+  }),
+}));
+
 describe('PhotoUpload', () => {
   const mockOnClose = vi.fn();
   const mockOnSuccess = vi.fn();

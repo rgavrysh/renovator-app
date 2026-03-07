@@ -62,6 +62,7 @@
   },
   "userDropdown": {
     "workItemsLibrary": "Work Items Library",
+    "googleDrive": "Google Drive",
     "logout": "Logout"
   },
   "dashboard": {
@@ -441,6 +442,27 @@
     "uploadPhotosToDocument": "Upload photos to document project progress",
     "photo": "photo",
     "photos": "photos"
+  },
+  "googleDrive": {
+    "title": "Google Drive",
+    "description": "Connect your Google Drive to store project documents and photos in your personal cloud storage.",
+    "connected": "Connected",
+    "disconnected": "Not Connected",
+    "connectedAs": "Connected as {{email}}",
+    "connect": "Connect Google Drive",
+    "disconnect": "Disconnect",
+    "disconnectConfirm": "Are you sure you want to disconnect Google Drive? New uploads will use local storage. Existing files in Drive remain accessible.",
+    "connecting": "Connecting...",
+    "callbackSuccess": "Google Drive connected successfully!",
+    "callbackError": "Failed to connect Google Drive. Please try again.",
+    "callbackErrorDetail": "Error: {{error}}",
+    "callbackClosing": "You can close this window.",
+    "uploadingTo": "Uploading to Google Drive",
+    "uploadingToLocal": "Uploading to local storage",
+    "storedInDrive": "Google Drive",
+    "reconnectPrompt": "Google Drive connection expired. Please reconnect.",
+    "folderAuto": "Auto-create on first upload",
+    "folderCurrent": "Drive folder: {{name}}"
   },
   "resourceType": {
     "material": "Material",

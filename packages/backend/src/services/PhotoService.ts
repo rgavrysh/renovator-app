@@ -2,6 +2,7 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Document, DocumentType } from '../entities/Document';
 import { FileStorageService } from './FileStorageService';
+import { StorageResolver } from './StorageResolver';
 import * as exifr from 'exifr';
 import sharp from 'sharp';
 
@@ -21,6 +22,7 @@ export interface PhotoMetadata {
 
 export interface UploadPhotoInput {
   projectId: string;
+  projectName: string;
   name: string;
   fileBuffer: Buffer;
   fileType: string;
@@ -43,14 +45,17 @@ export interface PhotoFilters {
 export class PhotoService {
   private documentRepository: Repository<Document>;
   private fileStorageService: FileStorageService;
+  private storageResolver: StorageResolver;
 
   constructor(
     documentRepository?: Repository<Document>,
-    fileStorageService?: FileStorageService
+    fileStorageService?: FileStorageService,
+    storageResolver?: StorageResolver,
   ) {
     this.documentRepository =
       documentRepository || AppDataSource.getRepository(Document);
     this.fileStorageService = fileStorageService || new FileStorageService();
+    this.storageResolver = storageResolver || new StorageResolver();
   }
 
   /**
@@ -121,41 +126,45 @@ export class PhotoService {
   }
 
   /**
-   * Upload a photo with EXIF extraction and thumbnail generation
+   * Upload a photo with EXIF extraction and thumbnail generation.
+   * Routes to Google Drive or local storage via StorageResolver.
    */
   async uploadPhoto(input: UploadPhotoInput): Promise<Document> {
-    // Extract metadata from photo
     const extractedMetadata = await this.extractMetadata(input.fileBuffer);
 
-    // Merge extracted metadata with provided metadata (provided takes precedence)
     const finalMetadata: PhotoMetadata = {
       ...extractedMetadata,
       ...input.metadata,
     };
 
-    // Upload original photo
-    const uploadResult = await this.fileStorageService.uploadFile(
+    // Upload original photo via StorageResolver
+    const uploadResult = await this.storageResolver.uploadFile(
+      input.uploadedBy,
+      input.projectId,
+      input.projectName,
       input.fileBuffer,
       input.name,
-      input.fileType
+      input.fileType,
     );
 
-    // Generate and upload thumbnail
+    // Generate and upload thumbnail (same storage backend)
     let thumbnailUrl: string | undefined;
     try {
       const thumbnailBuffer = await this.generateThumbnail(input.fileBuffer);
       const thumbnailName = `thumb_${input.name}`;
-      const thumbnailResult = await this.fileStorageService.uploadFile(
+      const thumbResult = await this.storageResolver.uploadFile(
+        input.uploadedBy,
+        input.projectId,
+        input.projectName,
         thumbnailBuffer,
         thumbnailName,
-        'image/jpeg'
+        'image/jpeg',
       );
-      thumbnailUrl = thumbnailResult.storageUrl;
+      thumbnailUrl = thumbResult.storageUrl;
     } catch (error) {
       console.warn('Failed to generate thumbnail:', error);
     }
 
-    // Create document entity with photo type
     const photo = this.documentRepository.create({
       projectId: input.projectId,
       name: input.name,
@@ -166,6 +175,8 @@ export class PhotoService {
       thumbnailUrl,
       uploadedBy: input.uploadedBy,
       metadata: finalMetadata,
+      storageProvider: uploadResult.storageProvider,
+      driveFileId: uploadResult.driveFileId,
     });
 
     return await this.documentRepository.save(photo);
@@ -176,6 +187,7 @@ export class PhotoService {
    */
   async uploadPhotoBatch(
     projectId: string,
+    projectName: string,
     files: Array<{ name: string; buffer: Buffer; fileType: string }>,
     uploadedBy: string,
     metadata?: Omit<PhotoMetadata, 'captureDate' | 'location' | 'dimensions'>
@@ -183,6 +195,7 @@ export class PhotoService {
     const uploadPromises = files.map((file) =>
       this.uploadPhoto({
         projectId,
+        projectName,
         name: file.name,
         fileBuffer: file.buffer,
         fileType: file.fileType,

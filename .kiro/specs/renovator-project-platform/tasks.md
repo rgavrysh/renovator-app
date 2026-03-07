@@ -572,6 +572,198 @@ This implementation plan breaks down the development of the Renovator Project Ma
   - Check error handling and logging
   - Confirm Docker deployment works
 
+
+
+- [ ] 24. Google Drive Integration - Phase 1: Foundation
+  - [ ] 24.1 Google Cloud Console setup
+    - Enable Google Drive API in existing project (`renovator-489414`)
+    - Add backend redirect URIs to existing OAuth client (`http://localhost:4000/api/google/callback`, production URL)
+    - Add `drive.file` scope to OAuth consent screen
+    - _Requirements: 9.1_
+
+  - [ ] 24.2 Environment variables and configuration
+    - Add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` to backend config
+    - Generate `TOKEN_ENCRYPTION_KEY` (32-byte hex via `openssl rand -hex 32`)
+    - Update `packages/backend/src/config/index.ts` with google and tokenEncryption sections
+    - Update `.env` files for local dev and production
+    - _Requirements: 9.1, 9.3_
+
+  - [ ] 24.3 Database migration for Google Drive tables
+    - Create `user_google_drive_tokens` table (encrypted token storage per user)
+    - Create `project_drive_folders` table (project-to-folder mapping)
+    - Alter `documents` table: add `storage_provider` (default 'local') and `drive_file_id` columns
+    - Generate and test TypeORM migration
+    - _Requirements: 9.3, 9.6, 9.12_
+
+  - [ ] 24.4 Create new TypeORM entities
+    - Create `UserGoogleDriveToken` entity mapping to `user_google_drive_tokens`
+    - Create `ProjectDriveFolder` entity mapping to `project_drive_folders`
+    - Update `Document` entity with `storageProvider` and `driveFileId` columns
+    - Update `User` entity with `googleDriveToken` relation
+    - _Requirements: 9.3, 9.6, 9.12_
+
+  - [ ] 24.5 Implement TokenEncryptionService
+    - Create `packages/backend/src/services/TokenEncryptionService.ts`
+    - Implement AES-256-GCM encrypt/decrypt using `TOKEN_ENCRYPTION_KEY`
+    - Format: `iv:authTag:ciphertext` base64 encoded
+    - _Requirements: 9.3_
+
+  - [ ] 24.6 Implement GoogleDriveAuthService
+    - Create `packages/backend/src/services/GoogleDriveAuthService.ts`
+    - Implement `getAuthorizationUrl()` with `login_hint`, `access_type: 'offline'`, `prompt: 'consent'`, scope `drive.file`
+    - Implement `handleCallback()` to exchange code for tokens, encrypt, store in DB
+    - Implement `getAccessToken()` with automatic refresh of expired tokens
+    - Implement `disconnect()` to revoke token and delete from DB
+    - Implement `isConnected()` and `getConnectionInfo()`
+    - _Requirements: 9.1, 9.2, 9.3, 9.4_
+
+  - [ ] 24.7 Create Google auth API routes
+    - Create `packages/backend/src/routes/google.ts`
+    - `GET /api/google/connect` - returns Google OAuth consent URL (with login_hint from user's email)
+    - `GET /api/google/callback` - handles OAuth callback, stores tokens, redirects to frontend
+    - `GET /api/google/status` - returns `{ connected, email }`
+    - `POST /api/google/disconnect` - revokes access and deletes tokens
+    - Register routes in Express app
+    - _Requirements: 9.1, 9.2, 9.4_
+
+- [ ] 25. Google Drive Integration - Phase 2: Storage Backend
+  - [ ] 25.1 Install Google Drive dependencies
+    - Add `googleapis` and `google-auth-library` to backend package.json
+    - _Requirements: 9.5_
+
+  - [ ] 25.2 Implement GoogleDriveStorageProvider
+    - Create `packages/backend/src/services/GoogleDriveStorageProvider.ts`
+    - Implement `uploadFile()` - upload buffer to specified Drive folder
+    - Implement `downloadFile()` - download file content by Drive file ID
+    - Implement `deleteFile()` - delete file from Drive
+    - Implement `createFolder()` - create folder in user's Drive
+    - Implement `listFolders()` - list folders for folder picker
+    - _Requirements: 9.5, 9.6, 9.7_
+
+  - [ ] 25.3 Implement StorageResolver
+    - Create `packages/backend/src/services/StorageResolver.ts`
+    - Implement `getStorageMode()` - check if user has linked Google Drive
+    - Implement `resolveProjectFolder()` - get or auto-create project folder in Drive
+    - Implement `uploadFile()` - route to local or Drive based on user config
+    - Implement `readFile()` - handle both local and Drive retrieval
+    - Implement `getDownloadUrl()` - handle both storage providers
+    - Implement `deleteFile()` - handle both storage providers
+    - _Requirements: 9.5, 9.7, 9.9, 9.10, 9.11_
+
+  - [ ] 25.4 Modify DocumentService to use StorageResolver
+    - Replace direct `FileStorageService` usage with `StorageResolver`
+    - Set `storageProvider` and `driveFileId` on document entity during upload
+    - Update `generatePresignedUrl` to handle both providers
+    - Update `permanentlyDeleteDocument` to handle both providers
+    - Maintain backward compatibility for existing local documents
+    - _Requirements: 9.5, 9.9, 9.10, 9.12_
+
+  - [ ] 25.5 Modify PhotoService to use StorageResolver
+    - Replace direct `FileStorageService` usage with `StorageResolver`
+    - Upload thumbnails to Drive alongside originals when Drive is active
+    - Set `storageProvider` and `driveFileId` on photo document entity
+    - Maintain backward compatibility for existing local photos
+    - _Requirements: 9.5, 9.9, 9.10, 9.12_
+
+  - [ ] 25.6 Update document/photo API routes for Drive-aware download
+    - Modify `GET /api/documents/:id/download` to check `storageProvider`
+    - For `google_drive`: proxy file through backend using stored tokens
+    - For `local`: use existing presigned URL logic
+    - _Requirements: 9.9_
+
+  - [ ] 25.7 Create Drive folder management API routes
+    - `GET /api/google/folders` - list root-level Drive folders
+    - `GET /api/google/folders/:folderId/children` - list subfolders
+    - `GET /api/projects/:projectId/drive-folder` - get project's folder mapping
+    - `PUT /api/projects/:projectId/drive-folder` - set/update folder mapping
+    - `DELETE /api/projects/:projectId/drive-folder` - remove mapping (revert to auto-create)
+    - _Requirements: 9.6, 9.8_
+
+- [ ] 26. Google Drive Integration - Phase 3: Frontend
+  - [ ] 26.1 Create useGoogleDrive hook
+    - Create `packages/frontend/src/hooks/useGoogleDrive.ts`
+    - Expose `isConnected`, `googleEmail`, `loading`, `connect()`, `disconnect()`, `refreshStatus()`
+    - Cache status and refetch on mount
+    - _Requirements: 9.1, 9.4_
+
+  - [ ] 26.2 Create Google Drive connection UI
+    - Add "Google Drive" section to user settings/profile area
+    - Disconnected state: "Connect Google Drive" button with explanation text
+    - Connected state: show linked email, "Disconnect" button
+    - Handle OAuth popup/redirect flow for connecting
+    - _Requirements: 9.1, 9.2, 9.4_
+
+  - [ ] 26.3 Create Google OAuth callback page
+    - Add `/google/callback` route to frontend router
+    - Extract success/error from URL params
+    - Show success or error message
+    - Auto-close popup or redirect back to settings
+    - _Requirements: 9.1_
+
+  - [ ] 26.4 Create project Drive folder selector component
+    - Build folder picker modal with Drive folder tree navigation
+    - Show current folder mapping or "Auto-create on first upload"
+    - "Choose Folder" button, "Create New Folder" option
+    - "Reset to Auto" removes explicit mapping
+    - Integrate into project Documents/Photos tab header
+    - _Requirements: 9.6, 9.8_
+
+  - [ ] 26.5 Update DocumentUpload and PhotoUpload components
+    - Show storage destination indicator ("Uploading to Google Drive" / "Uploading to local storage")
+    - If Drive connected but no folder selected: show note about auto-creation
+    - If Drive token expired/revoked: show "Reconnect Google Drive" error with link
+    - _Requirements: 9.5, 9.7, 9.11_
+
+  - [ ] 26.6 Update DocumentList and PhotoGallery components
+    - Add small Google Drive icon badge on Drive-stored files
+    - Optionally add "Open in Google Drive" link for Drive-stored files
+    - Download links continue to work via backend proxy (no change needed)
+    - _Requirements: 9.9, 9.12_
+
+  - [ ] 26.7 Add i18n translations
+    - Add Google Drive related translation keys to `en` and `uk` locale files
+    - Cover: connection UI, folder picker, upload indicators, error messages
+    - _Requirements: 9.1-9.12_
+
+- [ ] 27. Google Drive Integration - Phase 4: Polish and Reliability
+  - [ ] 27.1 Error handling for expired/revoked tokens
+    - Detect Google token failures (401/403 from Google API)
+    - Prompt user to reconnect Google Drive
+    - Graceful fallback messaging in frontend
+    - _Requirements: 9.3_
+
+  - [ ] 27.2 Backward compatibility verification
+    - Test that existing documents with `storage_provider = 'local'` are unaffected
+    - Test upload and retrieval for both storage providers
+    - Test mixed storage within the same project
+    - _Requirements: 9.10_
+
+  - [ ] 27.3 Rate limiting and quota management
+    - Implement exponential backoff for Google Drive API calls
+    - Handle Google API rate limit errors gracefully
+    - Monitor request quotas in Google Cloud Console
+    - _Requirements: 9.5_
+
+  - [ ]* 27.4 Write property tests for Google Drive integration
+    - **Property 42: Google Drive Token Encryption**
+    - **Property 43: Google Drive Connection Lifecycle**
+    - **Property 44: Storage Provider Routing**
+    - **Property 45: Automatic Project Folder Creation**
+    - **Property 46: Explicit Folder Mapping**
+    - **Property 47: Backward Compatibility**
+    - **Property 48: Token Auto-Refresh**
+    - **Validates: Requirements 9.1-9.12**
+
+- [ ] 28. Checkpoint - Google Drive integration works end-to-end
+  - Test Google Drive connect/disconnect flow
+  - Test document upload to Google Drive
+  - Test photo upload (with thumbnail) to Google Drive
+  - Test file retrieval from Google Drive via backend proxy
+  - Test folder auto-creation and explicit folder selection
+  - Test backward compatibility with existing local files
+  - Test token refresh when access token expires
+  - Test error handling when Google Drive is unavailable
+
 ## Notes
 
 - Tasks marked with `*` are optional property-based tests that can be skipped for faster MVP

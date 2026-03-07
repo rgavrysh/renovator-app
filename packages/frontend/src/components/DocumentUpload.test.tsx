@@ -2,6 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DocumentUpload, DocumentType } from './DocumentUpload';
 
+vi.mock('../hooks/useGoogleDrive', () => ({
+  useGoogleDrive: () => ({
+    isConnected: false,
+    googleEmail: null,
+    loading: false,
+    error: null,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    refreshStatus: vi.fn(),
+  }),
+}));
+
 describe('DocumentUpload', () => {
   const mockOnClose = vi.fn();
   const mockOnSuccess = vi.fn();

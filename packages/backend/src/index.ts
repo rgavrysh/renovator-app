@@ -13,6 +13,7 @@ import budgetRoutes from './routes/budgets';
 import documentRoutes from './routes/documents';
 import photoRoutes from './routes/photos';
 import resourceRoutes from './routes/resources';
+import googleRoutes from './routes/google';
 
 // Initialize Sentry
 initSentry();
@@ -65,6 +66,7 @@ app.use('/api', documentRoutes); // For /api/documents routes
 app.use('/api/projects', photoRoutes);
 app.use('/api', photoRoutes); // For /api/photos routes
 app.use('/api', resourceRoutes); // For /api/resources and /api/suppliers routes
+app.use('/api/google', googleRoutes); // Google Drive OAuth routes
 
 // Sentry error handler must be before any other error middleware
 app.use(Sentry.Handlers.errorHandler());

@@ -30,8 +30,9 @@ router.post(
       const { caption, milestoneId } = req.body;
 
       // Verify project exists and user owns it
+      let project;
       try {
-        await projectService.getProject(projectId, req.userId!);
+        project = await projectService.getProject(projectId, req.userId!);
       } catch (error) {
         res.status(404).json({ error: 'Project not found' });
         return;
@@ -53,10 +54,10 @@ router.post(
 
       // Handle single or batch upload
       if (req.files.length === 1) {
-        // Single photo upload
         const file = req.files[0];
         const photo = await photoService.uploadPhoto({
           projectId,
+          projectName: project.name,
           name: file.originalname,
           fileBuffer: file.buffer,
           fileType: file.mimetype,
@@ -66,7 +67,6 @@ router.post(
 
         res.status(201).json(photo);
       } else {
-        // Batch photo upload
         const files = req.files.map((file) => ({
           name: file.originalname,
           buffer: file.buffer,
@@ -75,6 +75,7 @@ router.post(
 
         const photos = await photoService.uploadPhotoBatch(
           projectId,
+          project.name,
           files,
           req.userId!,
           metadata

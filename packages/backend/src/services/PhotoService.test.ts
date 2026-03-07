@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { PhotoService, UploadPhotoInput, PhotoFilters } from './PhotoService';
 import { Document, DocumentType } from '../entities/Document';
 import { FileStorageService } from './FileStorageService';
+import { StorageResolver } from './StorageResolver';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -10,6 +11,7 @@ describe('PhotoService', () => {
   let photoService: PhotoService;
   let mockDocumentRepository: Partial<Repository<Document>>;
   let mockFileStorageService: Partial<FileStorageService>;
+  let mockStorageResolver: Partial<StorageResolver>;
 
   beforeEach(() => {
     mockDocumentRepository = {
@@ -29,9 +31,21 @@ describe('PhotoService', () => {
       ),
     };
 
+    mockStorageResolver = {
+      uploadFile: vi.fn((userId, projectId, projectName, buffer, name, type) =>
+        Promise.resolve({
+          storageUrl: `http://storage.example.com/${name}`,
+          fileSize: buffer.length,
+          fileType: type,
+          storageProvider: 'local' as const,
+        })
+      ),
+    };
+
     photoService = new PhotoService(
       mockDocumentRepository as Repository<Document>,
-      mockFileStorageService as FileStorageService
+      mockFileStorageService as FileStorageService,
+      mockStorageResolver as StorageResolver,
     );
   });
 
@@ -83,6 +97,7 @@ describe('PhotoService', () => {
     it('should upload photo with extracted metadata', async () => {
       const input: UploadPhotoInput = {
         projectId: 'project-123',
+        projectName: 'Test Project',
         name: 'photo.jpg',
         fileBuffer: Buffer.from('fake-image-data'),
         fileType: 'image/jpeg',
@@ -107,6 +122,7 @@ describe('PhotoService', () => {
       const captureDate = new Date('2024-01-15');
       const input: UploadPhotoInput = {
         projectId: 'project-123',
+        projectName: 'Test Project',
         name: 'photo.jpg',
         fileBuffer: Buffer.from('fake-image-data'),
         fileType: 'image/jpeg',
@@ -134,6 +150,7 @@ describe('PhotoService', () => {
     it('should upload both original and thumbnail', async () => {
       const input: UploadPhotoInput = {
         projectId: 'project-123',
+        projectName: 'Test Project',
         name: 'photo.jpg',
         fileBuffer: Buffer.from('fake-image-data'),
         fileType: 'image/jpeg',
@@ -142,11 +159,14 @@ describe('PhotoService', () => {
 
       await photoService.uploadPhoto(input);
 
-      // Should upload original photo
-      expect(mockFileStorageService.uploadFile).toHaveBeenCalledWith(
+      // Should upload original photo via StorageResolver
+      expect(mockStorageResolver.uploadFile).toHaveBeenCalledWith(
+        'user-123',
+        'project-123',
+        'Test Project',
         expect.any(Buffer),
         'photo.jpg',
-        'image/jpeg'
+        'image/jpeg',
       );
     });
   });
@@ -161,6 +181,7 @@ describe('PhotoService', () => {
 
       const results = await photoService.uploadPhotoBatch(
         'project-123',
+        'Test Project',
         files,
         'user-123'
       );
@@ -177,6 +198,7 @@ describe('PhotoService', () => {
 
       await photoService.uploadPhotoBatch(
         'project-123',
+        'Test Project',
         files,
         'user-123',
         { milestoneId: 'milestone-123', caption: 'Batch upload' }

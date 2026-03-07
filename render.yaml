@@ -46,6 +46,14 @@ services:
         sync: false # Backend public URL + /files, e.g. https://renovator-backend.onrender.com/files
       - key: FILE_STORAGE_SECRET
         generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false # Google Cloud OAuth Client ID
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false # Google Cloud OAuth Client Secret
+      - key: GOOGLE_REDIRECT_URI
+        sync: false # e.g. https://renovator-backend.onrender.com/api/google/callback
+      - key: TOKEN_ENCRYPTION_KEY
+        sync: false # Must be 64-char hex string. Generate with: openssl rand -hex 32
       - key: SENTRY_DSN
         sync: false # Optional: Sentry DSN for error tracking
       - key: SENTRY_ENVIRONMENT

@@ -22,6 +22,14 @@ interface Config {
     clientId: string;
     clientSecret: string;
   };
+  google: {
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+  };
+  tokenEncryption: {
+    key: string;
+  };
   sentry: {
     dsn: string;
     environment: string;
@@ -52,6 +60,14 @@ const config: Config = {
     realm: process.env.KEYCLOAK_REALM || 'renovator',
     clientId: process.env.KEYCLOAK_CLIENT_ID || 'renovator-app',
     clientSecret: process.env.KEYCLOAK_CLIENT_SECRET || '',
+  },
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID || '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:4000/api/google/callback',
+  },
+  tokenEncryption: {
+    key: process.env.TOKEN_ENCRYPTION_KEY || '',
   },
   sentry: {
     dsn: process.env.SENTRY_DSN || '',

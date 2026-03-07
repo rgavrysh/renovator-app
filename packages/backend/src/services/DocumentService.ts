@@ -2,6 +2,7 @@ import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Document, DocumentType } from '../entities/Document';
 import { FileStorageService } from './FileStorageService';
+import { StorageResolver } from './StorageResolver';
 
 export interface DocumentMetadata {
   tags?: string[];
@@ -21,6 +22,7 @@ export interface DocumentMetadata {
 
 export interface UploadDocumentInput {
   projectId: string;
+  projectName: string;
   name: string;
   type: DocumentType;
   fileBuffer: Buffer;
@@ -55,14 +57,17 @@ const ALLOWED_FILE_EXTENSIONS = [
 export class DocumentService {
   private documentRepository: Repository<Document>;
   private fileStorageService: FileStorageService;
+  private storageResolver: StorageResolver;
 
   constructor(
     documentRepository?: Repository<Document>,
-    fileStorageService?: FileStorageService
+    fileStorageService?: FileStorageService,
+    storageResolver?: StorageResolver,
   ) {
     this.documentRepository =
       documentRepository || AppDataSource.getRepository(Document);
     this.fileStorageService = fileStorageService || new FileStorageService();
+    this.storageResolver = storageResolver || new StorageResolver();
   }
 
   /**
@@ -79,20 +84,21 @@ export class DocumentService {
   }
 
   /**
-   * Upload a document with metadata
+   * Upload a document with metadata.
+   * Routes to Google Drive or local storage via StorageResolver.
    */
   async uploadDocument(input: UploadDocumentInput): Promise<Document> {
-    // Validate file format
     this.validateFileFormat(input.name);
 
-    // Upload file to storage
-    const uploadResult = await this.fileStorageService.uploadFile(
+    const uploadResult = await this.storageResolver.uploadFile(
+      input.uploadedBy,
+      input.projectId,
+      input.projectName,
       input.fileBuffer,
       input.name,
-      input.fileType
+      input.fileType,
     );
 
-    // Create document entity
     const document = this.documentRepository.create({
       projectId: input.projectId,
       name: input.name,
@@ -102,6 +108,8 @@ export class DocumentService {
       storageUrl: uploadResult.storageUrl,
       uploadedBy: input.uploadedBy,
       metadata: input.metadata,
+      storageProvider: uploadResult.storageProvider,
+      driveFileId: uploadResult.driveFileId,
     });
 
     return await this.documentRepository.save(document);
@@ -222,9 +230,10 @@ export class DocumentService {
   }
 
   /**
-   * Permanently delete a document and its file from storage
+   * Permanently delete a document and its file from storage.
+   * Handles both local and Google Drive files.
    */
-  async permanentlyDeleteDocument(id: string): Promise<void> {
+  async permanentlyDeleteDocument(id: string, userId?: string): Promise<void> {
     const document = await this.documentRepository.findOne({
       where: { id },
     });
@@ -233,25 +242,23 @@ export class DocumentService {
       throw new Error('Document not found');
     }
 
-    // Delete file from storage
-    await this.fileStorageService.deleteFile(document.storageUrl);
+    if (document.storageProvider === 'google_drive' && document.driveFileId && userId) {
+      await this.storageResolver.deleteFile(document, userId);
+    } else {
+      await this.fileStorageService.deleteFile(document.storageUrl);
+    }
 
-    // Delete document entity
     await this.documentRepository.remove(document);
   }
 
   /**
-   * Generate a presigned URL for document download
+   * Generate a download URL for a document.
+   * For Drive files, returns the backend proxy path.
+   * For local files, returns a presigned download URL.
    */
   async generatePresignedUrl(id: string): Promise<string> {
     const document = await this.getDocument(id);
-
-    const result = this.fileStorageService.generatePresignedDownloadUrl(
-      document.storageUrl,
-      3600 // 1 hour expiration
-    );
-
-    return result.url;
+    return this.storageResolver.getDownloadUrl(document);
   }
 
   /**

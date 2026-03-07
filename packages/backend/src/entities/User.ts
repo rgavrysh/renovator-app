@@ -5,10 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { Session } from './Session';
 import { Project } from './Project';
 import { Supplier } from './Supplier';
+import { UserGoogleDriveToken } from './UserGoogleDriveToken';
 
 @Entity('users')
 export class User {
@@ -51,4 +53,7 @@ export class User {
 
   @OneToMany(() => Supplier, (supplier) => supplier.owner)
   suppliers: Supplier[];
+
+  @OneToOne(() => UserGoogleDriveToken, (token) => token.user)
+  googleDriveToken?: UserGoogleDriveToken;
 }

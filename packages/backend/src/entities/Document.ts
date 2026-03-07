@@ -37,7 +37,7 @@ export class Document {
   })
   type: DocumentType;
 
-  @Column({ name: 'file_type', type: 'varchar', length: 50 })
+  @Column({ name: 'file_type', type: 'varchar', length: 255 })
   fileType: string;
 
   @Column({ name: 'file_size', type: 'bigint' })
@@ -57,6 +57,12 @@ export class Document {
 
   @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
+
+  @Column({ name: 'storage_provider', type: 'varchar', length: 20, default: 'local' })
+  storageProvider: 'local' | 'google_drive';
+
+  @Column({ name: 'drive_file_id', type: 'varchar', length: 255, nullable: true })
+  driveFileId?: string;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata?: {

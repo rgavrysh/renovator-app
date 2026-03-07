@@ -638,6 +638,143 @@ interface IdPConfig {
 }
 ```
 
+### 9. Google Drive Integration Component
+
+**Responsibilities**:
+- Google OAuth 2.0 consent flow for Drive access (separate from Keycloak login)
+- Encrypted storage and automatic refresh of per-user Google Drive tokens
+- File upload, download, and deletion via Google Drive API v3
+- Per-project folder management (explicit selection or auto-creation)
+- Storage routing between local filesystem and Google Drive
+- Backward-compatible file retrieval for mixed storage providers
+
+**Architecture Decision: Separate OAuth Flow**
+
+The platform uses Keycloak as the Identity Provider for login (with Google configured as a Keycloak IdP). Google Drive access requires a **separate, opt-in OAuth 2.0 flow** requesting the `drive.file` scope. This is because:
+1. Keycloak's Google IdP brokering only requests identity scopes (`openid email profile`), not Drive scopes
+2. Coupling Drive consent with login would force all users to grant storage access even if unwanted
+3. Keycloak Token Exchange for brokered IdP tokens is a preview feature with limited managed-service support
+
+The same Google Cloud project and OAuth client credentials are reused for both flows, so users see a consistent app name in Google's consent screen. Since users already have an active Google session from Keycloak login, the Drive consent flow skips re-login and only shows the scope consent prompt.
+
+**Key Interfaces**:
+
+```typescript
+// --- Token Management ---
+
+interface UserGoogleDriveToken {
+  id: string;
+  userId: string;
+  googleEmail: string;
+  accessTokenEncrypted: string;
+  refreshTokenEncrypted: string;
+  tokenExpiresAt: Date;
+  scopes: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface GoogleDriveAuthService {
+  getAuthorizationUrl(userEmail: string, state: string): string;
+  handleCallback(code: string, userId: string): Promise<UserGoogleDriveToken>;
+  getAccessToken(userId: string): Promise<string>;
+  disconnect(userId: string): Promise<void>;
+  isConnected(userId: string): Promise<boolean>;
+  getConnectionInfo(userId: string): Promise<{ connected: boolean; email?: string }>;
+}
+
+interface TokenEncryptionService {
+  encrypt(plaintext: string): string;
+  decrypt(encrypted: string): string;
+}
+
+// --- Drive Storage ---
+
+interface DriveUploadResult {
+  driveFileId: string;
+  webViewLink: string;
+  webContentLink: string;
+}
+
+interface DriveFolderResult {
+  folderId: string;
+  folderName: string;
+  webViewLink: string;
+}
+
+interface DriveFolder {
+  id: string;
+  name: string;
+  webViewLink: string;
+}
+
+interface GoogleDriveStorageProvider {
+  uploadFile(userId: string, folderId: string, fileBuffer: Buffer,
+             fileName: string, mimeType: string): Promise<DriveUploadResult>;
+  downloadFile(userId: string, driveFileId: string): Promise<Buffer>;
+  deleteFile(userId: string, driveFileId: string): Promise<void>;
+  createFolder(userId: string, folderName: string,
+               parentFolderId?: string): Promise<DriveFolderResult>;
+  listFolders(userId: string, parentFolderId?: string): Promise<DriveFolder[]>;
+}
+
+// --- Project Folder Mapping ---
+
+interface ProjectDriveFolder {
+  id: string;
+  projectId: string;
+  userId: string;
+  driveFolderId: string;
+  driveFolderName: string;
+  driveFolderUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// --- Storage Resolution ---
+
+interface StorageResult {
+  storageUrl: string;
+  storageProvider: 'local' | 'google_drive';
+  driveFileId?: string;
+  fileSize: number;
+  fileType: string;
+}
+
+interface StorageResolver {
+  getStorageMode(userId: string): Promise<'local' | 'google_drive'>;
+  resolveProjectFolder(userId: string, projectId: string,
+                        projectName: string): Promise<string>;
+  uploadFile(userId: string, projectId: string, projectName: string,
+             fileBuffer: Buffer, fileName: string, mimeType: string): Promise<StorageResult>;
+  readFile(document: Document, userId: string): Promise<Buffer>;
+  getDownloadUrl(document: Document, userId: string): Promise<string>;
+  deleteFile(document: Document, userId: string): Promise<void>;
+}
+```
+
+**Storage Resolution Logic**:
+
+The `StorageResolver` acts as a routing layer between services and storage backends:
+1. Check if user has linked Google Drive (`GoogleDriveAuthService.isConnected`)
+2. If connected → use `GoogleDriveStorageProvider` (resolve project folder first)
+3. If not connected → use existing `FileStorageService` (local)
+
+**Project Folder Resolution**:
+1. Query `project_drive_folders` for existing mapping
+2. If found → use that `drive_folder_id`
+3. If not found → create folder `"Renovator - {Project Name}"` in Drive root
+4. Save mapping to `project_drive_folders`
+5. Return folder ID
+
+**Modified Document Entity**:
+
+The `Document` entity gains two new fields:
+- `storageProvider`: `'local' | 'google_drive'` (default `'local'`)
+- `driveFileId`: Google Drive file ID (null for local storage)
+
+Existing documents retain `storage_provider = 'local'` and continue working unchanged.
+
 ## Data Models
 
 ### Database Schema
@@ -786,7 +923,40 @@ CREATE TABLE documents (
   uploaded_by UUID NOT NULL REFERENCES users(id),
   uploaded_at TIMESTAMP DEFAULT NOW(),
   deleted_at TIMESTAMP,
-  metadata JSONB
+  metadata JSONB,
+  storage_provider VARCHAR(20) NOT NULL DEFAULT 'local',
+  drive_file_id VARCHAR(255)
+);
+```
+
+#### User Google Drive Tokens Table
+```sql
+CREATE TABLE user_google_drive_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  google_email VARCHAR(255) NOT NULL,
+  access_token_encrypted TEXT NOT NULL,
+  refresh_token_encrypted TEXT NOT NULL,
+  token_expires_at TIMESTAMP NOT NULL,
+  scopes TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX idx_user_google_drive_tokens_user_id ON user_google_drive_tokens(user_id);
+```
+
+#### Project Drive Folders Table
+```sql
+CREATE TABLE project_drive_folders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  drive_folder_id VARCHAR(255) NOT NULL,
+  drive_folder_name VARCHAR(255) NOT NULL,
+  drive_folder_url VARCHAR(500),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(project_id, user_id)
 );
 ```
 
@@ -832,12 +1002,15 @@ CREATE TABLE suppliers (
 ```
 users (1) ──── (N) sessions
 users (1) ──── (N) projects
+users (1) ──── (0..1) user_google_drive_tokens
+users (1) ──── (N) project_drive_folders
 projects (1) ──── (N) milestones
 projects (1) ──── (N) tasks
 projects (1) ──── (1) budget
 budget (1) ──── (N) budget_items
 projects (1) ──── (N) documents
 projects (1) ──── (N) resources
+projects (1) ──── (N) project_drive_folders
 users (1) ──── (N) suppliers
 milestones (1) ──── (N) tasks
 milestones (1) ──── (N) budget_items
@@ -1052,6 +1225,36 @@ After analyzing all acceptance criteria, I've identified the following areas whe
 **Property 41: Token Revocation**
 *For any* valid access token, revoking it should invalidate the token and delete the associated session.
 **Validates: Requirements 8.8**
+
+#### Google Drive Integration Properties
+
+**Property 42: Google Drive Token Encryption**
+*For any* Google OAuth token, storing it should encrypt the token using AES-256-GCM, and retrieving it should return the original plaintext. The encrypted form should differ from the plaintext.
+**Validates: Requirements 9.3**
+
+**Property 43: Google Drive Connection Lifecycle**
+*For any* user, connecting Google Drive should store encrypted tokens and record the Google email; disconnecting should revoke the token and permanently delete stored credentials. After disconnect, `isConnected` should return false.
+**Validates: Requirements 9.1, 9.4**
+
+**Property 44: Storage Provider Routing**
+*For any* user with Google Drive connected, uploading a file should use Google Drive storage and set `storage_provider = 'google_drive'` on the document. For a user without Google Drive, uploading should use local storage and set `storage_provider = 'local'`.
+**Validates: Requirements 9.5, 9.11, 9.12**
+
+**Property 45: Automatic Project Folder Creation**
+*For any* project without an explicit Drive folder mapping, the first upload should create a folder named "Renovator - {Project Name}" in the user's Google Drive root and persist the mapping. Subsequent uploads to the same project should reuse the same folder.
+**Validates: Requirements 9.7**
+
+**Property 46: Explicit Folder Mapping**
+*For any* project with an explicitly selected Drive folder, uploads should go to that folder. Removing the explicit mapping should revert to automatic folder creation behavior on the next upload.
+**Validates: Requirements 9.6, 9.8**
+
+**Property 47: Backward Compatibility**
+*For any* document with `storage_provider = 'local'`, retrieval should continue to use local file storage regardless of whether the user has since connected Google Drive. Documents with `storage_provider = 'google_drive'` should be retrieved via Google Drive API.
+**Validates: Requirements 9.9, 9.10**
+
+**Property 48: Token Auto-Refresh**
+*For any* user with an expired Google access token and a valid refresh token, any Drive operation should automatically refresh the access token, update the stored encrypted token, and complete the operation without user intervention.
+**Validates: Requirements 9.3**
 
 ## Error Handling
 

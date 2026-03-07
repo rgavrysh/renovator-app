@@ -6,6 +6,10 @@ package-lock.json
 .env
 .env.local
 .env.*.local
+renovator_*.sql
+temp-commands
+client_secret*.json
+.env.renovator
 
 # Build outputs
 dist/

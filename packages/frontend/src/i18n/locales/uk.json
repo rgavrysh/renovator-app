@@ -62,6 +62,7 @@
   },
   "userDropdown": {
     "workItemsLibrary": "Бібліотека робочих елементів",
+    "googleDrive": "Google Диск",
     "logout": "Вийти"
   },
   "dashboard": {
@@ -441,6 +442,27 @@
     "uploadPhotosToDocument": "Завантажте фото для документування прогресу проєкту",
     "photo": "фото",
     "photos": "фото"
+  },
+  "googleDrive": {
+    "title": "Google Диск",
+    "description": "Підключіть Google Диск для зберігання документів і фото проєктів у вашому персональному хмарному сховищі.",
+    "connected": "Підключено",
+    "disconnected": "Не підключено",
+    "connectedAs": "Підключено як {{email}}",
+    "connect": "Підключити Google Диск",
+    "disconnect": "Відключити",
+    "disconnectConfirm": "Ви впевнені, що хочете відключити Google Диск? Нові завантаження використовуватимуть локальне сховище. Існуючі файли на Диску залишаться доступними.",
+    "connecting": "Підключення...",
+    "callbackSuccess": "Google Диск успішно підключено!",
+    "callbackError": "Не вдалося підключити Google Диск. Будь ласка, спробуйте ще раз.",
+    "callbackErrorDetail": "Помилка: {{error}}",
+    "callbackClosing": "Ви можете закрити це вікно.",
+    "uploadingTo": "Завантаження на Google Диск",
+    "uploadingToLocal": "Завантаження в локальне сховище",
+    "storedInDrive": "Google Диск",
+    "reconnectPrompt": "Підключення до Google Диску застаріло. Будь ласка, підключіться знову.",
+    "folderAuto": "Автоматичне створення при першому завантаженні",
+    "folderCurrent": "Папка Диску: {{name}}"
   },
   "resourceType": {
     "material": "Матеріал",

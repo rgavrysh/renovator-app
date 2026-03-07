@@ -10,3 +10,5 @@ export { BudgetItem, BudgetCategory } from './BudgetItem';
 export { Document, DocumentType } from './Document';
 export { Resource, ResourceType, ResourceStatus } from './Resource';
 export { Supplier } from './Supplier';
+export { UserGoogleDriveToken } from './UserGoogleDriveToken';
+export { ProjectDriveFolder } from './ProjectDriveFolder';
