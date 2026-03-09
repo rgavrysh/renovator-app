@@ -130,7 +130,7 @@ describe('WorkItemTemplateService', () => {
     test('should deny access to other users custom templates', async () => {
       const customTemplate = await service.createTemplate({
         name: 'Custom Template',
-        category: WorkItemCategory.HVAC,
+        category: WorkItemCategory.HEATING,
         ownerId: testUserId,
       });
 
@@ -323,11 +323,19 @@ describe('WorkItemTemplateService', () => {
       expect(Object.keys(grouped)).toContain(WorkItemCategory.FRAMING);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.ELECTRICAL);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.PLUMBING);
-      expect(Object.keys(grouped)).toContain(WorkItemCategory.HVAC);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.HEATING);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.VENTILATION);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.DRYWALL);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.PAINTING);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.PRIMING);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.FLOORING);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.FINISHING);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.LIGHTING);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.FAIENCE);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.PLUMBING_FIXTURE);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.ACCESSORIES);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.TOOK_OUT_BM);
+      expect(Object.keys(grouped)).toContain(WorkItemCategory.PACKING_UNLOADING_BM);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.CLEANUP);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.INSPECTION);
       expect(Object.keys(grouped)).toContain(WorkItemCategory.OTHER);
