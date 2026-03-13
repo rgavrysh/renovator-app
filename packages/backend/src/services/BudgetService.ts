@@ -411,8 +411,8 @@ export class BudgetService {
 
     // Table headers
     const tableTop = doc.y;
-    const colWidths = { id: 30, name: 155, quantity: 50, unit: 55, pricePerUnit: 75, price: 80 };
-    const colX = { id: 50, name: 80, quantity: 240, unit: 290, pricePerUnit: 345, price: 420 };
+    const colWidths = { id: 30, name: 200, quantity: 50, unit: 50, pricePerUnit: 80, price: 90 };
+    const colX = { id: 50, name: 80, quantity: 280, unit: 330, pricePerUnit: 380, price: 460 };
     let currentY = tableTop;
 
     doc.fontSize(10).font('Roboto-Bold');
@@ -435,53 +435,66 @@ export class BudgetService {
     // Add tasks with pricing
     for (let i = 0; i < tasksWithPricing.length; i++) {
       const task = tasksWithPricing[i];
-      
-      if (currentY > 700) {
-        doc.addPage();
-        currentY = 50;
-      }
 
       const amount = task.amount ? String(Number(task.amount)) : '1';
       const unit = task.unit || '-';
       const pricePerUnit = task.price != null ? formatPdfCurrency(Number(task.price), lang) : '-';
       const price = task.actualPrice ? formatPdfCurrency(Number(task.actualPrice), lang) : formatPdfCurrency(0, lang);
 
+      const nameText = `[${t.task}] ${task.name}`;
+      const nameHeight = doc.heightOfString(nameText, { width: colWidths.name });
+      const rowHeight = Math.max(20, nameHeight + 4);
+
+      if (currentY + rowHeight > 720) {
+        doc.addPage();
+        currentY = 50;
+      }
+
       doc.text(`${rowNumber}`, colX.id, currentY, { width: colWidths.id });
-      doc.text(`[${t.task}] ${task.name}`, colX.name, currentY, { width: colWidths.name });
+      doc.text(nameText, colX.name, currentY, { width: colWidths.name });
       doc.text(amount, colX.quantity, currentY, { width: colWidths.quantity });
       doc.text(unit, colX.unit, currentY, { width: colWidths.unit });
       doc.text(pricePerUnit, colX.pricePerUnit, currentY, { width: colWidths.pricePerUnit });
       doc.text(price, colX.price, currentY, { width: colWidths.price });
       
-      currentY += 20;
+      currentY += rowHeight;
       rowNumber++;
     }
 
     // Add budget items
     for (let i = 0; i < filteredBudgetItems.length; i++) {
       const item = filteredBudgetItems[i];
-      
-      if (currentY > 700) {
-        doc.addPage();
-        currentY = 50;
-      }
 
       const price = formatPdfCurrency(Number(item.actualCost), lang);
       const categoryLabel = translateCategory(item.category, t);
 
+      const nameText = `[${categoryLabel}] ${item.name}`;
+      const nameHeight = doc.heightOfString(nameText, { width: colWidths.name });
+      const rowHeight = Math.max(20, nameHeight + 4);
+
+      if (currentY + rowHeight > 720) {
+        doc.addPage();
+        currentY = 50;
+      }
+
       doc.text(`${rowNumber}`, colX.id, currentY, { width: colWidths.id });
-      doc.text(`[${categoryLabel}] ${item.name}`, colX.name, currentY, { width: colWidths.name });
+      doc.text(nameText, colX.name, currentY, { width: colWidths.name });
       doc.text('-', colX.quantity, currentY, { width: colWidths.quantity });
       doc.text('-', colX.unit, currentY, { width: colWidths.unit });
       doc.text('-', colX.pricePerUnit, currentY, { width: colWidths.pricePerUnit });
       doc.text(price, colX.price, currentY, { width: colWidths.price });
       
-      currentY += 20;
+      currentY += rowHeight;
       rowNumber++;
     }
 
     doc.moveDown(2);
     currentY += 20;
+
+    if (currentY > 680) {
+      doc.addPage();
+      currentY = 50;
+    }
 
     // Draw line before footer
     doc.moveTo(50, currentY).lineTo(550, currentY).stroke();
