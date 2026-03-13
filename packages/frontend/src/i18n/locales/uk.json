@@ -181,6 +181,8 @@
   "taskList": {
     "allStatuses": "Всі статуси",
     "allPriorities": "Всі пріоритети",
+    "allMilestones": "Всі етапи",
+    "noMilestone": "Без етапу",
     "noTasks": "Завдань ще немає",
     "noTasksMatch": "Жодне завдання не відповідає обраним фільтрам",
     "showingTasks": "Показано {{filtered}} з {{total}} завдань",

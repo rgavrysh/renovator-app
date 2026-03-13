@@ -4,6 +4,7 @@ import { Badge } from './ui/Badge';
 import { Divider } from './ui/Divider';
 import { Select } from './ui/Select';
 import { formatCurrency } from '../utils/currency';
+import type { Milestone } from './MilestoneList';
 
 export interface Task {
   id: string;
@@ -54,6 +55,7 @@ const PRIORITY_CYCLE: TaskPriority[] = [
 
 export interface TaskListProps {
   tasks: Task[];
+  milestones?: Milestone[];
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
   onStatusChange?: (task: Task, newStatus: TaskStatus) => void;
@@ -63,6 +65,7 @@ export interface TaskListProps {
 
 export const TaskList: React.FC<TaskListProps> = ({
   tasks,
+  milestones = [],
   onEdit,
   onDelete,
   onStatusChange,
@@ -72,6 +75,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   const { t, i18n } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [milestoneFilter, setMilestoneFilter] = useState<string>('all');
   const [editingAmounts, setEditingAmounts] = useState<Record<string, string>>({});
 
   const formatDate = (dateString: string) => {
@@ -168,8 +172,16 @@ export const TaskList: React.FC<TaskListProps> = ({
       filtered = filtered.filter((task) => task.priority === priorityFilter);
     }
 
+    if (milestoneFilter !== 'all') {
+      if (milestoneFilter === 'none') {
+        filtered = filtered.filter((task) => !task.milestoneId);
+      } else {
+        filtered = filtered.filter((task) => task.milestoneId === milestoneFilter);
+      }
+    }
+
     return filtered;
-  }, [tasks, statusFilter, priorityFilter]);
+  }, [tasks, statusFilter, priorityFilter, milestoneFilter]);
 
   const statusOptions = [
     { value: 'all', label: t('taskList.allStatuses') },
@@ -185,6 +197,12 @@ export const TaskList: React.FC<TaskListProps> = ({
     { value: TaskPriority.MEDIUM, label: t('taskPriority.medium') },
     { value: TaskPriority.HIGH, label: t('taskPriority.high') },
     { value: TaskPriority.URGENT, label: t('taskPriority.urgent') },
+  ];
+
+  const milestoneOptions = [
+    { value: 'all', label: t('taskList.allMilestones') },
+    { value: 'none', label: t('taskList.noMilestone') },
+    ...milestones.map((m) => ({ value: m.id, label: m.name })),
   ];
 
   if (tasks.length === 0) {
@@ -217,6 +235,17 @@ export const TaskList: React.FC<TaskListProps> = ({
             fullWidth
           />
         </div>
+        {milestones.length > 0 && (
+          <div className="flex-1">
+            <Select
+              label={t('taskForm.milestone')}
+              options={milestoneOptions}
+              value={milestoneFilter}
+              onChange={(e) => setMilestoneFilter(e.target.value)}
+              fullWidth
+            />
+          </div>
+        )}
       </div>
 
       {/* Task Count */}

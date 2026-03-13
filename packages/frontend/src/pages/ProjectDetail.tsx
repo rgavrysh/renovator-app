@@ -884,6 +884,7 @@ export const ProjectDetail: React.FC = () => {
               <CardContent>
                 <TaskList 
                   tasks={tasks}
+                  milestones={milestones}
                   onEdit={handleEditTask}
                   onDelete={handleDeleteTaskFromList}
                   onStatusChange={handleTaskStatusChange}

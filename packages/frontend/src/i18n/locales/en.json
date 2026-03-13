@@ -181,6 +181,8 @@
   "taskList": {
     "allStatuses": "All Statuses",
     "allPriorities": "All Priorities",
+    "allMilestones": "All Milestones",
+    "noMilestone": "No Milestone",
     "noTasks": "No tasks yet",
     "noTasksMatch": "No tasks match the selected filters",
     "showingTasks": "Showing {{filtered}} of {{total}} tasks",
