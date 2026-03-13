@@ -21,6 +21,7 @@ export interface BudgetItem {
   milestoneId?: string;
   name: string;
   category: BudgetCategory;
+  customCategory?: string;
   actualCost: number;
   notes?: string;
   createdAt: string;
@@ -54,7 +55,10 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
 
   const fmtCurrency = (amount: number): string => formatCurrency(amount, i18n.language);
 
-  const getCategoryLabel = (category: BudgetCategory): string => {
+  const getCategoryLabel = (category: BudgetCategory, customCategory?: string): string => {
+    if (category === BudgetCategory.OTHER && customCategory) {
+      return customCategory;
+    }
     return t(`budgetCategory.${category}`);
   };
 
@@ -93,7 +97,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-medium text-gray-900">{item.name}</h4>
               <Badge variant={getCategoryColor(item.category) as any} size="sm">
-                {getCategoryLabel(item.category)}
+                {getCategoryLabel(item.category, item.customCategory)}
               </Badge>
             </div>
             {item.notes && (

@@ -292,8 +292,11 @@
     "notesPlaceholder": "Додайте додаткові нотатки...",
     "addButton": "Додати статтю",
     "updateButton": "Оновити статтю",
+    "customCategoryLabel": "Своя категорія",
+    "customCategoryPlaceholder": "напр., Ландшафтний дизайн, Інтер'єр...",
     "validation": {
       "nameRequired": "Назва статті обов'язкова",
+      "customCategoryRequired": "Назва своєї категорії обов'язкова",
       "actualCostRequired": "Вартість обов'язкова",
       "actualCostInvalid": "Вартість повинна бути дійсним числом",
       "actualCostNegative": "Вартість не може бути від'ємною"

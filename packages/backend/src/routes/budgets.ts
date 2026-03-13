@@ -145,7 +145,7 @@ router.delete('/:projectId/budget', authenticate, async (req: Request, res: Resp
 router.post('/:budgetId/items', authenticate, async (req: Request, res: Response) => {
   try {
     const { budgetId } = req.params;
-    const { name, category, actualCost, notes, milestoneId } = req.body;
+    const { name, category, customCategory, actualCost, notes, milestoneId } = req.body;
 
     // Validate required fields
     if (!name || !category) {
@@ -182,6 +182,7 @@ router.post('/:budgetId/items', authenticate, async (req: Request, res: Response
     const budgetItem = await budgetService.addBudgetItem(budgetId, {
       name,
       category,
+      customCategory,
       actualCost,
       notes,
       milestoneId,
@@ -201,7 +202,7 @@ router.post('/:budgetId/items', authenticate, async (req: Request, res: Response
 router.put('/budget-items/:id', authenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, category, actualCost, notes, milestoneId } = req.body;
+    const { name, category, customCategory, actualCost, notes, milestoneId } = req.body;
 
     const updateData: any = {};
 
@@ -216,6 +217,7 @@ router.put('/budget-items/:id', authenticate, async (req: Request, res: Response
         return;
       }
       updateData.category = category;
+      updateData.customCategory = category === BudgetCategory.OTHER ? (customCategory || null) : null;
     }
 
     if (actualCost !== undefined) {

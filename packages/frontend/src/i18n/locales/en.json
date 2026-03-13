@@ -292,8 +292,11 @@
     "notesPlaceholder": "Add any additional notes...",
     "addButton": "Add Item",
     "updateButton": "Update Item",
+    "customCategoryLabel": "Custom Category",
+    "customCategoryPlaceholder": "e.g., Landscaping, Interior Design...",
     "validation": {
       "nameRequired": "Item name is required",
+      "customCategoryRequired": "Custom category name is required",
       "actualCostRequired": "Cost is required",
       "actualCostInvalid": "Cost must be a valid number",
       "actualCostNegative": "Cost cannot be negative"

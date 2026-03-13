@@ -29,6 +29,7 @@ export interface UpdateBudgetInput {
 export interface CreateBudgetItemInput {
   name: string;
   category: BudgetCategory;
+  customCategory?: string;
   actualCost?: number;
   notes?: string;
   milestoneId?: string;
@@ -37,6 +38,7 @@ export interface CreateBudgetItemInput {
 export interface UpdateBudgetItemInput {
   name?: string;
   category?: BudgetCategory;
+  customCategory?: string | null;
   actualCost?: number;
   notes?: string;
   milestoneId?: string | null;
@@ -158,6 +160,7 @@ export class BudgetService {
       milestoneId: data.milestoneId || undefined,
       name: data.name,
       category: data.category,
+      customCategory: data.category === BudgetCategory.OTHER ? (data.customCategory || undefined) : undefined,
       actualCost: data.actualCost ?? 0,
       notes: data.notes,
     });
@@ -466,7 +469,7 @@ export class BudgetService {
       const item = filteredBudgetItems[i];
 
       const price = formatPdfCurrency(Number(item.actualCost), lang);
-      const categoryLabel = translateCategory(item.category, t);
+      const categoryLabel = translateCategory(item.category, t, item.customCategory);
 
       const nameText = `[${categoryLabel}] ${item.name}`;
       const nameHeight = doc.heightOfString(nameText, { width: colWidths.name });
@@ -511,7 +514,7 @@ export class BudgetService {
     categoryTotals[t.tasks] = filteredTasksCost;
 
     for (const item of filteredBudgetItems) {
-      const category = translateCategory(item.category, t);
+      const category = translateCategory(item.category, t, item.customCategory);
       if (!categoryTotals[category]) {
         categoryTotals[category] = 0;
       }

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 export interface BudgetItemFormData {
   name: string;
   category: BudgetCategory;
+  customCategory: string;
   milestoneId: string;
   actualCost: string;
   notes: string;
@@ -32,6 +33,7 @@ interface BudgetItemFormProps {
     id: string;
     name: string;
     category: BudgetCategory;
+    customCategory?: string;
     milestoneId?: string;
     actualCost: number;
     notes?: string;
@@ -50,6 +52,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
   const [formData, setFormData] = useState<BudgetItemFormData>({
     name: '',
     category: BudgetCategory.MATERIALS,
+    customCategory: '',
     milestoneId: '',
     actualCost: '0',
     notes: '',
@@ -75,6 +78,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       setFormData({
         name: budgetItem.name,
         category: budgetItem.category,
+        customCategory: budgetItem.customCategory || '',
         milestoneId: budgetItem.milestoneId || '',
         actualCost: budgetItem.actualCost.toString(),
         notes: budgetItem.notes || '',
@@ -83,6 +87,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       setFormData({
         name: '',
         category: BudgetCategory.MATERIALS,
+        customCategory: '',
         milestoneId: '',
         actualCost: '0',
         notes: '',
@@ -128,6 +133,10 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       newErrors.name = t('budgetItemForm.validation.nameRequired');
     }
 
+    if (formData.category === BudgetCategory.OTHER && !formData.customCategory.trim()) {
+      newErrors.customCategory = t('budgetItemForm.validation.customCategoryRequired');
+    }
+
     if (!formData.actualCost) {
       newErrors.actualCost = t('budgetItemForm.validation.actualCostRequired');
     } else if (isNaN(parseFloat(formData.actualCost))) {
@@ -154,6 +163,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       const payload: any = {
         name: formData.name.trim(),
         category: formData.category,
+        customCategory: formData.category === BudgetCategory.OTHER ? formData.customCategory.trim() || undefined : undefined,
         milestoneId: formData.milestoneId || undefined,
         actualCost: parseFloat(formData.actualCost),
         notes: formData.notes.trim() || undefined,
@@ -235,6 +245,20 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
             fullWidth
             required
           />
+
+          {formData.category === BudgetCategory.OTHER && (
+            <Input
+              label={t('budgetItemForm.customCategoryLabel')}
+              name="customCategory"
+              value={formData.customCategory}
+              onChange={handleChange}
+              error={errors.customCategory}
+              placeholder={t('budgetItemForm.customCategoryPlaceholder')}
+              fullWidth
+              required
+              autoFocus
+            />
+          )}
 
           <Select
             label={t('budgetItemForm.milestone')}

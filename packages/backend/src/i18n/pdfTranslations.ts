@@ -101,7 +101,10 @@ export function getPdfTranslations(lang: string): PdfTranslations {
   return translations[lang] || translations.en;
 }
 
-export function translateCategory(category: string, t: PdfTranslations): string {
+export function translateCategory(category: string, t: PdfTranslations, customCategory?: string): string {
+  if (category === 'other' && customCategory) {
+    return customCategory;
+  }
   const key = category.toLowerCase() as keyof PdfTranslations;
   return (t[key] as string) || category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
 }

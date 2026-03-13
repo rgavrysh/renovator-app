@@ -41,6 +41,9 @@ export class BudgetItem {
   })
   category: BudgetCategory;
 
+  @Column({ name: 'custom_category', type: 'varchar', length: 100, nullable: true })
+  customCategory?: string;
+
   @Column({ name: 'actual_cost', type: 'decimal', precision: 12, scale: 2, default: 0 })
   actualCost: number;
 
