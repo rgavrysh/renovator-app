@@ -20,12 +20,16 @@ import {
 const isProduction = config.server.nodeEnv === 'production';
 const sslEnabled = process.env.DATABASE_SSL !== 'false';
 
+type PostgresSslConfig =
+  | { rejectUnauthorized: boolean; ca?: string }
+  | undefined;
+
 // Build the SSL config in code rather than via `sslmode` in the connection URL.
 // pg-connection-string parses `sslmode` from the URL and OVERRIDES any `ssl`
 // option we pass here, so keep the URL free of `sslmode`/`ssl*` query params.
 // - If a CA bundle is supplied (path or inline PEM), verify the server cert.
 // - Otherwise encrypt without verification (previous default).
-function buildSslConfig(): DataSourceOptions['ssl'] {
+function buildSslConfig(): PostgresSslConfig {
   if (!sslEnabled) return undefined;
 
   const inlineCa = process.env.DATABASE_SSL_CA_CERT;
