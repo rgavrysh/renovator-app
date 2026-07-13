@@ -1,0 +1,28 @@
+# Copy to terraform.tfvars and adjust as needed.
+
+aws_region  = "eu-central-1"
+environment = "production"
+name_prefix = "renovator"
+
+# Who may connect to Postgres (5432).
+allowed_cidrs = [
+  "74.220.48.0/24",    # Render backend egress
+  "74.220.56.0/24",    # Render backend egress
+  "195.160.232.110/32" # your admin IP
+]
+
+# Scale-to-zero: min 0 ACU (auto-pause), max 4 ACU.
+min_capacity             = 0
+max_capacity             = 4
+seconds_until_auto_pause = 300 # 5 min idle -> pause
+
+engine_version         = "16.6"
+parameter_group_family = "aurora-postgresql16"
+
+database_name   = "renovator"
+master_username = "renovator"
+
+# Recommended for production
+deletion_protection = false
+skip_final_snapshot = true
+force_ssl           = true

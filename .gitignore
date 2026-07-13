@@ -19,6 +19,7 @@ build/
 # IDE
 .vscode/
 .idea/
+.kiro/
 *.swp
 *.swo
 *~
@@ -36,6 +37,14 @@ yarn-error.log*
 
 # Docker
 .docker/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
 
 # Testing
 coverage/

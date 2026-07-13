@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import config from './index';
 import {
@@ -18,6 +19,23 @@ import {
 
 const isProduction = config.server.nodeEnv === 'production';
 const sslEnabled = process.env.DATABASE_SSL !== 'false';
+
+// Build the SSL config in code rather than via `sslmode` in the connection URL.
+// pg-connection-string parses `sslmode` from the URL and OVERRIDES any `ssl`
+// option we pass here, so keep the URL free of `sslmode`/`ssl*` query params.
+// - If a CA bundle is supplied (path or inline PEM), verify the server cert.
+// - Otherwise encrypt without verification (previous default).
+function buildSslConfig(): DataSourceOptions['ssl'] {
+  if (!sslEnabled) return undefined;
+
+  const inlineCa = process.env.DATABASE_SSL_CA_CERT;
+  const caPath = process.env.DATABASE_SSL_CA;
+  const ca = inlineCa ?? (caPath ? fs.readFileSync(caPath, 'utf8') : undefined);
+
+  return ca ? { ca, rejectUnauthorized: true } : { rejectUnauthorized: false };
+}
+
+const sslConfig = buildSslConfig();
 
 // Resolve migration paths: compiled JS in production, TS source in development
 function getMigrationPaths(): string[] {
@@ -53,7 +71,7 @@ export const dataSourceOptions: DataSourceOptions = config.database.url
   ? {
       type: 'postgres' as const,
       url: config.database.url,
-      ...(sslEnabled ? { ssl: { rejectUnauthorized: false } } : {}),
+      ...(sslConfig ? { ssl: sslConfig } : {}),
       ...sharedOptions,
     }
   : {
