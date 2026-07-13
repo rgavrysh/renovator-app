@@ -1,14 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import axios from 'axios';
 import { AuthService } from './AuthService';
+import { KeycloakJwksValidator } from './KeycloakJwksValidator';
 
 vi.mock('axios');
 const mockedAxios = vi.mocked(axios, true);
+
+vi.mock('./KeycloakJwksValidator');
 
 vi.mock('../config', () => ({
   default: {
     keycloak: {
       url: 'http://localhost:8080',
+      publicUrl: 'http://localhost:8080',
       realm: 'renovator',
       clientId: 'renovator-app',
       clientSecret: 'test-secret',
@@ -24,10 +28,22 @@ vi.mock('../config/database', () => ({
 
 describe('AuthService', () => {
   let authService: AuthService;
+  let mockTokenValidator: {
+    validateAccessToken: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
+    mockTokenValidator = {
+      validateAccessToken: vi.fn(),
+    };
+    (KeycloakJwksValidator as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      () => mockTokenValidator
+    );
     authService = new AuthService();
     vi.clearAllMocks();
+    (KeycloakJwksValidator as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      () => mockTokenValidator
+    );
   });
 
   describe('getAuthorizationUrl', () => {
@@ -161,16 +177,12 @@ describe('AuthService', () => {
 
   describe('validateAccessToken', () => {
     it('should validate active token and return validation result', async () => {
-      const mockResponse = {
-        data: {
-          active: true,
-          sub: 'user-123',
-          exp: Math.floor(Date.now() / 1000) + 3600,
-          scope: 'openid email profile',
-        },
-      };
-
-      mockedAxios.post.mockResolvedValueOnce(mockResponse);
+      mockTokenValidator.validateAccessToken.mockResolvedValueOnce({
+        valid: true,
+        userId: 'user-123',
+        expiresAt: new Date(Date.now() + 3600 * 1000),
+        scopes: ['openid', 'email', 'profile'],
+      });
 
       const token = 'valid-token';
       const result = await authService.validateAccessToken(token);
@@ -179,16 +191,13 @@ describe('AuthService', () => {
       expect(result.userId).toBe('user-123');
       expect(result.expiresAt).toBeInstanceOf(Date);
       expect(result.scopes).toEqual(['openid', 'email', 'profile']);
+      expect(mockTokenValidator.validateAccessToken).toHaveBeenCalledWith(token);
     });
 
     it('should return invalid result for inactive token', async () => {
-      const mockResponse = {
-        data: {
-          active: false,
-        },
-      };
-
-      mockedAxios.post.mockResolvedValueOnce(mockResponse);
+      mockTokenValidator.validateAccessToken.mockResolvedValueOnce({
+        valid: false,
+      });
 
       const token = 'invalid-token';
       const result = await authService.validateAccessToken(token);
@@ -197,21 +206,14 @@ describe('AuthService', () => {
       expect(result.userId).toBeUndefined();
     });
 
-    it('should throw error when validation request fails', async () => {
-      mockedAxios.post.mockRejectedValueOnce({
-        isAxiosError: true,
-        response: {
-          data: {
-            error_description: 'Token validation failed',
-          },
-        },
-      });
-
-      mockedAxios.isAxiosError.mockReturnValueOnce(true);
+    it('should propagate validator errors', async () => {
+      mockTokenValidator.validateAccessToken.mockRejectedValueOnce(
+        new Error('JWKS endpoint unavailable')
+      );
 
       await expect(
         authService.validateAccessToken('token')
-      ).rejects.toThrow('Failed to validate access token: Token validation failed');
+      ).rejects.toThrow('JWKS endpoint unavailable');
     });
   });
 

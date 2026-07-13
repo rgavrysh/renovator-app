@@ -3,7 +3,11 @@ import config from '../config';
 import { AppDataSource } from '../config/database';
 import { User } from '../entities/User';
 import { Session } from '../entities/Session';
+import { KeycloakJwksValidator } from './KeycloakJwksValidator';
+import type { TokenValidationResult } from './KeycloakJwksValidator';
 import { SessionService } from './SessionService';
+
+export type { TokenValidationResult };
 
 export interface OAuthTokens {
   accessToken: string;
@@ -11,13 +15,6 @@ export interface OAuthTokens {
   idToken?: string;
   expiresIn: number;
   tokenType: string;
-}
-
-export interface TokenValidationResult {
-  valid: boolean;
-  userId?: string;
-  expiresAt?: Date;
-  scopes?: string[];
 }
 
 export interface UserInfo {
@@ -37,8 +34,8 @@ export class AuthService {
   private readonly authorizationEndpoint: string;
   private readonly tokenEndpoint: string;
   private readonly userInfoEndpoint: string;
-  private readonly tokenIntrospectionEndpoint: string;
   private readonly logoutEndpoint: string;
+  private readonly tokenValidator: KeycloakJwksValidator;
   private readonly sessionService: SessionService;
 
   constructor() {
@@ -55,8 +52,12 @@ export class AuthService {
     this.authorizationEndpoint = `${publicRealmUrl}/protocol/openid-connect/auth`;
     this.tokenEndpoint = `${internalRealmUrl}/protocol/openid-connect/token`;
     this.userInfoEndpoint = `${internalRealmUrl}/protocol/openid-connect/userinfo`;
-    this.tokenIntrospectionEndpoint = `${internalRealmUrl}/protocol/openid-connect/token/introspect`;
     this.logoutEndpoint = `${internalRealmUrl}/protocol/openid-connect/logout`;
+    this.tokenValidator = new KeycloakJwksValidator(
+      this.keycloakUrl,
+      this.realm,
+      this.clientId
+    );
 
     this.sessionService = new SessionService();
   }
@@ -154,46 +155,10 @@ export class AuthService {
   }
 
   /**
-   * Validate access token using token introspection endpoint
+   * Validate access token locally using Keycloak JWKS (signature + claims).
    */
   async validateAccessToken(token: string): Promise<TokenValidationResult> {
-    try {
-      const params = new URLSearchParams({
-        token,
-        client_id: this.clientId,
-        client_secret: this.clientSecret,
-      });
-
-      const response = await axios.post(
-        this.tokenIntrospectionEndpoint,
-        params.toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-
-      const data = response.data;
-
-      if (!data.active) {
-        return { valid: false };
-      }
-
-      return {
-        valid: true,
-        userId: data.sub,
-        expiresAt: data.exp ? new Date(data.exp * 1000) : undefined,
-        scopes: data.scope ? data.scope.split(' ') : undefined,
-      };
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(
-          `Failed to validate access token: ${error.response?.data?.error_description || error.message}`
-        );
-      }
-      throw error;
-    }
+    return this.tokenValidator.validateAccessToken(token);
   }
 
   /**
