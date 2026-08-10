@@ -253,8 +253,7 @@
     "updateButton": "Оновити етап",
     "validation": {
       "nameRequired": "Назва етапу обов'язкова",
-      "targetDateRequired": "Цільова дата обов'язкова",
-      "targetDatePast": "Цільова дата не може бути в минулому"
+      "targetDateRequired": "Цільова дата обов'язкова"
     }
   },
   "budgetCategory": {

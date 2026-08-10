@@ -253,8 +253,7 @@
     "updateButton": "Update Milestone",
     "validation": {
       "nameRequired": "Milestone name is required",
-      "targetDateRequired": "Target date is required",
-      "targetDatePast": "Target date cannot be in the past"
+      "targetDateRequired": "Target date is required"
     }
   },
   "budgetCategory": {

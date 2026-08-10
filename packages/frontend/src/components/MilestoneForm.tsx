@@ -92,14 +92,6 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
 
     if (!formData.targetDate) {
       newErrors.targetDate = t('milestoneForm.validation.targetDateRequired');
-    } else {
-      const targetDate = new Date(formData.targetDate);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (targetDate < today && !isEditMode) {
-        newErrors.targetDate = t('milestoneForm.validation.targetDatePast');
-      }
     }
 
     setErrors(newErrors);
