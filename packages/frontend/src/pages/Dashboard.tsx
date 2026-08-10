@@ -72,9 +72,9 @@ export const Dashboard: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
-      // Fetch active projects (exclude archived and completed)
+      // Fetch all non-archived projects (archived is hidden from the dashboard)
       const data = await apiClient.get<Project[]>(
-        '/api/projects?status=planning,active,on_hold'
+        '/api/projects?status=planning,active,on_hold,completed'
       );
       
       setProjects(data);
