@@ -16,7 +16,8 @@ export const Input: React.FC<InputProps> = ({
   id,
   ...props
 }) => {
-  const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+  const generatedId = React.useId();
+  const inputId = id || generatedId;
   const widthStyle = fullWidth ? 'w-full' : '';
   
   return (

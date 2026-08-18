@@ -128,7 +128,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
       onClose();
     } catch (error: any) {
       console.error('Error saving milestone:', error);
-      setSubmitError(error.message || t('common.retry'));
+      setSubmitError(error.message || t('errors.saveFailed'));
     } finally {
       setIsSubmitting(false);
     }

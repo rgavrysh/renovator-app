@@ -1,7 +1,11 @@
 import React from 'react';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info';
+  /**
+   * `success`/`warning`/`danger`/`info` carry status meaning; `purple`/`orange`
+   * are decorative only, for labelling categories where no status is implied.
+   */
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'orange';
   size?: 'sm' | 'md';
 }
 
@@ -21,6 +25,8 @@ export const Badge: React.FC<BadgeProps> = ({
     warning: 'bg-yellow-100 text-yellow-700',
     danger: 'bg-red-100 text-red-700',
     info: 'bg-blue-100 text-blue-700',
+    purple: 'bg-purple-100 text-purple-700',
+    orange: 'bg-orange-100 text-orange-700',
   };
   
   const sizeStyles = {

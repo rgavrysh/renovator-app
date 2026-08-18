@@ -35,6 +35,9 @@
     "confirmDelete": "Ви впевнені, що хочете видалити це?",
     "overdue": "Прострочено"
   },
+  "errors": {
+    "saveFailed": "Не вдалося зберегти. Ваші зміни на місці — спробуйте ще раз."
+  },
   "app": {
     "name": "Renovator",
     "tagline": "Платформа управління проєктами"
@@ -341,11 +344,16 @@
     "backToDashboard": "На головну",
     "defaultPrice": "Ціна за замовч.:",
     "estDuration": "Орієнтовна тривалість:",
-    "hours": "годин",
+    "hoursCount_one": "{{count}} година",
+    "hoursCount_few": "{{count}} години",
+    "hoursCount_many": "{{count}} годин",
+    "hoursCount_other": "{{count}} години",
     "noCustomItems": "Користувацьких робочих елементів не знайдено. Створіть свій перший шаблон для початку.",
     "noCustomItemsCategory": "У цій категорії немає користувацьких робочих елементів.",
-    "showingCustomItems": "Показано {{count}} користувацький робочий елемент",
-    "showingCustomItems_plural": "Показано {{count}} користувацьких робочих елементів",
+    "showingCustomItems_one": "Показано {{count}} користувацький робочий елемент",
+    "showingCustomItems_few": "Показано {{count}} користувацькі робочі елементи",
+    "showingCustomItems_many": "Показано {{count}} користувацьких робочих елементів",
+    "showingCustomItems_other": "Показано {{count}} користувацького робочого елемента",
     "inCategory": "у категорії {{category}}",
     "deleteConfirm": "Ви впевнені, що хочете видалити \"{{name}}\"?\n\nПримітка: Існуючі завдання, створені з цього шаблону, будуть збережені.",
     "deleteSuccess": "Шаблон \"{{name}}\" було видалено.\n\nІснуючі завдання, створені з цього шаблону, збережені.",
@@ -357,12 +365,17 @@
     "deselectAll": "Зняти вибір",
     "itemsSelected": "{{selected}} з {{total}} елементів обрано",
     "noItemsFound": "У цій категорії робочих елементів не знайдено",
-    "addTasks": "Додати {{count}} завдання",
-    "addTasks_plural": "Додати {{count}} завдань",
+    "addTasks_one": "Додати {{count}} завдання",
+    "addTasks_few": "Додати {{count}} завдання",
+    "addTasks_many": "Додати {{count}} завдань",
+    "addTasks_other": "Додати {{count}} завдання",
     "selectAtLeastOne": "Будь ласка, оберіть хоча б один робочий елемент",
     "defaultPrice": "Ціна за замовч.:",
     "estDuration": "Орієнтовна тривалість:",
-    "hours": "годин"
+    "hoursCount_one": "{{count}} година",
+    "hoursCount_few": "{{count}} години",
+    "hoursCount_many": "{{count}} годин",
+    "hoursCount_other": "{{count}} години"
   },
   "workItemTemplateForm": {
     "createTitle": "Створити шаблон робочого елемента",
@@ -493,8 +506,10 @@
     "title": "Ресурси",
     "noResources": "Немає ресурсів",
     "addResources": "Додайте ресурси для відстеження матеріалів, обладнання та субпідрядників",
-    "overdueDelivery": "{{count}} ресурс прострочений для доставки",
-    "overdueDelivery_plural": "{{count}} ресурсів прострочені для доставки",
+    "overdueDelivery_one": "Прострочено доставку {{count}} позиції",
+    "overdueDelivery_few": "Прострочено доставку {{count}} позицій",
+    "overdueDelivery_many": "Прострочено доставку {{count}} позицій",
+    "overdueDelivery_other": "Прострочено доставку {{count}} позиції",
     "deliveryOverdue": "Доставка прострочена більш ніж на 2 дні",
     "quantity": "Кількість",
     "cost": "Вартість",

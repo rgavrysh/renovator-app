@@ -372,9 +372,19 @@ export const ProjectDetail: React.FC = () => {
     setIsTaskFormOpen(true);
   };
 
+  const handleViewTask = (task: Task) => {
+    setSelectedTask(task);
+    setIsTaskDetailOpen(true);
+  };
+
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setIsTaskFormOpen(true);
+  };
+
+  const handleEditTaskFromDetail = (task: Task) => {
+    handleTaskDetailClose();
+    handleEditTask(task);
   };
 
   const handleTaskFormClose = () => {
@@ -802,7 +812,7 @@ export const ProjectDetail: React.FC = () => {
                     </div>
                   )}
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-xs text-gray-500 mb-1">{t('projectDetail.startDate')}</p>
                       <p className="text-sm font-medium text-gray-900">
@@ -828,7 +838,7 @@ export const ProjectDetail: React.FC = () => {
 
                   <Divider />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {project.clientEmail && (
                       <div>
                         <p className="text-xs text-gray-500 mb-1">{t('projectDetail.clientEmail')}</p>
@@ -903,6 +913,7 @@ export const ProjectDetail: React.FC = () => {
                 <TaskList 
                   tasks={tasks}
                   milestones={milestones}
+                  onSelect={handleViewTask}
                   onEdit={handleEditTask}
                   onDelete={handleDeleteTaskFromList}
                   onStatusChange={handleTaskStatusChange}
@@ -1258,6 +1269,7 @@ export const ProjectDetail: React.FC = () => {
           isOpen={isTaskDetailOpen}
           onClose={handleTaskDetailClose}
           task={selectedTask}
+          onEdit={handleEditTaskFromDetail}
           onTaskUpdate={handleTaskUpdate}
           onStatusChange={handleTaskStatusChange}
           onTaskDelete={handleTaskDelete}

@@ -274,7 +274,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             autoFocus
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label={t('common.type')}
               name="type"
@@ -296,7 +296,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label={t('resourceForm.quantity')}
               name="quantity"
@@ -349,7 +349,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({
 
           {/* Show date fields based on status */}
           {(formData.status === ResourceStatus.ORDERED || formData.status === ResourceStatus.RECEIVED) && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 label={t('resourceForm.orderDate')}
                 name="orderDate"

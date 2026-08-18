@@ -181,7 +181,7 @@ export const BudgetItemForm: React.FC<BudgetItemFormProps> = ({
       onClose();
     } catch (error: any) {
       console.error('Error saving budget item:', error);
-      setSubmitError(error.message || t('common.retry'));
+      setSubmitError(error.message || t('errors.saveFailed'));
     } finally {
       setIsSubmitting(false);
     }

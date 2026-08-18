@@ -321,7 +321,7 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
                             )}
                             {item.estimatedDuration && (
                               <span>
-                                {t('workItemsModal.estDuration')} {item.estimatedDuration} {t('workItemsModal.hours')}
+                                {t('workItemsModal.estDuration')} {t('workItemsModal.hoursCount', { count: item.estimatedDuration })}
                               </span>
                             )}
                           </div>

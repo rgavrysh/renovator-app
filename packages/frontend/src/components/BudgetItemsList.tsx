@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
-import { Badge } from './ui/Badge';
+import { Badge, type BadgeProps } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/currency';
@@ -62,17 +62,17 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
     return t(`budgetCategory.${category}`);
   };
 
-  const getCategoryColor = (category: BudgetCategory): string => {
-    const colors: Record<BudgetCategory, string> = {
-      [BudgetCategory.LABOR]: 'blue',
-      [BudgetCategory.MATERIALS]: 'green',
+  const getCategoryColor = (category: BudgetCategory): BadgeProps['variant'] => {
+    const colors: Record<BudgetCategory, BadgeProps['variant']> = {
+      [BudgetCategory.LABOR]: 'info',
+      [BudgetCategory.MATERIALS]: 'success',
       [BudgetCategory.EQUIPMENT]: 'purple',
       [BudgetCategory.SUBCONTRACTORS]: 'orange',
-      [BudgetCategory.PERMITS]: 'yellow',
-      [BudgetCategory.CONTINGENCY]: 'gray',
-      [BudgetCategory.OTHER]: 'gray',
+      [BudgetCategory.PERMITS]: 'warning',
+      [BudgetCategory.CONTINGENCY]: 'default',
+      [BudgetCategory.OTHER]: 'default',
     };
-    return colors[category];
+    return colors[category] ?? 'default';
   };
 
   const toggleMilestone = (key: string) => {
@@ -96,7 +96,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-medium text-gray-900">{item.name}</h4>
-              <Badge variant={getCategoryColor(item.category) as any} size="sm">
+              <Badge variant={getCategoryColor(item.category)} size="sm">
                 {getCategoryLabel(item.category, item.customCategory)}
               </Badge>
             </div>

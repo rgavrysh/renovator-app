@@ -56,6 +56,8 @@ const PRIORITY_CYCLE: TaskPriority[] = [
 export interface TaskListProps {
   tasks: Task[];
   milestones?: Milestone[];
+  /** Activating a row calls this; falls back to `onEdit` when not provided. */
+  onSelect?: (task: Task) => void;
   onEdit?: (task: Task) => void;
   onDelete?: (task: Task) => void;
   onStatusChange?: (task: Task, newStatus: TaskStatus) => void;
@@ -66,6 +68,7 @@ export interface TaskListProps {
 export const TaskList: React.FC<TaskListProps> = ({
   tasks,
   milestones = [],
+  onSelect,
   onEdit,
   onDelete,
   onStatusChange,
@@ -73,6 +76,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   onAmountChange,
 }) => {
   const { t, i18n } = useTranslation();
+  const activateRow = onSelect ?? onEdit;
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [milestoneFilter, setMilestoneFilter] = useState<string>('all');
@@ -276,11 +280,11 @@ export const TaskList: React.FC<TaskListProps> = ({
                       ? 'bg-red-50 border border-red-200'
                       : 'hover:bg-gray-50'
                   }`}
-                  onClick={() => onEdit?.(task)}
+                  onClick={() => activateRow?.(task)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      onEdit?.(task);
+                      activateRow?.(task);
                     }
                   }}
                 >

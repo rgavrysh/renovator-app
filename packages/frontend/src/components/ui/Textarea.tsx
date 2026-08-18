@@ -16,7 +16,8 @@ export const Textarea: React.FC<TextareaProps> = ({
   id,
   ...props
 }) => {
-  const textareaId = id || label?.toLowerCase().replace(/\s+/g, '-');
+  const generatedId = React.useId();
+  const textareaId = id || generatedId;
   const widthStyle = fullWidth ? 'w-full' : '';
   
   return (

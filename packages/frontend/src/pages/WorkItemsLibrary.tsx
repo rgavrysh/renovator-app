@@ -256,7 +256,7 @@ export const WorkItemsLibrary: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">{t('workItemsLibrary.estDuration')}</span>
                           <span className="font-medium text-gray-900">
-                            {item.estimatedDuration} {t('workItemsLibrary.hours')}
+                            {t('workItemsLibrary.hoursCount', { count: item.estimatedDuration })}
                           </span>
                         </div>
                       )}

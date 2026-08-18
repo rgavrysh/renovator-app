@@ -18,7 +18,8 @@ export const Select: React.FC<SelectProps> = ({
   id,
   ...props
 }) => {
-  const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
+  const generatedId = React.useId();
+  const selectId = id || generatedId;
   const widthStyle = fullWidth ? 'w-full' : '';
   
   return (

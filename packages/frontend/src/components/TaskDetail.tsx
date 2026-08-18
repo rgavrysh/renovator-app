@@ -16,6 +16,7 @@ interface TaskDetailProps {
   onTaskUpdate?: () => void;
   onStatusChange?: (task: Task, newStatus: TaskStatus) => void;
   onTaskDelete?: (taskId: string) => void;
+  onEdit?: (task: Task) => void;
 }
 
 export const TaskDetail: React.FC<TaskDetailProps> = ({
@@ -25,6 +26,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
   onTaskUpdate,
   onStatusChange,
   onTaskDelete,
+  onEdit,
 }) => {
   const { t, i18n } = useTranslation();
   const [newNote, setNewNote] = useState('');
@@ -192,7 +194,7 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
         )}
 
         {/* Task Details */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {task.dueDate && (
             <div>
               <p className="text-xs text-gray-500 mb-1">{t('taskDetail.dueDate')}</p>
@@ -300,9 +302,16 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
           >
             {t('taskDetail.deleteTask')}
           </Button>
-          <Button variant="secondary" onClick={onClose}>
-            {t('common.close')}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={onClose}>
+              {t('common.close')}
+            </Button>
+            {onEdit && (
+              <Button variant="primary" onClick={() => onEdit(task)}>
+                {t('common.edit')}
+              </Button>
+            )}
+          </div>
         </div>
       </ModalFooter>
     </Modal>

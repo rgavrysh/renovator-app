@@ -12,7 +12,8 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   id,
   ...props
 }) => {
-  const checkboxId = id || label?.toLowerCase().replace(/\s+/g, '-');
+  const generatedId = React.useId();
+  const checkboxId = id || generatedId;
   
   return (
     <div className="flex items-start">

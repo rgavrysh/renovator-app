@@ -191,7 +191,7 @@ export const SupplierForm: React.FC<SupplierFormProps> = ({
             fullWidth
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label={t('supplierForm.email')}
               name="email"
