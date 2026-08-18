@@ -191,4 +191,61 @@ describe('MilestoneList', () => {
     
     expect(screen.queryByText('Complete')).not.toBeInTheDocument();
   });
+
+  it('should hide the complete button for milestones with associated tasks', () => {
+    const onComplete = vi.fn();
+    render(
+      <MilestoneList
+        milestones={mockMilestones}
+        onComplete={onComplete}
+        tasks={[{ milestoneId: '2', status: 'in_progress' }]}
+      />
+    );
+
+    // Only the third milestone (no tasks, not started) should still show Complete
+    const completeButtons = screen.getAllByText('Complete');
+    expect(completeButtons).toHaveLength(1);
+  });
+
+  it('should display task completion progress for milestones with tasks', () => {
+    render(
+      <MilestoneList
+        milestones={mockMilestones}
+        tasks={[
+          { milestoneId: '2', status: 'completed' },
+          { milestoneId: '2', status: 'in_progress' },
+        ]}
+      />
+    );
+
+    expect(screen.getByText('1/2 tasks completed')).toBeInTheDocument();
+  });
+
+  it('should show forecast variance when a milestone completes after its target date', () => {
+    const lateMilestone: Milestone[] = [
+      {
+        ...mockMilestones[0],
+        targetDate: '2024-01-10',
+        completedDate: '2024-01-15',
+      },
+    ];
+
+    render(<MilestoneList milestones={lateMilestone} />);
+
+    expect(screen.getByText('5 days late')).toBeInTheDocument();
+  });
+
+  it('should show forecast variance when a milestone completes before its target date', () => {
+    const earlyMilestone: Milestone[] = [
+      {
+        ...mockMilestones[0],
+        targetDate: '2024-01-15',
+        completedDate: '2024-01-10',
+      },
+    ];
+
+    render(<MilestoneList milestones={earlyMilestone} />);
+
+    expect(screen.getByText('5 days early')).toBeInTheDocument();
+  });
 });

@@ -23,8 +23,14 @@ export enum MilestoneStatus {
   OVERDUE = 'overdue',
 }
 
+export interface MilestoneTaskSummary {
+  milestoneId?: string;
+  status: string;
+}
+
 export interface MilestoneListProps {
   milestones: Milestone[];
+  tasks?: MilestoneTaskSummary[];
   showProgress?: boolean;
   onEdit?: (milestone: Milestone) => void;
   onComplete?: (milestone: Milestone) => void;
@@ -33,6 +39,7 @@ export interface MilestoneListProps {
 
 export const MilestoneList: React.FC<MilestoneListProps> = ({
   milestones,
+  tasks = [],
   showProgress = true,
   onEdit,
   onComplete,
@@ -83,6 +90,33 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
 
   const isOverdue = (milestone: Milestone) => {
     return milestone.status === MilestoneStatus.OVERDUE;
+  };
+
+  const getMilestoneTasks = (milestone: Milestone) => {
+    return tasks.filter((task) => task.milestoneId === milestone.id);
+  };
+
+  // Days between target and actual completion: positive = late, negative = early, 0 = on time.
+  const getForecastVarianceDays = (milestone: Milestone): number | null => {
+    if (!milestone.completedDate) return null;
+    const target = new Date(milestone.targetDate);
+    const completed = new Date(milestone.completedDate);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    return Math.round((completed.getTime() - target.getTime()) / msPerDay);
+  };
+
+  const getForecastVarianceLabel = (variance: number): string => {
+    if (variance === 0) return t('milestoneList.completedOnTime');
+    if (variance > 0) {
+      return t('milestoneList.completedLate', { count: variance });
+    }
+    return t('milestoneList.completedEarly', { count: Math.abs(variance) });
+  };
+
+  const getForecastVarianceClassName = (variance: number): string => {
+    if (variance > 0) return 'font-medium text-red-600';
+    if (variance < 0) return 'font-medium text-green-600';
+    return 'text-gray-500';
   };
 
   if (sortedMilestones.length === 0) {
@@ -190,10 +224,34 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                   {milestone.completedDate && (
                     <span>{t('milestoneList.completed')} {formatDate(milestone.completedDate)}</span>
                   )}
+                  {(() => {
+                    const variance = getForecastVarianceDays(milestone);
+                    if (variance === null) return null;
+                    return (
+                      <span className={getForecastVarianceClassName(variance)}>
+                        {getForecastVarianceLabel(variance)}
+                      </span>
+                    );
+                  })()}
                   {isOverdue(milestone) && !milestone.completedDate && (
                     <span className="font-medium text-red-600">⚠ {t('common.overdue')}</span>
                   )}
                 </div>
+                {(() => {
+                  const milestoneTasks = getMilestoneTasks(milestone);
+                  if (milestoneTasks.length === 0) return null;
+                  const completedTasks = milestoneTasks.filter(
+                    (task) => task.status === 'completed'
+                  ).length;
+                  return (
+                    <p className="text-xs text-gray-500 mt-1 ml-4">
+                      {t('milestoneList.tasksProgress', {
+                        completed: completedTasks,
+                        total: milestoneTasks.length,
+                      })}
+                    </p>
+                  );
+                })()}
               </div>
               
               {/* Action buttons */}
@@ -203,16 +261,18 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
               >
-                {/* Complete button - only show if not completed */}
-                {onComplete && milestone.status !== MilestoneStatus.COMPLETED && (
-                  <button
-                    onClick={() => onComplete(milestone)}
-                    className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors"
-                    title={t('common.complete')}
-                  >
-                    {t('common.complete')}
-                  </button>
-                )}
+                {/* Complete button - only show if not completed and status isn't auto-derived from tasks */}
+                {onComplete &&
+                  milestone.status !== MilestoneStatus.COMPLETED &&
+                  getMilestoneTasks(milestone).length === 0 && (
+                    <button
+                      onClick={() => onComplete(milestone)}
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors"
+                      title={t('common.complete')}
+                    >
+                      {t('common.complete')}
+                    </button>
+                  )}
                 
                 {/* Delete button */}
                 {onDelete && (

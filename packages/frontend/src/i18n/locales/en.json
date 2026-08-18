@@ -244,7 +244,13 @@
     "overallProgress": "Overall Progress",
     "completedOf": "{{completed}} of {{total}} completed",
     "target": "Target:",
-    "completed": "Completed:"
+    "completed": "Completed:",
+    "tasksProgress": "{{completed}}/{{total}} tasks completed",
+    "completedOnTime": "On time",
+    "completedLate": "{{count}} day late",
+    "completedLate_other": "{{count}} days late",
+    "completedEarly": "{{count}} day early",
+    "completedEarly_other": "{{count}} days early"
   },
   "milestoneForm": {
     "createTitle": "Create Milestone",
@@ -253,6 +259,8 @@
     "milestoneNamePlaceholder": "e.g., Foundation Complete",
     "descriptionPlaceholder": "Add details about this milestone...",
     "targetDate": "Target Date",
+    "completedDate": "Completed Date",
+    "completedDateHint": "Auto-set from task progress. Set or clear it manually to override.",
     "createButton": "Create Milestone",
     "updateButton": "Update Milestone",
     "validation": {

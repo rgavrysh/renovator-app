@@ -10,6 +10,7 @@ export interface MilestoneFormData {
   name: string;
   description: string;
   targetDate: string;
+  completedDate: string;
 }
 
 interface MilestoneFormProps {
@@ -23,6 +24,7 @@ interface MilestoneFormProps {
     name: string;
     description?: string;
     targetDate: string;
+    completedDate?: string;
   };
 }
 
@@ -39,6 +41,7 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
     name: '',
     description: '',
     targetDate: '',
+    completedDate: '',
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof MilestoneFormData, string>>>({});
@@ -54,12 +57,14 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
         name: milestone.name,
         description: milestone.description || '',
         targetDate: milestone.targetDate.split('T')[0], // Convert to YYYY-MM-DD format
+        completedDate: milestone.completedDate ? milestone.completedDate.split('T')[0] : '',
       });
     } else {
       setFormData({
         name: '',
         description: '',
         targetDate: '',
+        completedDate: '',
       });
     }
     setErrors({});
@@ -109,17 +114,24 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
     setSubmitError(null);
 
     try {
-      const payload = {
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        targetDate: formData.targetDate,
-        orderIndex: existingMilestonesCount,
-      };
-
       if (isEditMode) {
-        // Update existing milestone
+        // Update existing milestone. completedDate is normally derived from
+        // associated tasks, but can be manually overridden here.
+        const payload = {
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          targetDate: formData.targetDate,
+          completedDate: formData.completedDate || null,
+          orderIndex: existingMilestonesCount,
+        };
         await apiClient.put(`/api/milestones/${milestone.id}`, payload);
       } else {
+        const payload = {
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          targetDate: formData.targetDate,
+          orderIndex: existingMilestonesCount,
+        };
         // Create new milestone
         await apiClient.post(`/api/projects/${projectId}/milestones`, payload);
       }
@@ -186,6 +198,18 @@ export const MilestoneForm: React.FC<MilestoneFormProps> = ({
             fullWidth
             required
           />
+
+          {isEditMode && (
+            <Input
+              label={t('milestoneForm.completedDate')}
+              name="completedDate"
+              type="date"
+              value={formData.completedDate}
+              onChange={handleChange}
+              helperText={t('milestoneForm.completedDateHint')}
+              fullWidth
+            />
+          )}
         </div>
 
         <ModalFooter>

@@ -455,4 +455,238 @@ describe('MilestoneService', () => {
       expect(progress).toBe(0);
     });
   });
+
+  describe('recalculateMilestoneStatus', () => {
+    const taskRepo = () => AppDataSource.getRepository(Task);
+
+    test('should leave status untouched for a milestone with no tasks', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'No Tasks',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+        status: MilestoneStatus.IN_PROGRESS,
+      });
+
+      const result = await milestoneService.recalculateMilestoneStatus(milestone.id);
+
+      expect(result!.status).toBe(MilestoneStatus.IN_PROGRESS);
+    });
+
+    test('should set status to NOT_STARTED when all tasks are TODO', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'All Todo',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+        status: MilestoneStatus.IN_PROGRESS,
+      });
+
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 1',
+          status: TaskStatus.TODO,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+
+      const result = await milestoneService.recalculateMilestoneStatus(milestone.id);
+
+      expect(result!.status).toBe(MilestoneStatus.NOT_STARTED);
+    });
+
+    test('should set status to IN_PROGRESS when at least one task is in progress', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'Partial Progress',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+      });
+
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 1',
+          status: TaskStatus.TODO,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 2',
+          status: TaskStatus.IN_PROGRESS,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+
+      const result = await milestoneService.recalculateMilestoneStatus(milestone.id);
+
+      expect(result!.status).toBe(MilestoneStatus.IN_PROGRESS);
+    });
+
+    test('should set status to COMPLETED and stamp completedDate when all tasks are completed', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'All Done',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+      });
+
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 1',
+          status: TaskStatus.COMPLETED,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 2',
+          status: TaskStatus.COMPLETED,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+
+      const result = await milestoneService.recalculateMilestoneStatus(milestone.id);
+
+      expect(result!.status).toBe(MilestoneStatus.COMPLETED);
+      expect(result!.completedDate).toBeDefined();
+      expect(result!.completedDate).toBeInstanceOf(Date);
+    });
+
+    test('should clear completedDate when a completed milestone regresses', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'Regress',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+      });
+
+      const task = await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 1',
+          status: TaskStatus.COMPLETED,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+
+      const completed = await milestoneService.recalculateMilestoneStatus(milestone.id);
+      expect(completed!.status).toBe(MilestoneStatus.COMPLETED);
+      expect(completed!.completedDate).toBeDefined();
+
+      task.status = TaskStatus.IN_PROGRESS;
+      await taskRepo().save(task);
+
+      const reopened = await milestoneService.recalculateMilestoneStatus(milestone.id);
+
+      expect(reopened!.status).toBe(MilestoneStatus.IN_PROGRESS);
+      expect(reopened!.completedDate).toBeFalsy();
+    });
+
+    test('should not clobber a manually set completedDate while status stays COMPLETED', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'Manual Override',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+      });
+
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 1',
+          status: TaskStatus.COMPLETED,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+
+      const autoCompleted = await milestoneService.recalculateMilestoneStatus(milestone.id);
+      expect(autoCompleted!.status).toBe(MilestoneStatus.COMPLETED);
+
+      // Manually override the completion date via the update endpoint's code path
+      const manualDate = new Date('2024-02-20');
+      await milestoneService.updateMilestone(milestone.id, {
+        completedDate: manualDate,
+      });
+      const afterManualUpdate = await milestoneService.getMilestone(milestone.id);
+      expect(String(afterManualUpdate.completedDate)).toBe('2024-02-20');
+
+      // Add another already-completed task; status stays COMPLETED, so the
+      // manual override should be preserved rather than reset to "now".
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 2',
+          status: TaskStatus.COMPLETED,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+
+      const recalculated = await milestoneService.recalculateMilestoneStatus(milestone.id);
+      expect(recalculated!.status).toBe(MilestoneStatus.COMPLETED);
+      expect(String(recalculated!.completedDate)).toBe('2024-02-20');
+    });
+
+    test('should not clear a manually set completedDate when the milestone was never COMPLETED', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'Manual Date, Not Completed',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+      });
+
+      await taskRepo().save(
+        taskRepo().create({
+          projectId: testProject.id,
+          milestoneId: milestone.id,
+          name: 'Task 1',
+          status: TaskStatus.TODO,
+          priority: TaskPriority.MEDIUM,
+        })
+      );
+
+      // Manually set a completedDate while the milestone is still NOT_STARTED
+      const manualDate = new Date('2024-02-15');
+      await milestoneService.updateMilestone(milestone.id, {
+        completedDate: manualDate,
+      });
+
+      // Task starts progressing; milestone should become IN_PROGRESS but the
+      // manual completedDate should not be wiped since it was never COMPLETED.
+      const task = await taskRepo().findOne({ where: { milestoneId: milestone.id } });
+      task!.status = TaskStatus.IN_PROGRESS;
+      await taskRepo().save(task!);
+
+      const result = await milestoneService.recalculateMilestoneStatus(milestone.id);
+      expect(result!.status).toBe(MilestoneStatus.IN_PROGRESS);
+      expect(String(result!.completedDate)).toBe('2024-02-15');
+    });
+
+    test('should return null for a non-existent milestone', async () => {
+      const result = await milestoneService.recalculateMilestoneStatus(
+        '00000000-0000-0000-0000-000000000000'
+      );
+
+      expect(result).toBeNull();
+    });
+
+    test('should return null for a missing milestone ID', async () => {
+      const result = await milestoneService.recalculateMilestoneStatus(undefined);
+
+      expect(result).toBeNull();
+    });
+  });
 });

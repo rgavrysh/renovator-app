@@ -244,7 +244,17 @@
     "overallProgress": "Загальний прогрес",
     "completedOf": "{{completed}} з {{total}} завершено",
     "target": "Ціль:",
-    "completed": "Завершено:"
+    "completed": "Завершено:",
+    "tasksProgress": "{{completed}}/{{total}} завдань завершено",
+    "completedOnTime": "Вчасно",
+    "completedLate_one": "Затримка на {{count}} день",
+    "completedLate_few": "Затримка на {{count}} дні",
+    "completedLate_many": "Затримка на {{count}} днів",
+    "completedLate_other": "Затримка на {{count}} днів",
+    "completedEarly_one": "Раніше на {{count}} день",
+    "completedEarly_few": "Раніше на {{count}} дні",
+    "completedEarly_many": "Раніше на {{count}} днів",
+    "completedEarly_other": "Раніше на {{count}} днів"
   },
   "milestoneForm": {
     "createTitle": "Створити етап",
@@ -253,6 +263,8 @@
     "milestoneNamePlaceholder": "напр., Завершення фундаменту",
     "descriptionPlaceholder": "Додайте деталі про цей етап...",
     "targetDate": "Цільова дата",
+    "completedDate": "Дата завершення",
+    "completedDateHint": "Розраховується автоматично на основі завдань. Встановіть або очистіть вручну, щоб перевизначити.",
     "createButton": "Створити етап",
     "updateButton": "Оновити етап",
     "validation": {

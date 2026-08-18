@@ -2,6 +2,7 @@ import { Repository, In, LessThan, MoreThan, Between } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Task, TaskStatus, TaskPriority } from '../entities/Task';
 import { WorkItemTemplate } from '../entities/WorkItemTemplate';
+import { MilestoneService } from './MilestoneService';
 
 // UUID validation regex
 const UUID_REGEX =
@@ -67,10 +68,12 @@ export interface TaskCosts {
 export class TaskService {
   private taskRepository: Repository<Task>;
   private templateRepository: Repository<WorkItemTemplate>;
+  private milestoneService: MilestoneService;
 
   constructor() {
     this.taskRepository = AppDataSource.getRepository(Task);
     this.templateRepository = AppDataSource.getRepository(WorkItemTemplate);
+    this.milestoneService = new MilestoneService();
   }
 
   async createTask(data: CreateTaskInput): Promise<Task> {
@@ -105,7 +108,13 @@ export class TaskService {
       notes: [],
     });
 
-    return await this.taskRepository.save(task);
+    const savedTask = await this.taskRepository.save(task);
+
+    if (savedTask.milestoneId) {
+      await this.milestoneService.recalculateMilestoneStatus(savedTask.milestoneId);
+    }
+
+    return savedTask;
   }
 
   async getTask(id: string): Promise<Task> {
@@ -126,6 +135,7 @@ export class TaskService {
 
   async updateTask(id: string, data: UpdateTaskInput): Promise<Task> {
     const task = await this.getTask(id);
+    const previousMilestoneId = task.milestoneId;
 
     if (data.milestoneId !== undefined && data.milestoneId !== null && !isValidUUID(data.milestoneId)) {
       throw new Error('Invalid milestone ID');
@@ -145,12 +155,28 @@ export class TaskService {
     // Recompute actual price whenever price or amount might have changed
     task.actualPrice = computeActualPrice(task.price, task.amount);
 
-    return await this.taskRepository.save(task);
+    const updatedTask = await this.taskRepository.save(task);
+
+    // Keep affected milestone(s) status in sync with their tasks' progress
+    if (previousMilestoneId && previousMilestoneId !== updatedTask.milestoneId) {
+      await this.milestoneService.recalculateMilestoneStatus(previousMilestoneId);
+    }
+    if (updatedTask.milestoneId) {
+      await this.milestoneService.recalculateMilestoneStatus(updatedTask.milestoneId);
+    }
+
+    return updatedTask;
   }
 
   async deleteTask(id: string): Promise<void> {
     const task = await this.getTask(id);
+    const { milestoneId } = task;
+
     await this.taskRepository.remove(task);
+
+    if (milestoneId) {
+      await this.milestoneService.recalculateMilestoneStatus(milestoneId);
+    }
   }
 
   async listTasks(projectId: string, filters: TaskFilters = {}): Promise<Task[]> {
@@ -315,6 +341,12 @@ export class TaskService {
     task.status = TaskStatus.COMPLETED;
     task.completedDate = new Date();
 
-    return await this.taskRepository.save(task);
+    const completedTask = await this.taskRepository.save(task);
+
+    if (completedTask.milestoneId) {
+      await this.milestoneService.recalculateMilestoneStatus(completedTask.milestoneId);
+    }
+
+    return completedTask;
   }
 }

@@ -591,5 +591,126 @@ describe('TaskService', () => {
       expect(completed.status).toBe(TaskStatus.COMPLETED);
       expect(completed.completedDate).toBeDefined();
     });
+
+    it('should mark the milestone as completed once every task is completed', async () => {
+      const task1 = await taskService.createTask({
+        projectId: testProjectId,
+        milestoneId: testMilestoneId,
+        name: 'Task 1',
+        status: TaskStatus.IN_PROGRESS,
+      });
+      const task2 = await taskService.createTask({
+        projectId: testProjectId,
+        milestoneId: testMilestoneId,
+        name: 'Task 2',
+        status: TaskStatus.TODO,
+      });
+
+      let milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.IN_PROGRESS);
+
+      await taskService.completeTask(task1.id);
+      await taskService.completeTask(task2.id);
+
+      milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.COMPLETED);
+      expect(milestone.completedDate).toBeDefined();
+    });
+  });
+
+  describe('milestone status aggregation side effects', () => {
+    it('should set milestone to IN_PROGRESS once a task starts', async () => {
+      const task = await taskService.createTask({
+        projectId: testProjectId,
+        milestoneId: testMilestoneId,
+        name: 'Task 1',
+        status: TaskStatus.TODO,
+      });
+
+      let milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.NOT_STARTED);
+
+      await taskService.updateTask(task.id, { status: TaskStatus.IN_PROGRESS });
+
+      milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.IN_PROGRESS);
+    });
+
+    it('should revert milestone to IN_PROGRESS if a completed task is reopened', async () => {
+      const task = await taskService.createTask({
+        projectId: testProjectId,
+        milestoneId: testMilestoneId,
+        name: 'Task 1',
+        status: TaskStatus.COMPLETED,
+      });
+
+      let milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.COMPLETED);
+      expect(milestone.completedDate).toBeDefined();
+
+      await taskService.updateTask(task.id, { status: TaskStatus.IN_PROGRESS });
+
+      milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.IN_PROGRESS);
+      expect(milestone.completedDate).toBeFalsy();
+    });
+
+    it('should recalculate both milestones when a task is reassigned', async () => {
+      const otherMilestone = await milestoneService.createMilestone({
+        projectId: testProjectId,
+        name: 'Other Milestone',
+        targetDate: new Date('2024-07-31'),
+        orderIndex: 2,
+      });
+
+      const task = await taskService.createTask({
+        projectId: testProjectId,
+        milestoneId: testMilestoneId,
+        name: 'Task 1',
+        status: TaskStatus.COMPLETED,
+      });
+
+      let firstMilestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(firstMilestone.status).toBe(MilestoneStatus.COMPLETED);
+
+      await taskService.updateTask(task.id, { milestoneId: otherMilestone.id });
+
+      // The source milestone now has zero tasks, so aggregation no longer
+      // applies to it and its last computed status is left untouched.
+      firstMilestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(firstMilestone.status).toBe(MilestoneStatus.COMPLETED);
+
+      const secondMilestone = await milestoneService.getMilestone(otherMilestone.id);
+      expect(secondMilestone.status).toBe(MilestoneStatus.COMPLETED);
+    });
+
+    it('should recalculate the milestone after a task is deleted', async () => {
+      const task1 = await taskService.createTask({
+        projectId: testProjectId,
+        milestoneId: testMilestoneId,
+        name: 'Task 1',
+        status: TaskStatus.TODO,
+      });
+      const task2 = await taskService.createTask({
+        projectId: testProjectId,
+        milestoneId: testMilestoneId,
+        name: 'Task 2',
+        status: TaskStatus.COMPLETED,
+      });
+
+      let milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.IN_PROGRESS);
+
+      await taskService.deleteTask(task1.id);
+
+      milestone = await milestoneService.getMilestone(testMilestoneId);
+      expect(milestone.status).toBe(MilestoneStatus.COMPLETED);
+
+      await taskService.deleteTask(task2.id);
+
+      milestone = await milestoneService.getMilestone(testMilestoneId);
+      // No tasks remain, so the milestone keeps its last computed status
+      expect(milestone.status).toBe(MilestoneStatus.COMPLETED);
+    });
   });
 });

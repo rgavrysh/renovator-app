@@ -878,6 +878,7 @@ export const ProjectDetail: React.FC = () => {
               <CardContent>
                 <MilestoneList 
                   milestones={milestones} 
+                  tasks={tasks}
                   showProgress={true}
                   onEdit={handleEditMilestone}
                   onComplete={handleCompleteMilestone}
