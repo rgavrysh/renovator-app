@@ -67,7 +67,7 @@ export class Task {
   @Column({ name: 'price', type: 'decimal', precision: 12, scale: 2, nullable: true })
   price?: number;
 
-  @Column({ name: 'amount', type: 'decimal', precision: 12, scale: 2, default: 1 })
+  @Column({ name: 'amount', type: 'decimal', precision: 12, scale: 2, default: 0 })
   amount: number;
 
   @Column({ name: 'actual_price', type: 'decimal', precision: 12, scale: 2, nullable: true })

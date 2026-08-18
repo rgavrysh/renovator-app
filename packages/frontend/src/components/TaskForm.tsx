@@ -62,7 +62,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     milestoneId: '',
     dueDate: '',
     price: '',
-    amount: '1',
+    amount: '',
     unit: '',
   });
 
@@ -105,7 +105,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         milestoneId: task.milestoneId || '',
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
         price: task.price != null ? task.price.toString() : '',
-        amount: task.amount != null ? task.amount.toString() : '1',
+        amount: task.amount != null ? task.amount.toString() : '',
         unit: task.unit || '',
       });
     } else {
@@ -117,7 +117,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         milestoneId: '',
         dueDate: '',
         price: '',
-        amount: '1',
+        amount: '',
         unit: '',
       });
     }

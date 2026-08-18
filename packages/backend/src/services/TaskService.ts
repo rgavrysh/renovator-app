@@ -19,7 +19,7 @@ function computeActualPrice(price?: number | null, amount?: number | null): numb
   if (price === undefined || price === null) {
     return undefined;
   }
-  const amt = (amount !== undefined && amount !== null) ? Number(amount) : 1;
+  const amt = (amount !== undefined && amount !== null) ? Number(amount) : 0;
   return Number(price) * amt;
 }
 
@@ -86,7 +86,7 @@ export class TaskService {
       throw new Error('Invalid user ID');
     }
 
-    const amount = data.amount !== undefined ? data.amount : 1;
+    const amount = data.amount !== undefined ? data.amount : 0;
     const actualPrice = computeActualPrice(data.price, amount);
 
     const task = this.taskRepository.create({

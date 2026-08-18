@@ -439,7 +439,7 @@ export class BudgetService {
     for (let i = 0; i < tasksWithPricing.length; i++) {
       const task = tasksWithPricing[i];
 
-      const amount = task.amount ? String(Number(task.amount)) : '1';
+      const amount = task.amount != null ? String(Number(task.amount)) : '0';
       const unit = task.unit || '-';
       const pricePerUnit = task.price != null ? formatPdfCurrency(Number(task.price), lang) : '-';
       const price = task.actualPrice ? formatPdfCurrency(Number(task.actualPrice), lang) : formatPdfCurrency(0, lang);
