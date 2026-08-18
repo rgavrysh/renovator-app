@@ -246,6 +246,23 @@ export const ProjectDetail: React.FC = () => {
     }
   };
 
+  const handleDeleteMilestone = async (milestone: Milestone) => {
+    if (!window.confirm(t('projectDetail.deleteMilestoneConfirm', { name: milestone.name }))) {
+      return;
+    }
+
+    try {
+      // Deleting a milestone unassigns any tasks that were assigned to it
+      await apiClient.delete(`/api/milestones/${milestone.id}`);
+
+      // Reload project data to get updated milestones and tasks
+      await loadProjectData();
+    } catch (err: any) {
+      console.error('Error deleting milestone:', err);
+      setError(err.message || 'Failed to delete milestone. Please try again.');
+    }
+  };
+
   const handleTaskDetailClose = () => {
     setIsTaskDetailOpen(false);
     setSelectedTask(null);
@@ -854,6 +871,7 @@ export const ProjectDetail: React.FC = () => {
                   showProgress={true}
                   onEdit={handleEditMilestone}
                   onComplete={handleCompleteMilestone}
+                  onDelete={handleDeleteMilestone}
                 />
               </CardContent>
             </Card>

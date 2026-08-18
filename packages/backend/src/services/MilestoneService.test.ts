@@ -167,6 +167,32 @@ describe('MilestoneService', () => {
         'Milestone not found'
       );
     });
+
+    test('should unassign tasks assigned to the deleted milestone', async () => {
+      const milestone = await milestoneService.createMilestone({
+        projectId: testProject.id,
+        name: 'To Delete With Tasks',
+        targetDate: new Date('2024-03-01'),
+        orderIndex: 1,
+      });
+
+      const taskRepository = AppDataSource.getRepository(Task);
+      const task = taskRepository.create({
+        projectId: testProject.id,
+        milestoneId: milestone.id,
+        name: 'Assigned Task',
+        status: TaskStatus.TODO,
+        priority: TaskPriority.MEDIUM,
+        notes: [],
+      });
+      const savedTask = await taskRepository.save(task);
+
+      await milestoneService.deleteMilestone(milestone.id);
+
+      const updatedTask = await taskRepository.findOne({ where: { id: savedTask.id } });
+      expect(updatedTask).not.toBeNull();
+      expect(updatedTask!.milestoneId).toBeNull();
+    });
   });
 
   describe('listMilestones', () => {

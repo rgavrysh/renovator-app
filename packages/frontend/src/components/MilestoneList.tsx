@@ -28,6 +28,7 @@ export interface MilestoneListProps {
   showProgress?: boolean;
   onEdit?: (milestone: Milestone) => void;
   onComplete?: (milestone: Milestone) => void;
+  onDelete?: (milestone: Milestone) => void;
 }
 
 export const MilestoneList: React.FC<MilestoneListProps> = ({
@@ -35,6 +36,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
   showProgress = true,
   onEdit,
   onComplete,
+  onDelete,
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -123,11 +125,22 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
           <div key={milestone.id}>
             {index > 0 && <Divider />}
             <div
+              role={onEdit ? 'button' : undefined}
+              tabIndex={onEdit ? 0 : undefined}
               className={`flex items-start justify-between p-3 rounded-linear transition-colors ${
+                onEdit ? 'cursor-pointer' : ''
+              } ${
                 isOverdue(milestone)
                   ? 'bg-red-50 border border-red-200'
                   : 'hover:bg-gray-50'
               }`}
+              onClick={() => onEdit?.(milestone)}
+              onKeyDown={(e) => {
+                if (onEdit && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  onEdit(milestone);
+                }
+              }}
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -184,7 +197,12 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
               </div>
               
               {/* Action buttons */}
-              <div className="ml-3 flex items-center gap-2">
+              {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+              <div
+                className="ml-3 flex items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+              >
                 {/* Complete button - only show if not completed */}
                 {onComplete && milestone.status !== MilestoneStatus.COMPLETED && (
                   <button
@@ -196,12 +214,12 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                   </button>
                 )}
                 
-                {/* Edit button */}
-                {onEdit && (
+                {/* Delete button */}
+                {onDelete && (
                   <button
-                    onClick={() => onEdit(milestone)}
-                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                    title={t('common.edit')}
+                    onClick={() => onDelete(milestone)}
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                    title={t('common.delete')}
                   >
                     <svg
                       className="w-4 h-4"
@@ -213,7 +231,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
                   </button>

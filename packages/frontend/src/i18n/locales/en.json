@@ -134,7 +134,8 @@
     "deleteBudgetItemConfirm": "Are you sure you want to delete \"{{name}}\" from the budget?",
     "exportMilestone": "Milestone",
     "exportMilestoneHint": "Select a milestone to export only its items, or export the entire project budget.",
-    "allProject": "Entire Project"
+    "allProject": "Entire Project",
+    "deleteMilestoneConfirm": "Are you sure you want to delete \"{{name}}\"? Tasks assigned to this milestone will become unassigned. This action cannot be undone."
   },
   "projectForm": {
     "createTitle": "Create New Project",

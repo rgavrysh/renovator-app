@@ -92,6 +92,15 @@ export class MilestoneService {
 
   async deleteMilestone(id: string): Promise<void> {
     const milestone = await this.getMilestone(id);
+
+    // Unassign any tasks that were assigned to this milestone before deleting it
+    await this.taskRepository
+      .createQueryBuilder()
+      .update(Task)
+      .set({ milestoneId: () => 'NULL' })
+      .where('milestone_id = :id', { id })
+      .execute();
+
     await this.milestoneRepository.remove(milestone);
   }
 
