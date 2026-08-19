@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
   actions,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200">
+    <header className="sticky top-0 z-40 bg-surface border-b border-border">
       <div className="flex items-center justify-between h-16 px-6">
         {/* Logo */}
         {logo && (
@@ -63,10 +63,10 @@ export const HeaderNavItem: React.FC<HeaderNavItemProps> = ({
       to={href}
       onClick={onClick}
       className={({ isActive }) => `
-        px-3 py-2 text-sm font-medium rounded-linear transition-colors
+        px-3 py-2 text-ui font-medium rounded-linear transition-colors duration-150
         ${(active ?? isActive)
-          ? 'text-gray-900 bg-gray-100' 
-          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+          ? 'text-gray-900 bg-gray-200/60'
+          : 'text-gray-600 hover:text-gray-900 hover:bg-subtle'
         }
       `}
     >

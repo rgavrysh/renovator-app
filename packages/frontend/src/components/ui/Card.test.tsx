@@ -17,7 +17,14 @@ describe('Card', () => {
   it('applies hover effect when hover prop is true', () => {
     const { container } = render(<Card hover>Content</Card>);
     const card = container.querySelector('div');
-    expect(card?.className).toContain('hover:shadow-md');
+    expect(card?.className).toContain('hover:border-border-strong');
+    expect(card?.className).not.toContain('shadow');
+  });
+
+  it('never carries a shadow — flat surfaces get a border only', () => {
+    const { container } = render(<Card>Content</Card>);
+    const card = container.querySelector('div');
+    expect(card?.className).not.toContain('shadow');
   });
 });
 

@@ -20,11 +20,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           {icon}
         </div>
       )}
-      <h3 className="text-base font-semibold text-gray-900 mb-2">
+      <h3 className="text-title-sm text-gray-900 mb-2">
         {title}
       </h3>
       {description && (
-        <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+        <p className="text-ui text-gray-500 mb-6 max-w-md mx-auto">
           {description}
         </p>
       )}

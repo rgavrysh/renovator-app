@@ -10,8 +10,8 @@ export const Divider: React.FC<DividerProps> = ({
   className = '',
 }) => {
   if (orientation === 'vertical') {
-    return <div className={`w-px bg-gray-200 ${className}`} />;
+    return <div className={`w-px bg-border ${className}`} />;
   }
   
-  return <div className={`h-px bg-gray-200 ${className}`} />;
+  return <div className={`h-px bg-border ${className}`} />;
 };

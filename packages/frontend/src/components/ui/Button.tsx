@@ -17,23 +17,24 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-linear transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-  
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-linear transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100';
+
   const variantStyles = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500 shadow-sm',
-    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus-visible:ring-primary-500 shadow-sm',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-sm',
+    primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 focus-visible:ring-primary-500',
+    secondary: 'bg-surface text-gray-700 border border-border hover:bg-subtle active:bg-gray-100 focus-visible:ring-primary-500',
+    ghost: 'text-gray-700 hover:bg-subtle active:bg-gray-200/60 focus-visible:ring-gray-500',
+    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 focus-visible:ring-red-500',
   };
-  
+
+  // Fixed heights so a button lines up with the input beside it (U1.2).
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
+    sm: 'h-7 px-3 text-ui-sm gap-1.5',
+    md: 'h-8 px-4 text-ui gap-2',
+    lg: 'h-9 px-6 text-ui-lg gap-2',
   };
-  
+
   const widthStyle = fullWidth ? 'w-full' : '';
-  
+
   return (
     <button
       className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyle} ${className}`}

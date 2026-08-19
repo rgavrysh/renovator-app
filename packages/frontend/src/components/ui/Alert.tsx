@@ -75,11 +75,11 @@ export const Alert: React.FC<AlertProps> = ({
         </div>
         <div className="ml-3 flex-1">
           {title && (
-            <h3 className={`text-sm font-medium ${styles.title}`}>
+            <h3 className={`text-ui font-medium ${styles.title}`}>
               {title}
             </h3>
           )}
-          <div className={`text-sm ${title ? 'mt-2' : ''} ${styles.text}`}>
+          <div className={`text-ui ${title ? 'mt-2' : ''} ${styles.text}`}>
             {children}
           </div>
         </div>

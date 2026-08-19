@@ -17,7 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
   
   return (
-    <aside className={`${widthStyles[width]} flex-shrink-0 bg-white border-r border-gray-200 overflow-y-auto`}>
+    <aside className={`${widthStyles[width]} flex-shrink-0 bg-subtle border-r border-border overflow-y-auto`}>
       <div className="py-6">
         {children}
       </div>
@@ -37,7 +37,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   return (
     <div className="mb-6">
       {title && (
-        <h3 className="px-6 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <h3 className="px-6 mb-2 text-ui-xs font-semibold text-gray-500 uppercase tracking-wider">
           {title}
         </h3>
       )}
@@ -66,10 +66,10 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
   badge,
 }) => {
   const linkClassName = (isActive: boolean) => `
-    flex items-center justify-between px-3 py-2 text-sm font-medium rounded-linear transition-colors
+    flex items-center justify-between px-3 py-2 text-ui font-medium rounded-linear transition-colors duration-150
     ${(active ?? isActive)
-      ? 'text-gray-900 bg-gray-100' 
-      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+      ? 'text-gray-900 bg-gray-200/60'
+      : 'text-gray-600 hover:text-gray-900 hover:bg-subtle'
     }
   `;
 

@@ -49,19 +49,19 @@ export const Modal: React.FC<ModalProps> = ({
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 transition-opacity"
+          className="fixed inset-0 bg-black bg-opacity-40 animate-fade-in"
           onClick={onClose}
         />
         
         {/* Modal */}
         <div
-          className={`relative bg-white rounded-linear shadow-lg w-full ${sizeStyles[size]} transform transition-all`}
+          className={`relative bg-surface rounded-linear shadow-lg w-full ${sizeStyles[size]} animate-pop-in`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              {title && <h2 className="text-lg font-semibold text-gray-900">{title}</h2>}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              {title && <h2 className="text-title text-gray-900">{title}</h2>}
               {showCloseButton && (
                 <button
                   onClick={onClose}
@@ -93,7 +93,7 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
   ...props
 }) => {
   return (
-    <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-linear ${className}`} {...props}>
+    <div className={`flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-subtle rounded-b-linear ${className}`} {...props}>
       {children}
     </div>
   );

@@ -44,7 +44,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   header,
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-canvas">
       {header}
       <div className="flex">
         {sidebar}

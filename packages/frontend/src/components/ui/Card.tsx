@@ -19,11 +19,13 @@ export const Card: React.FC<CardProps> = ({
     lg: 'p-6',
   };
   
-  const hoverStyle = hover ? 'hover:shadow-md transition-shadow duration-150' : '';
-  
+  // Flat surfaces get a border only; shadows are reserved for floating
+  // layers (popover, dropdown, modal, toast) — U1.3.
+  const hoverStyle = hover ? 'hover:border-border-strong hover:bg-subtle/50 transition-colors duration-150' : '';
+
   return (
     <div
-      className={`bg-white rounded-linear shadow-linear border border-gray-200 ${paddingStyles[padding]} ${hoverStyle} ${className}`}
+      className={`bg-surface rounded-linear border border-border ${paddingStyles[padding]} ${hoverStyle} ${className}`}
       {...props}
     >
       {children}
@@ -48,8 +50,8 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
   return (
     <div className={`flex items-start justify-between mb-4 ${className}`} {...props}>
       <div className="flex-1">
-        {title && <h3 className="text-base font-semibold text-gray-900">{title}</h3>}
-        {subtitle && <p className="mt-1 text-sm text-gray-500">{subtitle}</p>}
+        {title && <h3 className="text-title-sm text-gray-900">{title}</h3>}
+        {subtitle && <p className="mt-1 text-ui text-gray-500">{subtitle}</p>}
         {children}
       </div>
       {action && <div className="ml-4">{action}</div>}

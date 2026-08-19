@@ -47,7 +47,7 @@ export const Loading: React.FC<LoadingProps> = ({ text = 'Loading...' }) => {
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <Spinner size="lg" className="text-primary-600" />
-      <p className="mt-4 text-sm text-gray-600">{text}</p>
+      <p className="mt-4 text-ui text-gray-600">{text}</p>
     </div>
   );
 };
