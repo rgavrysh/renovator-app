@@ -13,6 +13,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { UserDropdown } from '../components/UserDropdown';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { apiClient } from '../utils/api';
+import { getProjectStatusVariant } from '../utils/statusColors';
 
 interface Project {
   id: string;
@@ -87,22 +88,7 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: ProjectStatus) => {
-    switch (status) {
-      case ProjectStatus.PLANNING:
-        return 'info';
-      case ProjectStatus.ACTIVE:
-        return 'success';
-      case ProjectStatus.ON_HOLD:
-        return 'warning';
-      case ProjectStatus.COMPLETED:
-        return 'default';
-      case ProjectStatus.ARCHIVED:
-        return 'default';
-      default:
-        return 'default';
-    }
-  };
+  const getStatusBadgeVariant = (status: ProjectStatus) => getProjectStatusVariant(status);
 
   const getStatusLabel = (status: ProjectStatus) => {
     return t(`projectStatus.${status}`);

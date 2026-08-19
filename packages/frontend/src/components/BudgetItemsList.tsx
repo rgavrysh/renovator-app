@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
-import { Badge, type BadgeProps } from './ui/Badge';
+import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/currency';
+import { getBudgetCategoryVariant } from '../utils/statusColors';
 
 export enum BudgetCategory {
   LABOR = 'labor',
@@ -62,18 +63,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
     return t(`budgetCategory.${category}`);
   };
 
-  const getCategoryColor = (category: BudgetCategory): BadgeProps['variant'] => {
-    const colors: Record<BudgetCategory, BadgeProps['variant']> = {
-      [BudgetCategory.LABOR]: 'info',
-      [BudgetCategory.MATERIALS]: 'success',
-      [BudgetCategory.EQUIPMENT]: 'purple',
-      [BudgetCategory.SUBCONTRACTORS]: 'orange',
-      [BudgetCategory.PERMITS]: 'warning',
-      [BudgetCategory.CONTINGENCY]: 'default',
-      [BudgetCategory.OTHER]: 'default',
-    };
-    return colors[category] ?? 'default';
-  };
+  const getCategoryColor = (category: BudgetCategory) => getBudgetCategoryVariant(category);
 
   const toggleMilestone = (key: string) => {
     setCollapsedMilestones((prev) => ({

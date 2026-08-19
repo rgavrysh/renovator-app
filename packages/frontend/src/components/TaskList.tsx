@@ -4,6 +4,7 @@ import { Badge } from './ui/Badge';
 import { Divider } from './ui/Divider';
 import { Select } from './ui/Select';
 import { formatCurrency } from '../utils/currency';
+import { getTaskStatusDotColor } from '../utils/statusColors';
 import type { Milestone } from './MilestoneList';
 
 export interface Task {
@@ -102,20 +103,7 @@ export const TaskList: React.FC<TaskListProps> = ({
     return dueDate < today;
   };
 
-  const getStatusColor = (status: TaskStatus): string => {
-    switch (status) {
-      case TaskStatus.TODO:
-        return 'bg-gray-400';
-      case TaskStatus.IN_PROGRESS:
-        return 'bg-blue-500';
-      case TaskStatus.COMPLETED:
-        return 'bg-green-500';
-      case TaskStatus.BLOCKED:
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-400';
-    }
-  };
+  const getStatusColor = (status: TaskStatus): string => getTaskStatusDotColor(status);
 
   const getStatusLabel = (status: TaskStatus) => {
     return t(`taskStatus.${status}`);

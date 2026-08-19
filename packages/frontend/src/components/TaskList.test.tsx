@@ -237,10 +237,10 @@ describe('TaskList', () => {
     const dots = container.querySelectorAll('.w-3\\.5.h-3\\.5.rounded-full');
     expect(dots.length).toBe(4);
 
-    expect(dots[0]).toHaveClass('bg-green-500'); // completed
-    expect(dots[1]).toHaveClass('bg-blue-500'); // in_progress
+    expect(dots[0]).toHaveClass('bg-success-500'); // completed
+    expect(dots[1]).toHaveClass('bg-info-500'); // in_progress
     expect(dots[2]).toHaveClass('bg-gray-400'); // todo
-    expect(dots[3]).toHaveClass('bg-red-500'); // blocked
+    expect(dots[3]).toHaveClass('bg-danger-500'); // blocked
   });
 
   it('should show status tooltip on status circle buttons', () => {

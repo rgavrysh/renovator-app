@@ -16,7 +16,7 @@ The distinction matters, because the two plans pull in different directions and 
 
 So this is not a third parallel plan. It is the argument for un-parking those items, plus the visual layer that neither existing document covers at all: type scale, density, iconography, motion, and reading comfort.
 
-**Current state:** `S0`–`S12` are committed (through `3cf87df`). The working tree is clean. Everything below is written against that baseline.
+**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`) and `U1.5` (Batch B) are implemented. Everything below is written against that baseline.
 
 ---
 
@@ -182,13 +182,15 @@ Note the deliberate difference from today: Linear's canvas is barely-off-white a
 
 **Where:** `tailwind.config.js`, `ui/*`, `layout/*`. **Effort:** M
 
-### U1.5 · Semantic status colours, then one accent
+### U1.5 · Semantic status colours, then one accent ✅ done
 
 This is `S20` from the other plan and it is a hard prerequisite for `U5` — do it here rather than in Phase 5 of that plan. Add `success`/`warning`/`danger`/`info` scales seeded from current values, extract `utils/statusColors.ts`, and consolidate the 8 duplicated status→colour maps.
 
 Then, immediately after (this is `D8`), regenerate `primary` at a fixed hue so the 600 fill and the 500 focus ring stop disagreeing, keeping 600 as the anchor so buttons look unchanged.
 
 **Where:** `tailwind.config.js`, new `utils/statusColors.ts`, 25 files. **Effort:** M
+
+**Implementation note:** `primary` was regenerated at a fixed 238° hue (the old 600's own hue), keeping `600` bit-for-bit `#4c51e8` so filled buttons are pixel-identical; `50`–`900` no longer drift toward blue as they darken. `success`/`warning`/`danger`/`info` were seeded exactly from the Tailwind green/yellow/red/blue shades `Badge` and `Alert` already rendered, so adopting the tokens is a rename with no visual change — verified in `tailwind.config.test.ts`. `utils/statusColors.ts` consolidates all eight status→variant maps (task status, task priority, project status, milestone status, resource status, budget category, plus the two status→dot-colour maps in `TaskList` and `MilestoneList`) with typed lookup functions and a fallback to `'default'`/neutral for unknown values, covered by `utils/statusColors.test.ts`. `Badge`, `Alert`, `TaskDetail`, `ProjectDetail`, `Dashboard`, `MilestoneList`, `TaskList`, `ResourceList` and `BudgetItemsList` were migrated to the new tokens/utility. (Note: since each file's status enum is locally declared rather than a shared type, the maps are keyed by string value, not by enum — de-duplicating the enums themselves is a separate, larger change and is not part of this step.)
 
 ### U1.6 · Motion ✅ done
 
@@ -439,7 +441,7 @@ Read this before scheduling either document, so nothing is built twice.
 | Batch | Steps | Effort | What changes for the user |
 |---|---|---|---|
 | **A** ✅ done | `U1.1`–`U1.4`, `U1.6`, `U1.7` | ~4–5 days | Every screen looks calmer and more deliberate. No layout moved |
-| **B** | `U1.5` + palette | ~2–3 days | Status colour is consistent; the accent stops fighting itself |
+| **B** ✅ done | `U1.5` + palette | ~2–3 days | Status colour is consistent; the accent stops fighting itself |
 | **C** | `U2.1`–`U2.4` | ~4–6 days | The app becomes navigable; two hidden features appear |
 | **D** | `U3.1`–`U3.3` | ~3–4 days | Uniform iconography; status glyphs replace the wall of pills |
 | **E** | `U4.1`–`U4.4` | ~2–3 days | Descriptions and notes become genuinely comfortable to read |

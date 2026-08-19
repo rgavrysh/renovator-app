@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from './ui/Badge';
 import { Divider } from './ui/Divider';
 import { useTranslation } from 'react-i18next';
+import { getMilestoneStatusVariant, getMilestoneStatusDotColor } from '../utils/statusColors';
 
 export interface Milestone {
   id: string;
@@ -61,20 +62,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
     });
   };
 
-  const getMilestoneStatusBadgeVariant = (status: MilestoneStatus) => {
-    switch (status) {
-      case MilestoneStatus.NOT_STARTED:
-        return 'default';
-      case MilestoneStatus.IN_PROGRESS:
-        return 'info';
-      case MilestoneStatus.COMPLETED:
-        return 'success';
-      case MilestoneStatus.OVERDUE:
-        return 'danger';
-      default:
-        return 'default';
-    }
-  };
+  const getMilestoneStatusBadgeVariant = (status: MilestoneStatus) => getMilestoneStatusVariant(status);
 
   const getMilestoneStatusLabel = (status: MilestoneStatus) => {
     return t(`milestoneStatus.${status}`);
@@ -180,15 +168,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                 <div className="flex items-center gap-2 mb-1">
                   {/* Milestone indicator dot */}
                   <div
-                    className={`w-2 h-2 rounded-full ${
-                      milestone.status === MilestoneStatus.COMPLETED
-                        ? 'bg-green-500'
-                        : milestone.status === MilestoneStatus.OVERDUE
-                        ? 'bg-red-500'
-                        : milestone.status === MilestoneStatus.IN_PROGRESS
-                        ? 'bg-blue-500'
-                        : 'bg-gray-300'
-                    }`}
+                    className={`w-2 h-2 rounded-full ${getMilestoneStatusDotColor(milestone.status)}`}
                   />
                   <h4
                     className={`text-sm font-medium ${

@@ -17,28 +17,28 @@ export const Alert: React.FC<AlertProps> = ({
 }) => {
   const variantStyles = {
     info: {
-      container: 'bg-blue-50 border-blue-200',
-      icon: 'text-blue-600',
-      title: 'text-blue-900',
-      text: 'text-blue-800',
+      container: 'bg-info-50 border-info-200',
+      icon: 'text-info-600',
+      title: 'text-info-900',
+      text: 'text-info-800',
     },
     success: {
-      container: 'bg-green-50 border-green-200',
-      icon: 'text-green-600',
-      title: 'text-green-900',
-      text: 'text-green-800',
+      container: 'bg-success-50 border-success-200',
+      icon: 'text-success-600',
+      title: 'text-success-900',
+      text: 'text-success-800',
     },
     warning: {
-      container: 'bg-yellow-50 border-yellow-200',
-      icon: 'text-yellow-600',
-      title: 'text-yellow-900',
-      text: 'text-yellow-800',
+      container: 'bg-warning-50 border-warning-200',
+      icon: 'text-warning-600',
+      title: 'text-warning-900',
+      text: 'text-warning-800',
     },
     danger: {
-      container: 'bg-red-50 border-red-200',
-      icon: 'text-red-600',
-      title: 'text-red-900',
-      text: 'text-red-800',
+      container: 'bg-danger-50 border-danger-200',
+      icon: 'text-danger-600',
+      title: 'text-danger-900',
+      text: 'text-danger-800',
     },
   };
   

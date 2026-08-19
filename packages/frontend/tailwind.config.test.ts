@@ -64,4 +64,67 @@ describe('tailwind.config.js — UI upgrade Batch A tokens', () => {
       expect(theme.extend.fontFamily.sans[0]).toBe('InterVariable');
     });
   });
+
+  describe('U1.5 — semantic status colours', () => {
+    it.each(['success', 'warning', 'danger', 'info'] as const)(
+      'defines a full 50-900 %s scale',
+      (name) => {
+        const scale = theme.extend.colors[name];
+        expect(scale).toBeDefined();
+        for (const shade of [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]) {
+          expect(scale[shade]).toMatch(/^#[0-9a-f]{6}$/);
+        }
+      }
+    );
+
+    it('seeds success/warning/danger/info from the values already used in Badge/Alert', () => {
+      const { success, warning, danger, info } = theme.extend.colors;
+      // These are the exact Tailwind green/yellow/red/blue shades the app's
+      // Badge and Alert components already rendered, so adopting the tokens
+      // is a rename with no visual change.
+      expect(success[100]).toBe('#dcfce7');
+      expect(success[700]).toBe('#15803d');
+      expect(warning[100]).toBe('#fef9c3');
+      expect(warning[700]).toBe('#a16207');
+      expect(danger[100]).toBe('#fee2e2');
+      expect(danger[700]).toBe('#b91c1c');
+      expect(info[100]).toBe('#dbeafe');
+      expect(info[700]).toBe('#1d4ed8');
+    });
+  });
+
+  describe('U1.5 / D8 — palette regeneration', () => {
+    it('keeps primary-600 as the unchanged anchor', () => {
+      expect(theme.extend.colors.primary[600]).toBe('#4c51e8');
+    });
+
+    it('gives the whole primary scale a single consistent hue', () => {
+      const hexToHue = (hex: string): number => {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const d = max - min;
+        if (d === 0) return 0;
+        let h: number;
+        if (max === r) h = ((g - b) / d) % 6;
+        else if (max === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        h *= 60;
+        return h < 0 ? h + 360 : h;
+      };
+
+      const hues = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) =>
+        hexToHue(theme.extend.colors.primary[shade])
+      );
+
+      // Allow a few degrees of slack for 8-bit hex rounding — the point of
+      // this test is to catch the old ~16° drift (224° at 50 to 240° at 700),
+      // not to demand sub-degree precision from quantised colour values.
+      for (const hue of hues) {
+        expect(Math.abs(hue - hues[0])).toBeLessThan(3);
+      }
+    });
+  });
 });

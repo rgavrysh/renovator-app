@@ -23,6 +23,7 @@ import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
 import { BudgetItemForm } from '../components/BudgetItemForm';
+import { getProjectStatusVariant } from '../utils/statusColors';
 import { Modal, ModalFooter } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
 import { UserDropdown } from '../components/UserDropdown';
@@ -641,22 +642,7 @@ export const ProjectDetail: React.FC = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: ProjectStatus) => {
-    switch (status) {
-      case ProjectStatus.PLANNING:
-        return 'info';
-      case ProjectStatus.ACTIVE:
-        return 'success';
-      case ProjectStatus.ON_HOLD:
-        return 'warning';
-      case ProjectStatus.COMPLETED:
-        return 'default';
-      case ProjectStatus.ARCHIVED:
-        return 'default';
-      default:
-        return 'default';
-    }
-  };
+  const getStatusBadgeVariant = (status: ProjectStatus) => getProjectStatusVariant(status);
 
   const getStatusLabel = (status: ProjectStatus) => {
     return t(`projectStatus.${status}`);

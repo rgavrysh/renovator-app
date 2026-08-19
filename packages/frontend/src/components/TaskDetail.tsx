@@ -8,6 +8,7 @@ import { Divider } from './ui/Divider';
 import { apiClient } from '../utils/api';
 import { Task, TaskStatus, TaskPriority } from './TaskList';
 import { formatCurrency } from '../utils/currency';
+import { getTaskStatusVariant, getTaskPriorityVariant } from '../utils/statusColors';
 
 interface TaskDetailProps {
   isOpen: boolean;
@@ -52,35 +53,9 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
     return t(`taskPriority.${priority}`);
   };
 
-  const getTaskStatusBadgeVariant = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.TODO:
-        return 'default';
-      case TaskStatus.IN_PROGRESS:
-        return 'info';
-      case TaskStatus.COMPLETED:
-        return 'success';
-      case TaskStatus.BLOCKED:
-        return 'danger';
-      default:
-        return 'default';
-    }
-  };
+  const getTaskStatusBadgeVariant = (status: TaskStatus) => getTaskStatusVariant(status);
 
-  const getTaskPriorityBadgeVariant = (priority: TaskPriority) => {
-    switch (priority) {
-      case TaskPriority.LOW:
-        return 'default';
-      case TaskPriority.MEDIUM:
-        return 'info';
-      case TaskPriority.HIGH:
-        return 'warning';
-      case TaskPriority.URGENT:
-        return 'danger';
-      default:
-        return 'default';
-    }
-  };
+  const getTaskPriorityBadgeVariant = (priority: TaskPriority) => getTaskPriorityVariant(priority);
 
   const handleAddNote = async () => {
     if (!task || !newNote.trim()) {

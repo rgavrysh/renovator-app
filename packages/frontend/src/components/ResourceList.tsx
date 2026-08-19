@@ -5,6 +5,7 @@ import { EmptyState } from './ui/EmptyState';
 import { Alert } from './ui/Alert';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/currency';
+import { getResourceStatusVariant } from '../utils/statusColors';
 
 export enum ResourceType {
   MATERIAL = 'material',
@@ -145,15 +146,7 @@ export const ResourceList: React.FC<ResourceListProps> = ({
     return t(`resourceStatus.${status}`);
   };
 
-  const getStatusColor = (status: ResourceStatus): 'default' | 'primary' | 'success' | 'warning' | 'danger' => {
-    const colors: Record<ResourceStatus, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
-      [ResourceStatus.NEEDED]: 'warning',
-      [ResourceStatus.ORDERED]: 'primary',
-      [ResourceStatus.RECEIVED]: 'success',
-      [ResourceStatus.CANCELLED]: 'default',
-    };
-    return colors[status];
-  };
+  const getStatusColor = (status: ResourceStatus) => getResourceStatusVariant(status);
 
   const getTypeLabel = (type: ResourceType): string => {
     return t(`resourceType.${type}`);
