@@ -42,6 +42,20 @@
     "name": "Renovator",
     "tagline": "Project Management Platform"
   },
+  "nav": {
+    "workspaceSection": "Workspace",
+    "projects": "Projects",
+    "workCatalog": "Work catalog",
+    "suppliers": "Suppliers",
+    "components": "Components",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
+  },
+  "suppliersPage": {
+    "subtitle": "Manage the vendors and subcontractors you work with"
+  },
   "language": {
     "en": "English",
     "uk": "Українська"

@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import App from './App';
+import { AppShell, RouteHandle } from './components/layout/AppShell';
 import { ComponentShowcase } from './pages/ComponentShowcase';
 import { Login } from './pages/Login';
 import { AuthCallback } from './pages/AuthCallback';
@@ -8,6 +8,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ProjectForm } from './pages/ProjectForm';
 import { ProjectDetail } from './pages/ProjectDetail';
 import { WorkItemsLibrary } from './pages/WorkItemsLibrary';
+import { SuppliersPage } from './pages/SuppliersPage';
 import { GoogleDriveCallback } from './pages/GoogleDriveCallback';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -22,6 +23,9 @@ const NotFound = () => {
     </div>
   );
 };
+
+const dashboardCrumb: RouteHandle = { crumbKey: 'nav.projects' };
+const projectsParent = { crumbKey: 'nav.projects', path: '/dashboard' };
 
 export const router = createBrowserRouter([
   {
@@ -38,7 +42,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: <App />,
+    element: (
+      <ProtectedRoute>
+        <AppShell />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
@@ -46,51 +54,38 @@ export const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: (
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        ),
+        element: <Dashboard />,
+        handle: dashboardCrumb,
       },
       {
         path: 'projects/new',
-        element: (
-          <ProtectedRoute>
-            <ProjectForm />
-          </ProtectedRoute>
-        ),
+        element: <ProjectForm />,
+        handle: { parent: projectsParent, crumbKey: 'projectForm.createTitle' } satisfies RouteHandle,
       },
       {
         path: 'projects/:id',
-        element: (
-          <ProtectedRoute>
-            <ProjectDetail />
-          </ProtectedRoute>
-        ),
+        element: <ProjectDetail />,
+        handle: { parent: projectsParent, dynamicCrumb: true } satisfies RouteHandle,
       },
       {
         path: 'projects/:id/edit',
-        element: (
-          <ProtectedRoute>
-            <ProjectForm />
-          </ProtectedRoute>
-        ),
+        element: <ProjectForm />,
+        handle: { parent: projectsParent, crumbKey: 'projectForm.editTitle' } satisfies RouteHandle,
       },
       {
         path: 'work-items-library',
-        element: (
-          <ProtectedRoute>
-            <WorkItemsLibrary />
-          </ProtectedRoute>
-        ),
+        element: <WorkItemsLibrary />,
+        handle: { crumbKey: 'nav.workCatalog' } satisfies RouteHandle,
+      },
+      {
+        path: 'suppliers',
+        element: <SuppliersPage />,
+        handle: { crumbKey: 'nav.suppliers' } satisfies RouteHandle,
       },
       {
         path: 'components',
-        element: (
-          <ProtectedRoute>
-            <ComponentShowcase />
-          </ProtectedRoute>
-        ),
+        element: <ComponentShowcase />,
+        handle: { crumbKey: 'nav.components' } satisfies RouteHandle,
       },
     ],
   },

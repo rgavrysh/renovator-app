@@ -68,7 +68,7 @@ describe('WorkItemsLibrary', () => {
     );
 
     // Check for spinner by looking for the SVG with animate-spin class
-    const spinner = screen.getByRole('main').querySelector('.animate-spin');
+    const spinner = document.querySelector('.animate-spin');
     expect(spinner).toBeInTheDocument();
   });
 

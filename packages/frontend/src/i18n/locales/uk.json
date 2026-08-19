@@ -42,6 +42,20 @@
     "name": "Renovator",
     "tagline": "Платформа управління проєктами"
   },
+  "nav": {
+    "workspaceSection": "Робочий простір",
+    "projects": "Проєкти",
+    "workCatalog": "Каталог робіт",
+    "suppliers": "Постачальники",
+    "components": "Компоненти",
+    "openMenu": "Відкрити меню",
+    "closeMenu": "Закрити меню",
+    "collapseSidebar": "Згорнути бічну панель",
+    "expandSidebar": "Розгорнути бічну панель"
+  },
+  "suppliersPage": {
+    "subtitle": "Керуйте постачальниками та субпідрядниками, з якими ви працюєте"
+  },
   "language": {
     "en": "English",
     "uk": "Українська"

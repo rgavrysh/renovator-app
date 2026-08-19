@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Header } from '../components/layout/Header';
-import { UserDropdown } from '../components/UserDropdown';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { Container } from '../components/layout/Container';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
@@ -14,7 +11,6 @@ import { WorkItemTemplateForm } from '../components/WorkItemTemplateForm';
 import { formatCurrency } from '../utils/currency';
 
 export const WorkItemsLibrary: React.FC = () => {
-  const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -121,31 +117,13 @@ export const WorkItemsLibrary: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header
-        logo={
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
-          >
-            {t('app.name')}
-          </button>
-        }
-        actions={<><LanguageSwitcher /><UserDropdown /></>}
-      />
-
-      <main className="max-w-7xl mx-auto px-6 py-8">
+    <Container>
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl font-bold text-gray-900">{t('workItemsLibrary.title')}</h1>
-            <div className="flex gap-3">
-              <Button variant="primary" onClick={handleCreateTemplate}>
-                {t('workItemsLibrary.createTemplate')}
-              </Button>
-              <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-                {t('workItemsLibrary.backToDashboard')}
-              </Button>
-            </div>
+            <Button variant="primary" onClick={handleCreateTemplate}>
+              {t('workItemsLibrary.createTemplate')}
+            </Button>
           </div>
           <p className="text-gray-600">
             {t('workItemsLibrary.subtitle')}
@@ -275,7 +253,6 @@ export const WorkItemsLibrary: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
 
       <WorkItemTemplateForm
         isOpen={isFormOpen}
@@ -283,6 +260,6 @@ export const WorkItemsLibrary: React.FC = () => {
         onSuccess={handleFormSuccess}
         template={selectedTemplate}
       />
-    </div>
+    </Container>
   );
 };

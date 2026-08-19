@@ -221,16 +221,6 @@ describe('Dashboard', () => {
     });
   });
 
-  it('should display user name in header', async () => {
-    vi.mocked(apiModule.apiClient.get).mockResolvedValue(mockProjects);
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByText('John Doe')).toBeInTheDocument();
-    });
-  });
-
   it('should call API with correct filter for active projects', async () => {
     vi.mocked(apiModule.apiClient.get).mockResolvedValue(mockProjects);
 

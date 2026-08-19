@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PageLayout } from '../components/layout/Container';
-import { Header } from '../components/layout/Header';
 import { Container } from '../components/layout/Container';
 import { Card, CardContent } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -10,8 +8,6 @@ import { Textarea } from '../components/ui/Textarea';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
-import { UserDropdown } from '../components/UserDropdown';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { apiClient } from '../utils/api';
 
 interface ProjectFormData {
@@ -200,47 +196,16 @@ export const ProjectForm: React.FC = () => {
 
   if (isFetching) {
     return (
-      <PageLayout
-        header={
-          <Header
-            logo={
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">R</span>
-                </div>
-                <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
-              </div>
-            }
-            actions={<><LanguageSwitcher /><UserDropdown /></>}
-          />
-        }
-      >
-        <Container>
-          <div className="flex justify-center items-center py-12">
-            <Spinner size="lg" />
-          </div>
-        </Container>
-      </PageLayout>
+      <Container>
+        <div className="flex justify-center items-center py-12">
+          <Spinner size="lg" />
+        </div>
+      </Container>
     );
   }
 
   return (
-    <PageLayout
-      header={
-        <Header
-          logo={
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
-                <span className="text-white font-bold text-lg">R</span>
-              </div>
-              <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
-            </div>
-          }
-          actions={<><LanguageSwitcher /><UserDropdown /></>}
-        />
-      }
-    >
-      <Container size="md">
+    <Container size="md">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {isEditMode ? t('projectForm.editTitle') : t('projectForm.createTitle')}
@@ -394,7 +359,6 @@ export const ProjectForm: React.FC = () => {
             </form>
           </CardContent>
         </Card>
-      </Container>
-    </PageLayout>
+    </Container>
   );
 };

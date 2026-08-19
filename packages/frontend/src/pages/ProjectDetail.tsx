@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PageLayout } from '../components/layout/Container';
-import { Header } from '../components/layout/Header';
 import { Container } from '../components/layout/Container';
+import { useAppShell } from '../components/layout/AppShellContext';
 import { Card, CardHeader, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -26,8 +25,6 @@ import { BudgetItemForm } from '../components/BudgetItemForm';
 import { getProjectStatusVariant } from '../utils/statusColors';
 import { Modal, ModalFooter } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
-import { UserDropdown } from '../components/UserDropdown';
-import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { getAccessToken } from '../contexts/AuthContext';
 import { apiClient } from '../utils/api';
 import config from '../config';
@@ -104,6 +101,7 @@ export const ProjectDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
+  const { setBreadcrumbLabel } = useAppShell();
 
   const [project, setProject] = useState<Project | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -142,7 +140,15 @@ export const ProjectDetail: React.FC = () => {
     if (id) {
       loadProjectData();
     }
+    // Clear any stale breadcrumb label from a previously viewed project.
+    setBreadcrumbLabel(null);
+    return () => setBreadcrumbLabel(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    setBreadcrumbLabel(project?.name ?? null);
+  }, [project, setBreadcrumbLabel]);
 
   const loadProjectData = async () => {
     try {
@@ -668,90 +674,33 @@ export const ProjectDetail: React.FC = () => {
 
   if (isLoading) {
     return (
-      <PageLayout
-        header={
-          <Header
-            logo={
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">R</span>
-                </div>
-                <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
-              </div>
-            }
-            actions={<><LanguageSwitcher /><UserDropdown /></>}
-          />
-        }
-      >
-        <Container>
-          <div className="flex justify-center items-center py-12">
-            <Spinner size="lg" />
-          </div>
-        </Container>
-      </PageLayout>
+      <Container>
+        <div className="flex justify-center items-center py-12">
+          <Spinner size="lg" />
+        </div>
+      </Container>
     );
   }
 
   if (error || !project) {
     return (
-      <PageLayout
-        header={
-          <Header
-            logo={
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">R</span>
-                </div>
-                <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
-              </div>
-            }
-            actions={<><LanguageSwitcher /><UserDropdown /></>}
-          />
-        }
-      >
-        <Container>
-          <Alert variant="danger" className="mb-6">
-            {error || t('projectDetail.projectNotFound')}
-          </Alert>
-          <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-            {t('projectDetail.backToDashboard')}
-          </Button>
-        </Container>
-      </PageLayout>
+      <Container>
+        <Alert variant="danger" className="mb-6">
+          {error || t('projectDetail.projectNotFound')}
+        </Alert>
+        <Button variant="secondary" onClick={() => navigate('/dashboard')}>
+          {t('projectDetail.backToDashboard')}
+        </Button>
+      </Container>
     );
   }
 
   const progress = calculateProgress();
 
   return (
-    <PageLayout
-      header={
-        <Header
-          logo={
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-linear flex items-center justify-center">
-                <span className="text-white font-bold text-lg">R</span>
-              </div>
-              <span className="text-lg font-semibold text-gray-900">{t('app.name')}</span>
-            </div>
-          }
-          actions={<><LanguageSwitcher /><UserDropdown /></>}
-        />
-      }
-    >
-      <Container>
+    <Container>
         {/* Header Section */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/dashboard')}
-            >
-              ← {t('common.back')}
-            </Button>
-          </div>
-          
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
@@ -1332,7 +1281,6 @@ export const ProjectDetail: React.FC = () => {
             </Button>
           </ModalFooter>
         </Modal>
-      </Container>
-    </PageLayout>
+    </Container>
   );
 };

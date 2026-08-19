@@ -16,7 +16,7 @@ The distinction matters, because the two plans pull in different directions and 
 
 So this is not a third parallel plan. It is the argument for un-parking those items, plus the visual layer that neither existing document covers at all: type scale, density, iconography, motion, and reading comfort.
 
-**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`) and `U1.5` (Batch B) are implemented. Everything below is written against that baseline.
+**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), and Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note) are implemented. Everything below is written against that baseline.
 
 ---
 
@@ -225,7 +225,7 @@ Self-host Inter variable, preload it, set `fontFamily.sans`, and add `font-featu
 
 Gated on **D-C**. This is `D2` + `#5` + `#37` from the review, and it is the step that turns four disconnected pages into a product.
 
-### U2.1 · `AppShell` layout route
+### U2.1 · `AppShell` layout route ✅ done
 
 One layout route rendering a persistent sidebar and a slim top bar, with `<Outlet/>` for the page. Hoist `ProtectedRoute` into it. Delete the hand-rolled header from `Dashboard`, `ProjectDetail`, `ProjectForm` and `WorkItemsLibrary` (~120 duplicated lines).
 
@@ -250,13 +250,19 @@ Structure, following your screenshots:
 
 **Where:** new `components/layout/AppShell.tsx`, `router.tsx`, four pages. **Effort:** M · 👁
 
-### U2.2 · Responsive behaviour, shipped in the same change
+**Implementation note:** `AppShell` is a layout route wrapping `ProtectedRoute`, with a persistent desktop sidebar, a slim top bar (breadcrumb + page-actions slot + language switcher + user dropdown), and `<Outlet/>` for the page. `Dashboard`, `ProjectDetail`, `ProjectForm` and `WorkItemsLibrary` had their hand-rolled headers removed. `App.tsx`/`App.test.tsx` were deleted since `AppShell` replaced their role as the root authenticated layout. The tab row shown in the mockup (`Overview  Tasks  Budget  Documents`) was not built — `ProjectDetail` still renders those as sections on one page rather than routed tabs; that remains open for a future step. Covered by `components/layout/AppShell.test.tsx`.
+
+### U2.2 · Responsive behaviour, shipped in the same change ✅ done
 
 The review is explicit that this must not lag behind `U2.1`: `Sidebar` has no narrow-width behaviour and will steal 256px on a phone the moment the shell ships. `hidden lg:flex` plus a slide-in drawer and a hamburger in the top bar, in the same PR.
 
 **Where:** `AppShell.tsx`, `layout/Sidebar.tsx`. **Effort:** M · 👁
 
-### U2.3 · Surface the two hidden features
+**Implementation note:** shipped as part of `U2.1` in the same `AppShell.tsx`, since the two aren't meaningfully separable. Desktop sidebar is `hidden lg:flex`; below `lg` a hamburger button opens a slide-in drawer with a backdrop, closes on backdrop click, `Escape`, or navigating to a link inside it. Covered by `components/layout/AppShell.test.tsx`.
+
+The desktop sidebar is additionally **collapsible** (icon-only, `w-14`, toggled by a chevron button pinned to the sidebar's bottom edge). Collapsing hides the "Renovator" wordmark, the "Workspace" section label, and nav-item text — icons remain, each with a native `title` tooltip carrying the label so the collapsed rail stays a11y-friendly and still fully navigable. The preference persists in `localStorage` (`appShell.sidebarCollapsed`) so it survives reloads; it only affects the `lg`+ sidebar, not the mobile drawer, which is always full-width when open since it's already an overlay. Covered by two more cases in `components/layout/AppShell.test.tsx`: toggling collapses/expands the rail, and the preference is read back on a fresh mount.
+
+### U2.3 · Surface the two hidden features ⚠️ partially done
 
 Suppliers, materials and the budget overview are fully built, tested, backed by complete API routes, and have no route in the frontend (`#9`/`D3`). The work-items library is reachable only from inside the account dropdown. Give all three a sidebar destination.
 
@@ -264,13 +270,17 @@ This is the cheapest "new feature" available: three route entries make finished,
 
 **Where:** `router.tsx`, `AppShell.tsx`, `components/ResourceList.tsx`. **Effort:** M
 
-### U2.4 · Breadcrumbs and titles
+**Implementation note:** Suppliers is done — a new `pages/SuppliersPage.tsx` gives the existing `SupplierList` a top-level route and a sidebar link, covered by `pages/SuppliersPage.test.tsx`. Materials and the budget overview were **not** given global routes: `Resource` (materials) and budget records are project-scoped in the backend (`GET /api/projects/:id/resources`, not a global collection), so a global "Materials" page would either need a new cross-project backend endpoint or would be misleading. They stay reachable from inside each project instead. Mirroring `SupplierList`'s create/edit/delete UI into `ResourceList` (`#39`) was also **not** done — `ResourceList` is still read-only; this is a real, separately-sized piece of work (form, mutations, tests) and is left as an explicit follow-up.
+
+### U2.4 · Breadcrumbs and titles ✅ done
 
 Breadcrumb from route data (`Projects › Kitchen remodel › Tasks`) with a small icon per level, and `document.title` per page. Both become trivial once `U2.1` exists, and both remove the `← Back` buttons.
 
 **Where:** `AppShell.tsx`, `router.tsx`. **Effort:** S
 
-**Phase outcome:** the app has a home, everything is one click away, and two complete features stop being invisible.
+**Implementation note:** breadcrumbs are derived from route `handle` metadata (`RouteHandle` in `router.tsx`) via `useMatches`, with a static `crumbKey` for most routes and a `dynamicCrumb` flag for `projects/:id`/`projects/:id/edit`, where the page itself supplies the label (e.g. the project name) through `useAppShell().setBreadcrumbLabel`. `document.title` updates to match the current breadcrumb. `← Back` buttons were removed from `ProjectDetail`. Covered by `components/layout/AppShell.test.tsx`.
+
+**Phase outcome:** the app has a home, everything is one click away, and one of the two complete features (Suppliers) stops being invisible. Materials remains project-scoped rather than global, and its own create/edit/delete UI is still open (see `U2.3`).
 
 ---
 
@@ -442,7 +452,7 @@ Read this before scheduling either document, so nothing is built twice.
 |---|---|---|---|
 | **A** ✅ done | `U1.1`–`U1.4`, `U1.6`, `U1.7` | ~4–5 days | Every screen looks calmer and more deliberate. No layout moved |
 | **B** ✅ done | `U1.5` + palette | ~2–3 days | Status colour is consistent; the accent stops fighting itself |
-| **C** | `U2.1`–`U2.4` | ~4–6 days | The app becomes navigable; two hidden features appear |
+| **C** ⚠️ mostly done | `U2.1`–`U2.4` | ~4–6 days | The app becomes navigable; Suppliers appears. Materials CRUD in `ResourceList` is the one piece left open |
 | **D** | `U3.1`–`U3.3` | ~3–4 days | Uniform iconography; status glyphs replace the wall of pills |
 | **E** | `U4.1`–`U4.4` | ~2–3 days | Descriptions and notes become genuinely comfortable to read |
 | **F** | `U5.1`–`U5.3` | ~5–8 days | Six list patterns become one |
