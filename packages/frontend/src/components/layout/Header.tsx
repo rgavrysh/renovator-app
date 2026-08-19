@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 export interface HeaderProps {
   children?: React.ReactNode;
@@ -53,23 +54,23 @@ export interface HeaderNavItemProps {
 
 export const HeaderNavItem: React.FC<HeaderNavItemProps> = ({
   href,
-  active = false,
+  active,
   children,
   onClick,
 }) => {
   return (
-    <a
-      href={href}
+    <NavLink
+      to={href}
       onClick={onClick}
-      className={`
+      className={({ isActive }) => `
         px-3 py-2 text-sm font-medium rounded-linear transition-colors
-        ${active 
+        ${(active ?? isActive)
           ? 'text-gray-900 bg-gray-100' 
           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
         }
       `}
     >
       {children}
-    </a>
+    </NavLink>
   );
 };

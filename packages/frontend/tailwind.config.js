@@ -43,8 +43,12 @@ export default {
         'linear': '0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.05)',
       },
       borderRadius: {
+        DEFAULT: '6px',
         'linear': '6px',
       },
+      ringColor: (theme) => ({
+        DEFAULT: theme('colors.primary.500'),
+      }),
     },
   },
   plugins: [],

@@ -87,7 +87,7 @@ export const Alert: React.FC<AlertProps> = ({
           <div className="ml-auto pl-3">
             <button
               onClick={onClose}
-              className={`inline-flex rounded-linear p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${styles.icon} hover:opacity-75`}
+              className={`inline-flex rounded-linear p-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${styles.icon} hover:opacity-75`}
             >
               <span className="sr-only">Dismiss</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

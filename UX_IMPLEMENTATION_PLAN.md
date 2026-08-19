@@ -2,7 +2,7 @@
 
 Companion to [`UX_REVIEW.md`](UX_REVIEW.md). Each step is sized to be one commit and one review. Step IDs (`S1`, `S2`, …) are stable — to start work, just say the ID.
 
-**Progress:** `S0`–`S6` complete (Batch 1, 18 Aug 2026). Build clean; tests match baseline exactly with zero regressions. Not committed — changes sit in the working tree alongside the pre-existing WIP.
+**Progress:** `S0`–`S12` complete (Batch 1 + 2, 18–19 Aug 2026). Build clean; tests match the `S0` baseline exactly (27 failures, same 10 files) aside from one unrelated pre-existing failure that landed in a commit made after `S0` was captured (see `S11`'s note). `S7`–`S12` are uncommitted, on top of the already-committed `S0`–`S6`.
 
 **Scope decisions already made**
 - Navigation: **`NavLink` fix only** (`S12`). No `AppShell`, no sidebar rollout, no mobile drawer.
@@ -149,53 +149,55 @@ Two of the eleven `grid-cols-2` matches were deliberately left alone: `PhotoGall
 
 ---
 
-## Phase 2 — Config and layout wins
+## Phase 2 — Config and layout wins ✅ complete
 
 Small edits with app-wide reach. `S7`–`S10` are all `tailwind.config.js`; they could be one commit, but keeping them separate makes the visual diff attributable.
 
-### S7 · Make 6px the default radius
+**Outcome.** All six steps done and verified: build stays clean at 323 modules, and `npm test` reproduces the `S0` baseline exactly — same 27 failures across the same 10 files, zero regressions. One extra failure surfaced (`MilestoneForm.test.tsx`, 1 test), but it's not this batch's doing: confirmed via `git stash` that it fails identically with none of `S7`–`S12` applied, tracing instead to `e620ef6` ("derive milestone status from task progress"), a commit that landed after the recorded `S0` baseline was captured. No visual regression testing was done in-browser for this batch (see individual steps for what verification substitutes for it); a manual pass at 1440px and 390px is recommended before treating the 👁 steps below as fully closed.
+
+### S7 · Make 6px the default radius ✅
 Closes part of **#36**. `rounded-linear` (54 uses) is outnumbered by the stock radii it was meant to replace (61 uses).
 
 - Add `borderRadius: { DEFAULT: '6px', linear: '6px' }`. This converts ~20 bare `rounded` uses with zero file edits.
 - `rounded-md` / `rounded-lg` / `rounded-full` are unaffected; migrating those is cosmetic follow-up, not part of this step.
 
-**Verify:** 👁 sweep for anything that looked intentionally sharp-cornered. **Effort:** S
+**Done.** Landed exactly as scoped. Verified in the compiled CSS output rather than by eye: `.rounded{border-radius:6px}` now resolves, where it previously fell back to Tailwind's stock `0.25rem`. Swept every bare `rounded` use app-wide first — `Checkbox`, `PhotoGallery`, `TaskList`, `BudgetItemsList`, `WorkItemsLibraryModal`, `MilestoneList`, `PhotoUpload`, `SupplierList`, `ProjectDetail` — all are small icon-button hover states or a thumbnail corner, nothing reads as intentionally sharp-cornered. **Effort:** S (as estimated)
 
-### S8 · Fix the off-palette focus ring
+### S8 · Fix the off-palette focus ring ✅
 Closes part of **#27**. `Alert`'s dismiss button uses a bare `focus:ring-2` with no colour, so it falls back to Tailwind's default blue — off-palette.
 
 - Set `ringColor: { DEFAULT: theme('colors.primary.500') }` in the config. This fixes `Alert` without editing it.
 - **Verify the Tailwind version's `ringColor.DEFAULT` semantics first** — confirm `ring-2` with no colour class actually picks it up in this setup before assuming the fix landed.
 - Deliberately *not* in this step: switching `focus:` → `focus-visible:` across the kit. That's `S9`.
 
-**Effort:** S
+**Done.** One deviation from the literal plan text: `ringColor` had to be a closure — `(theme) => ({ DEFAULT: theme('colors.primary.500') })` — rather than a static object, since it references the `primary` scale defined earlier in the same `extend` block; Tailwind's docs confirm this is the supported pattern for cross-referencing theme values. Verified the semantics directly in the compiled CSS rather than assuming: the universal reset's `--tw-ring-color` custom property now defaults to `rgb(91 110 242 / .5)` (primary-500 at the standard 50% ring opacity) in place of Tailwind's stock blue, so `Alert`'s ring (now `focus-visible:ring-2` after `S9`) picks up the right colour with zero changes to `Alert.tsx` itself. **Effort:** S
 
-### S9 · Switch to `focus-visible:`
+### S9 · Switch to `focus-visible:` ✅
 Closes the rest of **#27**. The kit uses `focus:`, so rings stay stuck after a mouse click.
 
 - Swap `focus:` → `focus-visible:` in `Button`, `Input`, `Select`, `Textarea`, `Checkbox`, `Alert`.
 - Keep `focus:` on the field primitives' `border-*` colour change if you want the border to react to programmatic focus too — worth a quick look rather than a blanket replace.
 
-**Verify:** 👁 click a button (no ring), then Tab to it (ring). **Effort:** S
+**Done.** All six components swapped. Kept `focus:border-red-500` / `focus:border-primary-500` as `focus:` on `Input`, `Select` and `Textarea`, per the plan's own suggestion, so the border still reacts to programmatic focus while the ring only appears for keyboard navigation. **Effort:** S
 
-### S10 · Give 1440px a layout, and phones their width back
+### S10 · Give 1440px a layout, and phones their width back ✅
 Closes **#11** and part of **#23**. The app has 13 responsive classes total and **zero `xl:`** — the last breakpoint used anywhere is `lg` (1024px), so the stated primary 1440px target renders an iPad layout.
 
 - `Container.tsx:23`: `px-6 py-8` → `px-4 sm:px-6 py-6 sm:py-8`, recovering ~12% of usable width on a 390px screen.
 - Add `xl:grid-cols-4` to the Dashboard project grid and the work-items library grid.
 - Add `xl:col-span-3` (or widen the main column) on the ProjectDetail two-column split so the rail stops cramping while the left column has slack.
 
-**Verify:** 👁 1440px — four dashboard cards per row; 390px — tighter gutters, nothing clipped. **Effort:** S
+**Done.** All three landed exactly as scoped: `Container.tsx` padding, `xl:grid-cols-4` on both the Dashboard project grid and the work-items library grid, and on `ProjectDetail` the row gained `xl:grid-cols-4` with the main column at `xl:col-span-3` (leaving the rail at an implicit `col-span-1`). **Not independently 👁-verified in-browser this round** — a background visual-check pass was started but its results didn't land before this batch was wrapped up; worth a manual look at 1440px (four dashboard cards per row) and 390px (tighter gutters, nothing clipped) before calling this fully closed. **Effort:** S
 
-### S11 · Unmask mobile overflow
+### S11 · Unmask mobile overflow ✅
 Closes the rest of **#23**. `PageLayout` puts `overflow-x-hidden` on `<main>` (`Container.tsx:51`), which hides horizontal overflow instead of fixing it.
 
 - Remove it. **Depends on `S6`** being merged first, or the known overlap becomes a visible scrollbar.
 - Fix whatever new overflow this exposes; expect wide tables and long unbroken strings (document names, emails).
 
-**Verify:** 👁 390px on all five pages, checking for horizontal scroll. **Effort:** S
+**Done.** Removed. Landed after `S6`, so the known email/phone overlap is already gone rather than becoming a visible scrollbar. Audited statically for what the plan warned would be exposed: there are no `<table>` elements anywhere in the app, and every existing `truncate` use already sits on an ancestor with `min-w-0` (`SupplierList`, `DocumentList`, `TaskList`, `PhotoUpload`, `ResourceList`, `WorkItemsLibrary`, `WorkItemsLibraryModal`, `UserDropdown`), so those were already safe. Found one real gap the audit was meant to catch: `ProjectDetail`'s client email renders as plain text with no `overflow-wrap`, so a long unbroken address would now bleed past its grid column instead of being invisibly clipped — added `break-words`. `SupplierList`'s equivalent contact fields have the same latent gap but were left alone since that component is currently unreachable (`D3`). **Not independently 👁-verified in-browser this round** — recommend a manual 390px pass across the five pages before treating this as fully closed. **Effort:** S
 
-### S12 · Make the nav components router-aware
+### S12 · Make the nav components router-aware ✅
 Closes **#32**. `SidebarItem` (`Sidebar.tsx:68-92`) and `HeaderNavItem` (`Header.tsx:61-73`) render raw `<a href>`, so the moment either is wired to a real route every click is a full page reload.
 
 This is the **only** navigation work in this plan, per your decision.
@@ -204,7 +206,7 @@ This is the **only** navigation work in this plan, per your decision.
 - Derive `active` from `NavLink`'s `isActive` while keeping the existing `active` prop as an optional override — `ComponentShowcase.tsx:45` and `:61` pass `active` explicitly with `href="#"`, and those must keep working.
 - Both components currently render outside a router only in the showcase, which *is* inside the router, so no `MemoryRouter` shim is needed.
 
-**Verify:** `/components` still renders both nav groups with the active pill; no console warnings. **Effort:** S
+**Done.** Both components now render `NavLink`. `active` became optional; when omitted it falls back to `NavLink`'s own `isActive`, and when passed explicitly — as every `ComponentShowcase` call site does, all with `href="#"` — it overrides `isActive` entirely, so the showcase's forced-active demo items keep rendering unchanged. `/components` sits inside the router tree (`router.tsx`), confirmed by reading the route config, so no `MemoryRouter` shim was needed as anticipated. **Not independently checked for console warnings in a running browser this round** — worth a quick look at `/components` to confirm before treating this as fully closed. **Effort:** S
 
 ---
 

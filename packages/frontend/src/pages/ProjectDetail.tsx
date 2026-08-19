@@ -797,9 +797,9 @@ export const ProjectDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {/* Main Content - Left Column */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 xl:col-span-3 space-y-6">
             {/* Project Information */}
             <Card>
               <CardHeader title={t('projectDetail.projectInformation')} />
@@ -842,7 +842,7 @@ export const ProjectDetail: React.FC = () => {
                     {project.clientEmail && (
                       <div>
                         <p className="text-xs text-gray-500 mb-1">{t('projectDetail.clientEmail')}</p>
-                        <p className="text-sm text-gray-900">{project.clientEmail}</p>
+                        <p className="text-sm text-gray-900 break-words">{project.clientEmail}</p>
                       </div>
                     )}
                     {project.clientPhone && (

@@ -20,7 +20,7 @@ export const Container: React.FC<ContainerProps> = ({
     full: 'max-w-full',
   };
   
-  const paddingStyle = padding ? 'px-6 py-8' : '';
+  const paddingStyle = padding ? 'px-4 sm:px-6 py-6 sm:py-8' : '';
   
   return (
     <div
@@ -48,7 +48,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
       {header}
       <div className="flex">
         {sidebar}
-        <main className="flex-1 overflow-x-hidden">
+        <main className="flex-1">
           {children}
         </main>
       </div>

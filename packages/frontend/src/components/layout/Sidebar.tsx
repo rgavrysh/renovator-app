@@ -1,4 +1,5 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 export interface SidebarProps {
   children: React.ReactNode;
@@ -58,23 +59,25 @@ export interface SidebarItemProps {
 
 export const SidebarItem: React.FC<SidebarItemProps> = ({
   href,
-  active = false,
+  active,
   icon,
   children,
   onClick,
   badge,
 }) => {
+  const linkClassName = (isActive: boolean) => `
+    flex items-center justify-between px-3 py-2 text-sm font-medium rounded-linear transition-colors
+    ${(active ?? isActive)
+      ? 'text-gray-900 bg-gray-100' 
+      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+    }
+  `;
+
   return (
-    <a
-      href={href}
+    <NavLink
+      to={href}
       onClick={onClick}
-      className={`
-        flex items-center justify-between px-3 py-2 text-sm font-medium rounded-linear transition-colors
-        ${active 
-          ? 'text-gray-900 bg-gray-100' 
-          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-        }
-      `}
+      className={({ isActive }) => linkClassName(isActive)}
     >
       <div className="flex items-center gap-3">
         {icon && (
@@ -89,6 +92,6 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
           {badge}
         </span>
       )}
-    </a>
+    </NavLink>
   );
 };
