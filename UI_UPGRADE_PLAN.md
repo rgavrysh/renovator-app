@@ -16,7 +16,7 @@ The distinction matters, because the two plans pull in different directions and 
 
 So this is not a third parallel plan. It is the argument for un-parking those items, plus the visual layer that neither existing document covers at all: type scale, density, iconography, motion, and reading comfort.
 
-**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), and Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note) are implemented. Everything below is written against that baseline.
+**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note), and Batch D (`U3.1`–`U3.3`) are implemented. Everything below is written against that baseline.
 
 ---
 
@@ -288,13 +288,15 @@ Breadcrumb from route data (`Projects › Kitchen remodel › Tasks`) with a sma
 
 Gated on **D-A**.
 
-### U3.1 · Replace all 61 inline SVGs
+### U3.1 · Replace all 61 inline SVGs ✅ done
 
 One pass per file, 16px default, `strokeWidth={1.5}`, `currentColor`. Priority order by count: `DocumentList` (10), `ResourceList` (7), `PhotoGallery` (6), `ui/Alert` (5), then the rest.
 
 **Effort:** M
 
-### U3.2 · `StatusIcon` — the signature detail
+**Implementation note:** `lucide-react` added as the icon dependency (`D-A`). Every hand-drawn inline `<svg>` across `ui/Alert`, `ui/Button`, `ui/Modal`, `ui/Spinner`, `DocumentList`, `ResourceList`, `PhotoGallery`, `PhotoUpload`, `DocumentUpload`, `SupplierList`, `WorkItemsLibraryModal`, `UserDropdown`, `layout/AppShell`, `pages/ProjectDetail`, `pages/Dashboard`, `pages/AuthCallback`, `pages/GoogleDriveCallback` and `pages/ComponentShowcase` was replaced with the matching `lucide-react` component at `strokeWidth={1.5}`. The one recurring brand mark that has no `lucide` equivalent — the Google Drive logo — was extracted once into `components/icons/GoogleDriveIcon.tsx` instead of staying duplicated across five files. The only inline SVGs remaining in the tree are the ones that *are* icon primitives: `ui/StatusIcon.tsx` and `components/icons/GoogleDriveIcon.tsx`.
+
+### U3.2 · `StatusIcon` — the signature detail ✅ done
 
 A single component rendering the state as a 14px glyph rather than a pill: dotted circle (not started), empty circle (todo), half-filled arc (in progress), filled check (done), crossed circle (cancelled), plus a filled-arc variant driven by percentage for milestone progress.
 
@@ -302,11 +304,15 @@ Then demote `Badge` from "status carrier" to "label carrier" — status becomes 
 
 **Where:** new `ui/StatusIcon.tsx`, `TaskList`, `MilestoneList`, `Dashboard`, `ProjectDetail`. **Effort:** M · 👁
 
-### U3.3 · `IconButton`
+**Implementation note:** `ui/StatusIcon.tsx` renders the fixed five-state glyph set and accepts an optional `progress` (0–100) that overrides the `in-progress` half-arc with an arc proportional to actual completion, used by `MilestoneList`. `utils/statusColors.ts` gained a domain-agnostic `StatusIconKind` type plus `getTaskStatusIconKind` / `getProjectStatusIconKind` / `getMilestoneStatusIconKind` mapping each local enum onto it. `TaskList`, `MilestoneList`, `Dashboard` and `ProjectDetail` all now render `<StatusIcon /> + plain text` for status instead of a `Badge`; `Badge` remains for genuine labels (task priority, document type, budget category). Covered by `ui/StatusIcon.test.tsx`, `utils/statusColors.test.ts`, and updated assertions in `TaskList.test.tsx`, `MilestoneList.test.tsx`, `Dashboard.test.tsx`.
+
+### U3.3 · `IconButton` ✅ done
 
 Icon-only actions currently appear as bare SVGs in buttons with three different hover treatments and no accessible name. One primitive: `h-7 w-7`, `rounded`, `hover:bg-subtle`, tooltip, required `label`. Part of `D6` in the other plan.
 
 **Where:** new `ui/IconButton.tsx`. **Effort:** S
+
+**Implementation note:** `ui/IconButton.tsx` is a `forwardRef` button with a required `label` used as both `aria-label` and `title`, `sm`/`md` sizes, and `default`/`danger` variants sharing one hover/focus treatment. Adopted for the icon-only actions in `DocumentList`, `SupplierList` and `ProjectDetail`'s inline budget edit/save/cancel controls. Covered by `ui/IconButton.test.tsx`. While fixing this, `Modal`'s close button gained an `aria-label` (`"Dismiss"`, chosen to not collide with the many plain-text "Close" footer buttons already asserted on by existing tests) — it previously had no accessible name at all.
 
 ---
 
@@ -453,7 +459,7 @@ Read this before scheduling either document, so nothing is built twice.
 | **A** ✅ done | `U1.1`–`U1.4`, `U1.6`, `U1.7` | ~4–5 days | Every screen looks calmer and more deliberate. No layout moved |
 | **B** ✅ done | `U1.5` + palette | ~2–3 days | Status colour is consistent; the accent stops fighting itself |
 | **C** ⚠️ mostly done | `U2.1`–`U2.4` | ~4–6 days | The app becomes navigable; Suppliers appears. Materials CRUD in `ResourceList` is the one piece left open |
-| **D** | `U3.1`–`U3.3` | ~3–4 days | Uniform iconography; status glyphs replace the wall of pills |
+| **D** ✅ done | `U3.1`–`U3.3` | ~3–4 days | Uniform iconography; status glyphs replace the wall of pills |
 | **E** | `U4.1`–`U4.4` | ~2–3 days | Descriptions and notes become genuinely comfortable to read |
 | **F** | `U5.1`–`U5.3` | ~5–8 days | Six list patterns become one |
 | **G** | `U6.1`–`U6.5` | ~5–7 days | The app feels fast and rewards poking around |

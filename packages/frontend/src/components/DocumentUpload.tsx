@@ -4,8 +4,10 @@ import { Select } from './ui/Select';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { Modal, ModalFooter } from './ui/Modal';
+import { GoogleDriveIcon } from './icons/GoogleDriveIcon';
 import { useTranslation } from 'react-i18next';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
+import { HardDrive, CheckCircle2, UploadCloud } from 'lucide-react';
 
 export enum DocumentType {
   CONTRACT = 'contract',
@@ -235,16 +237,12 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         >
           {isDriveConnected ? (
             <>
-              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
-              </svg>
+              <GoogleDriveIcon className="w-4 h-4 flex-shrink-0" />
               {t('googleDrive.uploadingTo')}
             </>
           ) : (
             <>
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
+              <HardDrive className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
               {t('googleDrive.uploadingToLocal')}
             </>
           )}
@@ -281,19 +279,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
             
             {selectedFile ? (
               <div className="space-y-2">
-                <svg
-                  className="mx-auto h-12 w-12 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" strokeWidth={1.5} />
                 <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
                 <p className="text-xs text-gray-500">
                   {(selectedFile.size / 1024).toFixed(2)} KB
@@ -301,19 +287,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
               </div>
             ) : (
               <div className="space-y-2">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
+                <UploadCloud className="mx-auto h-12 w-12 text-gray-400" strokeWidth={1.5} />
                 <div>
                   <p className="text-sm text-gray-600">
                     <span className="font-medium text-primary-600">{t('documentUpload.clickToBrowse')}</span> {t('documentUpload.orDragDrop')}

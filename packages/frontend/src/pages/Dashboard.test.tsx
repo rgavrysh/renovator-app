@@ -131,6 +131,16 @@ describe('Dashboard', () => {
     });
   });
 
+  it('should render status glyphs instead of pills', async () => {
+    vi.mocked(apiModule.apiClient.get).mockResolvedValue(mockProjects);
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('img', { name: /in progress|not started|done|cancelled/i }).length).toBeGreaterThan(0);
+    });
+  });
+
   it('should filter projects based on search query', async () => {
     vi.mocked(apiModule.apiClient.get).mockResolvedValue(mockProjects);
 

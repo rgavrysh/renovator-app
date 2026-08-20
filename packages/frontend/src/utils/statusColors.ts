@@ -15,6 +15,7 @@
  * dependency-free in both directions.
  */
 import type { BadgeProps } from '../components/ui/Badge';
+import type { StatusIconKind } from '../components/ui/StatusIcon';
 
 export type StatusVariant = NonNullable<BadgeProps['variant']>;
 
@@ -23,6 +24,12 @@ const lookup = <T extends string>(
   status: string,
   fallback: StatusVariant = 'default'
 ): StatusVariant => (map as Record<string, StatusVariant>)[status] ?? fallback;
+
+const lookupIconKind = (
+  map: Record<string, StatusIconKind>,
+  status: string,
+  fallback: StatusIconKind = 'todo'
+): StatusIconKind => map[status] ?? fallback;
 
 // --- Task status ------------------------------------------------------
 
@@ -46,6 +53,17 @@ export const TASK_STATUS_DOT_COLOR: Record<string, string> = {
 
 export const getTaskStatusDotColor = (status: string): string =>
   TASK_STATUS_DOT_COLOR[status] ?? 'bg-gray-400';
+
+/** `StatusIcon` glyph for a task (U3.2) — replaces the plain colour dot. */
+export const TASK_STATUS_ICON_KIND: Record<string, StatusIconKind> = {
+  todo: 'todo',
+  in_progress: 'in-progress',
+  completed: 'done',
+  blocked: 'cancelled',
+};
+
+export const getTaskStatusIconKind = (status: string): StatusIconKind =>
+  lookupIconKind(TASK_STATUS_ICON_KIND, status);
 
 // --- Task priority ------------------------------------------------------
 
@@ -72,6 +90,18 @@ export const PROJECT_STATUS_VARIANTS = {
 export const getProjectStatusVariant = (status: string): StatusVariant =>
   lookup(PROJECT_STATUS_VARIANTS, status);
 
+/** `StatusIcon` glyph for a project (U3.2). */
+export const PROJECT_STATUS_ICON_KIND: Record<string, StatusIconKind> = {
+  planning: 'not-started',
+  active: 'in-progress',
+  on_hold: 'cancelled',
+  completed: 'done',
+  archived: 'done',
+};
+
+export const getProjectStatusIconKind = (status: string): StatusIconKind =>
+  lookupIconKind(PROJECT_STATUS_ICON_KIND, status);
+
 // --- Milestone status ------------------------------------------------------
 
 export const MILESTONE_STATUS_VARIANTS = {
@@ -94,6 +124,23 @@ export const MILESTONE_STATUS_DOT_COLOR: Record<string, string> = {
 
 export const getMilestoneStatusDotColor = (status: string): string =>
   MILESTONE_STATUS_DOT_COLOR[status] ?? 'bg-gray-300';
+
+/**
+ * `StatusIcon` glyph for a milestone (U3.2). `overdue` reuses `cancelled`'s
+ * crossed-circle shape (in the danger colour) since a milestone that has
+ * missed its date, rather than been abandoned, has no dedicated glyph in
+ * the fixed five-state set — callers with a completion percentage should
+ * prefer passing `progress` to `StatusIcon` instead, which overrides this.
+ */
+export const MILESTONE_STATUS_ICON_KIND: Record<string, StatusIconKind> = {
+  not_started: 'not-started',
+  in_progress: 'in-progress',
+  completed: 'done',
+  overdue: 'cancelled',
+};
+
+export const getMilestoneStatusIconKind = (status: string): StatusIconKind =>
+  lookupIconKind(MILESTONE_STATUS_ICON_KIND, status);
 
 // --- Resource status ------------------------------------------------------
 

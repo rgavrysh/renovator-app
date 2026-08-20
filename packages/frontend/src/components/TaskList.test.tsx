@@ -231,16 +231,16 @@ describe('TaskList', () => {
     expect(screen.getByText('Showing 4 of 4 tasks')).toBeInTheDocument();
   });
 
-  it('should show status indicator circles with correct colors', () => {
+  it('should show a StatusIcon glyph per task with the correct semantic colour (U3.2)', () => {
     const { container } = render(<TaskList tasks={mockTasks} />);
 
-    const dots = container.querySelectorAll('.w-3\\.5.h-3\\.5.rounded-full');
-    expect(dots.length).toBe(4);
+    const glyphs = container.querySelectorAll('svg[aria-label]');
+    expect(glyphs.length).toBe(4);
 
-    expect(dots[0]).toHaveClass('bg-success-500'); // completed
-    expect(dots[1]).toHaveClass('bg-info-500'); // in_progress
-    expect(dots[2]).toHaveClass('bg-gray-400'); // todo
-    expect(dots[3]).toHaveClass('bg-danger-500'); // blocked
+    expect(glyphs[0]).toHaveClass('text-success-500'); // completed -> done
+    expect(glyphs[1]).toHaveClass('text-info-500'); // in_progress
+    expect(glyphs[2]).toHaveClass('text-gray-400'); // todo
+    expect(glyphs[3]).toHaveClass('text-danger-500'); // blocked -> cancelled
   });
 
   it('should show status tooltip on status circle buttons', () => {

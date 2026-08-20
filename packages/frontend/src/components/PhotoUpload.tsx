@@ -3,9 +3,12 @@ import { Button } from './ui/Button';
 import { Select } from './ui/Select';
 import { Input } from './ui/Input';
 import { Modal, ModalFooter } from './ui/Modal';
+import { IconButton } from './ui/IconButton';
+import { GoogleDriveIcon } from './icons/GoogleDriveIcon';
 import { Milestone } from './MilestoneList';
 import { useTranslation } from 'react-i18next';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
+import { HardDrive, ImagePlus, X } from 'lucide-react';
 
 interface PhotoUploadProps {
   isOpen: boolean;
@@ -290,16 +293,12 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
         >
           {isDriveConnected ? (
             <>
-              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
-              </svg>
+              <GoogleDriveIcon className="w-4 h-4 flex-shrink-0" />
               {t('googleDrive.uploadingTo')}
             </>
           ) : (
             <>
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
+              <HardDrive className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
               {t('googleDrive.uploadingToLocal')}
             </>
           )}
@@ -336,19 +335,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
             />
             
             <div className="space-y-2">
-              <svg
-                className="mx-auto h-12 w-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+              <ImagePlus className="mx-auto h-12 w-12 text-gray-400" strokeWidth={1.5} />
               <div>
                 <p className="text-sm text-gray-600">
                   <span className="font-medium text-primary-600">{t('photoUpload.clickToBrowse')}</span> {t('photoUpload.orDragDrop')}
@@ -428,15 +415,13 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
 
                   {/* Remove button */}
                   {!isUploading && (
-                    <button
+                    <IconButton
+                      label={t('common.remove')}
+                      icon={<X className="w-4 h-4" strokeWidth={1.5} />}
+                      variant="danger"
                       onClick={() => removePhoto(index)}
-                      className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors flex-shrink-0"
-                      title={t('common.remove')}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
+                      className="flex-shrink-0"
+                    />
                   )}
                 </div>
               ))}

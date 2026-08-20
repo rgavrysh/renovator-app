@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { LayoutDashboard, BookOpen, Building2, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { UserDropdown } from '../UserDropdown';
 import { LanguageSwitcher } from '../LanguageSwitcher';
 import { AppShellContext } from './AppShellContext';
@@ -46,29 +47,17 @@ const NAV_ITEMS: NavItemDef[] = [
   {
     to: '/dashboard',
     labelKey: 'nav.projects',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-      </svg>
-    ),
+    icon: <LayoutDashboard className="w-4 h-4" strokeWidth={1.5} />,
   },
   {
     to: '/work-items-library',
     labelKey: 'nav.workCatalog',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-      </svg>
-    ),
+    icon: <BookOpen className="w-4 h-4" strokeWidth={1.5} />,
   },
   {
     to: '/suppliers',
     labelKey: 'nav.suppliers',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    ),
+    icon: <Building2 className="w-4 h-4" strokeWidth={1.5} />,
   },
 ];
 
@@ -110,30 +99,6 @@ const ShellNav: React.FC<{ onNavigate?: () => void; collapsed?: boolean }> = ({
     </nav>
   );
 };
-
-const ChevronLeftIcon: React.FC = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-  </svg>
-);
-
-const ChevronRightIcon: React.FC = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-  </svg>
-);
-
-const MenuIcon: React.FC = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-);
-
-const CloseIcon: React.FC = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
 
 export const AppShell: React.FC = () => {
   const { t } = useTranslation();
@@ -237,7 +202,11 @@ export const AppShell: React.FC = () => {
                 isSidebarCollapsed ? 'w-full justify-center' : 'px-2'
               }`}
             >
-              {isSidebarCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+              {isSidebarCollapsed ? (
+                <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+              ) : (
+                <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+              )}
               {!isSidebarCollapsed && <span className="text-ui">{t('nav.collapseSidebar')}</span>}
             </button>
           </div>
@@ -265,7 +234,7 @@ export const AppShell: React.FC = () => {
                   aria-label={t('nav.closeMenu')}
                   className="p-1 text-gray-500 hover:text-gray-900 rounded-linear hover:bg-gray-200/60"
                 >
-                  <CloseIcon />
+                  <X className="w-5 h-5" strokeWidth={1.5} />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto py-3">
@@ -284,7 +253,7 @@ export const AppShell: React.FC = () => {
               aria-label={t('nav.openMenu')}
               className="p-1 -ml-1 text-gray-500 hover:text-gray-900 rounded-linear hover:bg-subtle lg:hidden"
             >
-              <MenuIcon />
+              <Menu className="w-5 h-5" strokeWidth={1.5} />
             </button>
 
             <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 min-w-0 flex-1">

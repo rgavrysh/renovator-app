@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Container } from '../components/layout/Container';
 import { useAppShell } from '../components/layout/AppShellContext';
 import { Card, CardHeader, CardContent } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
 import { Divider } from '../components/ui/Divider';
+import { StatusIcon } from '../components/ui/StatusIcon';
+import { IconButton } from '../components/ui/IconButton';
+import { Pencil, Check, X, RefreshCw } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
 import { MilestoneList, type Milestone, MilestoneStatus } from '../components/MilestoneList';
 import { MilestoneForm } from '../components/MilestoneForm';
@@ -22,7 +24,7 @@ import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
 import { BudgetItemForm } from '../components/BudgetItemForm';
-import { getProjectStatusVariant } from '../utils/statusColors';
+import { getProjectStatusIconKind } from '../utils/statusColors';
 import { Modal, ModalFooter } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
 import { getAccessToken } from '../contexts/AuthContext';
@@ -648,7 +650,7 @@ export const ProjectDetail: React.FC = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: ProjectStatus) => getProjectStatusVariant(status);
+  const getStatusIconKind = (status: ProjectStatus) => getProjectStatusIconKind(status);
 
   const getStatusLabel = (status: ProjectStatus) => {
     return t(`projectStatus.${status}`);
@@ -705,9 +707,10 @@ export const ProjectDetail: React.FC = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-                <Badge variant={getStatusBadgeVariant(project.status)}>
+                <span className="inline-flex items-center gap-1.5 text-ui text-gray-600">
+                  <StatusIcon status={getStatusIconKind(project.status)} />
                   {getStatusLabel(project.status)}
-                </Badge>
+                </span>
               </div>
               <p className="text-sm text-gray-600">
                 {t('projectDetail.client')}: {project.clientName}
@@ -976,15 +979,12 @@ export const ProjectDetail: React.FC = () => {
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-xs text-gray-500">{t('projectDetail.totalEstimated')}</p>
                         {!isEditingEstimatedBudget && (
-                          <button
+                          <IconButton
+                            label={t('common.edit')}
+                            icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                            size="sm"
                             onClick={handleStartEditEstimatedBudget}
-                            className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                            title={t('common.edit')}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                            </svg>
-                          </button>
+                          />
                         )}
                       </div>
                       {isEditingEstimatedBudget ? (
@@ -1002,23 +1002,18 @@ export const ProjectDetail: React.FC = () => {
                               if (e.key === 'Escape') handleCancelEditEstimatedBudget();
                             }}
                           />
-                          <button
+                          <IconButton
+                            label={t('common.save')}
+                            icon={<Check className="h-4 w-4" strokeWidth={2} />}
                             onClick={handleSaveEstimatedBudget}
                             disabled={isSavingEstimatedBudget}
-                            className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                          <button
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          />
+                          <IconButton
+                            label={t('common.cancel')}
+                            icon={<X className="h-4 w-4" strokeWidth={2} />}
                             onClick={handleCancelEditEstimatedBudget}
-                            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          </button>
+                          />
                         </div>
                       ) : (
                         <p className="text-xl font-bold text-gray-900">
@@ -1050,19 +1045,10 @@ export const ProjectDetail: React.FC = () => {
                               className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                               title={t('projectDetail.recalculateTasksCosts')}
                             >
-                              <svg
+                              <RefreshCw
                                 className={`w-3.5 h-3.5 ${isRecalculatingTasks ? 'animate-spin' : ''}`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                />
-                              </svg>
+                                strokeWidth={2}
+                              />
                             </button>
                           </div>
                           <div className="flex items-center gap-2">

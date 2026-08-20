@@ -3,9 +3,11 @@ import { Card, CardHeader, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { EmptyState } from './ui/EmptyState';
 import { Alert } from './ui/Alert';
+import { IconButton } from './ui/IconButton';
 import { SupplierForm, Supplier } from './SupplierForm';
 import { apiClient } from '../utils/api';
 import { useTranslation } from 'react-i18next';
+import { Building2, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 export interface SupplierListProps {
   showCard?: boolean;
@@ -104,11 +106,7 @@ export const SupplierList: React.FC<SupplierListProps> = ({
     if (suppliers.length === 0) {
       return (
         <EmptyState
-          icon={
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          }
+          icon={<Building2 className="w-12 h-12" strokeWidth={1.5} />}
           title={t('supplierList.noSuppliers')}
           description={t('supplierList.addSuppliers')}
           action={
@@ -134,9 +132,7 @@ export const SupplierList: React.FC<SupplierListProps> = ({
               {/* Supplier Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
+                  <Building2 className="w-5 h-5 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
                   <h4 className="text-sm font-medium text-gray-900">
                     {supplier.name}
                   </h4>
@@ -180,30 +176,27 @@ export const SupplierList: React.FC<SupplierListProps> = ({
 
               {/* Actions */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
+                <IconButton
+                  label={t('common.edit')}
+                  icon={<Pencil className="w-4 h-4" strokeWidth={1.5} />}
+                  size="sm"
                   onClick={(e) => handleEditSupplier(supplier, e)}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                  title={t('common.edit')}
                   disabled={deletingId === supplier.id}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
+                />
+                <IconButton
+                  label={t('common.delete')}
+                  icon={
+                    deletingId === supplier.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
+                    ) : (
+                      <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                    )
+                  }
+                  size="sm"
+                  variant="danger"
                   onClick={(e) => handleDeleteSupplier(supplier.id, e)}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                  title={t('common.delete')}
                   disabled={deletingId === supplier.id}
-                >
-                  {deletingId === supplier.id ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  )}
-                </button>
+                />
               </div>
             </div>
           </div>

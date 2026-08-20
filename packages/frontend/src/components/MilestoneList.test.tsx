@@ -97,10 +97,10 @@ describe('MilestoneList', () => {
     render(<MilestoneList milestones={overdueMilestones} />);
     
     expect(screen.getByText('⚠ Overdue')).toBeInTheDocument();
-    expect(screen.getByText('Overdue')).toBeInTheDocument(); // Badge text
+    expect(screen.getByText('Overdue')).toBeInTheDocument(); // status glyph label (U3.2)
   });
 
-  it('should display milestone status badges correctly', () => {
+  it('should display milestone status labels correctly (U3.2 — glyph + text, not a badge)', () => {
     render(<MilestoneList milestones={mockMilestones} />);
     
     expect(screen.getByText('Completed')).toBeInTheDocument();
@@ -128,12 +128,11 @@ describe('MilestoneList', () => {
     expect(screen.getByText(/Completed: Jan 14, 2024/)).toBeInTheDocument();
   });
 
-  it('should show visual indicator dots with correct colors', () => {
+  it('should show a StatusIcon glyph per milestone (U3.2)', () => {
     const { container } = render(<MilestoneList milestones={mockMilestones} />);
-    
-    // Check for indicator dots (they have specific background colors)
-    const dots = container.querySelectorAll('.w-2.h-2.rounded-full');
-    expect(dots.length).toBe(3);
+
+    const glyphs = container.querySelectorAll('svg[aria-label]');
+    expect(glyphs.length).toBe(3);
   });
 
   it('should apply special styling to overdue milestones', () => {

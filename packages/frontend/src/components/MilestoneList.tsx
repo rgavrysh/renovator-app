@@ -1,8 +1,10 @@
 import React from 'react';
-import { Badge } from './ui/Badge';
 import { Divider } from './ui/Divider';
+import { StatusIcon } from './ui/StatusIcon';
+import { IconButton } from './ui/IconButton';
 import { useTranslation } from 'react-i18next';
-import { getMilestoneStatusVariant, getMilestoneStatusDotColor } from '../utils/statusColors';
+import { getMilestoneStatusIconKind } from '../utils/statusColors';
+import { Check, Trash2 } from 'lucide-react';
 
 export interface Milestone {
   id: string;
@@ -62,7 +64,7 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
     });
   };
 
-  const getMilestoneStatusBadgeVariant = (status: MilestoneStatus) => getMilestoneStatusVariant(status);
+  const getMilestoneStatusIcon = (status: MilestoneStatus) => getMilestoneStatusIconKind(status);
 
   const getMilestoneStatusLabel = (status: MilestoneStatus) => {
     return t(`milestoneStatus.${status}`);
@@ -143,7 +145,13 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
 
       {/* Milestone List */}
       <div className="space-y-4">
-        {sortedMilestones.map((milestone, index) => (
+        {sortedMilestones.map((milestone, index) => {
+          const milestoneTasks = getMilestoneTasks(milestone);
+          const completedTaskCount = milestoneTasks.filter((task) => task.status === 'completed').length;
+          const taskProgress =
+            milestoneTasks.length > 0 ? Math.round((completedTaskCount / milestoneTasks.length) * 100) : undefined;
+
+          return (
           <div key={milestone.id}>
             {index > 0 && <Divider />}
             <div
@@ -166,10 +174,8 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  {/* Milestone indicator dot */}
-                  <div
-                    className={`w-2 h-2 rounded-full ${getMilestoneStatusDotColor(milestone.status)}`}
-                  />
+                  {/* Status glyph (U3.2) — the arc reflects task completion when the milestone has tasks */}
+                  <StatusIcon status={getMilestoneStatusIcon(milestone.status)} progress={taskProgress} />
                   <h4
                     className={`text-sm font-medium ${
                       isOverdue(milestone) ? 'text-red-900' : 'text-gray-900'
@@ -177,12 +183,9 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                   >
                     {milestone.name}
                   </h4>
-                  <Badge
-                    variant={getMilestoneStatusBadgeVariant(milestone.status)}
-                    size="sm"
-                  >
+                  <span className={`text-xs ${isOverdue(milestone) ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
                     {getMilestoneStatusLabel(milestone.status)}
-                  </Badge>
+                  </span>
                 </div>
                 {milestone.description && (
                   <p
@@ -217,21 +220,14 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                     <span className="font-medium text-red-600">⚠ {t('common.overdue')}</span>
                   )}
                 </div>
-                {(() => {
-                  const milestoneTasks = getMilestoneTasks(milestone);
-                  if (milestoneTasks.length === 0) return null;
-                  const completedTasks = milestoneTasks.filter(
-                    (task) => task.status === 'completed'
-                  ).length;
-                  return (
-                    <p className="text-xs text-gray-500 mt-1 ml-4">
-                      {t('milestoneList.tasksProgress', {
-                        completed: completedTasks,
-                        total: milestoneTasks.length,
-                      })}
-                    </p>
-                  );
-                })()}
+                {milestoneTasks.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1 ml-4">
+                    {t('milestoneList.tasksProgress', {
+                      completed: completedTaskCount,
+                      total: milestoneTasks.length,
+                    })}
+                  </p>
+                )}
               </div>
               
               {/* Action buttons */}
@@ -244,42 +240,31 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
                 {/* Complete button - only show if not completed and status isn't auto-derived from tasks */}
                 {onComplete &&
                   milestone.status !== MilestoneStatus.COMPLETED &&
-                  getMilestoneTasks(milestone).length === 0 && (
+                  milestoneTasks.length === 0 && (
                     <button
                       onClick={() => onComplete(milestone)}
                       className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded transition-colors"
                       title={t('common.complete')}
                     >
+                      <Check className="w-3.5 h-3.5 inline-block -ml-0.5 mr-1" strokeWidth={2} />
                       {t('common.complete')}
                     </button>
                   )}
-                
+
                 {/* Delete button */}
                 {onDelete && (
-                  <button
+                  <IconButton
+                    label={t('common.delete')}
+                    icon={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
+                    variant="danger"
                     onClick={() => onDelete(milestone)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                    title={t('common.delete')}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                  />
                 )}
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { EmptyState } from './ui/EmptyState';
 import { Button } from './ui/Button';
+import { GoogleDriveIcon } from './icons/GoogleDriveIcon';
 import { useTranslation } from 'react-i18next';
+import { X, ChevronLeft, ChevronRight, Image as ImageIcon, MessageSquare } from 'lucide-react';
 
 export interface Photo {
   id: string;
@@ -165,9 +167,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
           aria-label="Close"
         >
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="w-8 h-8" strokeWidth={1.5} />
         </button>
 
         {/* Previous button */}
@@ -180,9 +180,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             className="absolute left-4 text-white hover:text-gray-300 transition-colors z-10"
             aria-label="Previous"
           >
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <ChevronLeft className="w-10 h-10" strokeWidth={1.5} />
           </button>
         )}
 
@@ -196,9 +194,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             className="absolute right-4 text-white hover:text-gray-300 transition-colors z-10"
             aria-label="Next"
           >
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <ChevronRight className="w-10 h-10" strokeWidth={1.5} />
           </button>
         )}
 
@@ -257,11 +253,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     if (photos.length === 0) {
       return (
         <EmptyState
-          icon={
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          }
+          icon={<ImageIcon className="w-12 h-12" strokeWidth={1.5} />}
           title={t('photoGallery.noPhotos')}
           description={t('photoGallery.uploadPhotosToDocument')}
         />
@@ -317,16 +309,12 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                 <div className="absolute top-2 right-2 flex items-center gap-1">
                   {photo.storageProvider === 'google_drive' && (
                     <div className="bg-blue-500/80 text-white p-1 rounded">
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
-                      </svg>
+                      <GoogleDriveIcon className="w-3.5 h-3.5" />
                     </div>
                   )}
                   {photo.metadata?.caption && (
                     <div className="bg-black/70 text-white p-1 rounded">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
+                      <MessageSquare className="w-4 h-4" strokeWidth={1.5} />
                     </div>
                   )}
                 </div>

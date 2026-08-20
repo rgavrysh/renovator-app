@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useGoogleDrive } from '../hooks/useGoogleDrive';
+import { GoogleDriveIcon } from './icons/GoogleDriveIcon';
+import { ChevronDown } from 'lucide-react';
 
 export const UserDropdown: React.FC = () => {
   const { user, logout } = useAuth();
@@ -72,19 +74,10 @@ export const UserDropdown: React.FC = () => {
         <span>
           {user?.firstName} {user?.lastName}
         </span>
-        <svg
+        <ChevronDown
           className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+          strokeWidth={1.5}
+        />
       </button>
 
       {isOpen && (
@@ -102,9 +95,7 @@ export const UserDropdown: React.FC = () => {
           <div className="px-4 py-2">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
-                </svg>
+                <GoogleDriveIcon className="w-4 h-4 text-gray-500" />
                 <span className="text-sm font-medium text-gray-700">
                   {t('userDropdown.googleDrive')}
                 </span>

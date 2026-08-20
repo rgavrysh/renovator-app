@@ -5,13 +5,10 @@ import { EmptyState } from './ui/EmptyState';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
+import { IconButton } from './ui/IconButton';
+import { GoogleDriveIcon } from './icons/GoogleDriveIcon';
 import { useTranslation } from 'react-i18next';
-
-const DriveIcon: React.FC<{ className?: string }> = ({ className = 'w-3 h-3' }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-    <path d="M7.71 3.5L1.15 15l3.43 5.95h6.86l-3.43-5.95L7.71 3.5zm8.58 0l-3.43 5.95 3.43 5.95h6.86L19.72 9.45 16.29 3.5zM12 8.3l-3.43 5.95L12 20.2l3.43-5.95L12 8.3z" />
-  </svg>
-);
+import { FileText, Image as ImageIcon, FileSpreadsheet, File, FolderOpen, RotateCcw, Download, Trash2 } from 'lucide-react';
 
 export enum DocumentType {
   CONTRACT = 'contract',
@@ -314,44 +311,24 @@ export const DocumentList: React.FC<DocumentListProps> = ({
 
   const getFileIcon = (fileType: string): React.ReactNode => {
     const type = fileType.toLowerCase();
-    
+
     if (type.includes('pdf')) {
-      return (
-        <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M4 18h12V6h-4V2H4v16zm-2 1V0h12l4 4v16H2v-1z" />
-        </svg>
-      );
+      return <FileText className="w-8 h-8 text-red-500" strokeWidth={1.5} />;
     }
-    
+
     if (type.includes('image') || type.includes('jpg') || type.includes('png') || type.includes('heic')) {
-      return (
-        <svg className="w-8 h-8 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-        </svg>
-      );
+      return <ImageIcon className="w-8 h-8 text-blue-500" strokeWidth={1.5} />;
     }
-    
+
     if (type.includes('word') || type.includes('doc')) {
-      return (
-        <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M4 18h12V6h-4V2H4v16zm-2 1V0h12l4 4v16H2v-1z" />
-        </svg>
-      );
+      return <FileText className="w-8 h-8 text-blue-600" strokeWidth={1.5} />;
     }
-    
+
     if (type.includes('excel') || type.includes('xls') || type.includes('spreadsheet')) {
-      return (
-        <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M4 18h12V6h-4V2H4v16zm-2 1V0h12l4 4v16H2v-1z" />
-        </svg>
-      );
+      return <FileSpreadsheet className="w-8 h-8 text-green-600" strokeWidth={1.5} />;
     }
-    
-    return (
-      <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
-      </svg>
-    );
+
+    return <File className="w-8 h-8 text-gray-400" strokeWidth={1.5} />;
   };
 
   const typeOptions = [
@@ -401,11 +378,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     if (filteredDocuments.length === 0) {
       return (
         <EmptyState
-          icon={
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          }
+          icon={<FolderOpen className="w-12 h-12" strokeWidth={1.5} />}
           title={
             viewingTrash
               ? t('documentList.trashEmpty')
@@ -454,7 +427,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     {document.storageProvider === 'google_drive' && (
                       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs bg-blue-50 text-blue-600" title={t('googleDrive.storedInDrive')}>
-                        <DriveIcon />
+                        <GoogleDriveIcon className="w-3 h-3" />
                       </span>
                     )}
                     <Badge variant={getDocumentTypeColor(document.type)} size="sm">
@@ -488,38 +461,27 @@ export const DocumentList: React.FC<DocumentListProps> = ({
               {/* Actions */}
               <div className="flex-shrink-0 flex items-center gap-2">
                 {viewingTrash ? (
-                  <button
+                  <IconButton
+                    label={t('common.retry')}
+                    icon={<RotateCcw className="w-4 h-4" strokeWidth={1.5} />}
                     onClick={(e) => handleRestore(document, e)}
-                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                    title={t('common.retry')}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  </button>
+                  />
                 ) : (
                   <>
-                    <button
+                    <IconButton
+                      label={t('common.view')}
+                      icon={<Download className="w-4 h-4" strokeWidth={1.5} />}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDownload(document);
                       }}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      title={t('common.view')}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                    </button>
-                    <button
+                    />
+                    <IconButton
+                      label={t('common.delete')}
+                      icon={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
+                      variant="danger"
                       onClick={(e) => handleDelete(document, e)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title={t('common.delete')}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    />
                   </>
                 )}
               </div>

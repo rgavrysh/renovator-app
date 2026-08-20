@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Container } from '../components/layout/Container';
 import { Card, CardHeader, CardContent } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
-import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
+import { StatusIcon } from '../components/ui/StatusIcon';
 import { apiClient } from '../utils/api';
-import { getProjectStatusVariant } from '../utils/statusColors';
+import { getProjectStatusIconKind } from '../utils/statusColors';
 
 interface Project {
   id: string;
@@ -84,7 +84,7 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const getStatusBadgeVariant = (status: ProjectStatus) => getProjectStatusVariant(status);
+  const getStatusIconKind = (status: ProjectStatus) => getProjectStatusIconKind(status);
 
   const getStatusLabel = (status: ProjectStatus) => {
     return t(`projectStatus.${status}`);
@@ -183,12 +183,10 @@ export const Dashboard: React.FC = () => {
                 <CardHeader
                   title={project.name}
                   action={
-                    <Badge
-                      variant={getStatusBadgeVariant(project.status)}
-                      size="sm"
-                    >
+                    <span className="inline-flex items-center gap-1.5 text-ui text-gray-600">
+                      <StatusIcon status={getStatusIconKind(project.status)} />
                       {getStatusLabel(project.status)}
-                    </Badge>
+                    </span>
                   }
                 />
                 <CardContent>

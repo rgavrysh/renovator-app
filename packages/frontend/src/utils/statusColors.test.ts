@@ -2,10 +2,13 @@ import { describe, it, expect } from 'vitest';
 import {
   getTaskStatusVariant,
   getTaskStatusDotColor,
+  getTaskStatusIconKind,
   getTaskPriorityVariant,
   getProjectStatusVariant,
+  getProjectStatusIconKind,
   getMilestoneStatusVariant,
   getMilestoneStatusDotColor,
+  getMilestoneStatusIconKind,
   getResourceStatusVariant,
   getBudgetCategoryVariant,
 } from './statusColors';
@@ -32,6 +35,17 @@ describe('statusColors — U1.5 consolidated status maps', () => {
 
     it('falls back to the neutral dot colour for an unknown status', () => {
       expect(getTaskStatusDotColor('nonexistent')).toBe('bg-gray-400');
+    });
+
+    it('maps every known status to a StatusIcon glyph kind (U3.2)', () => {
+      expect(getTaskStatusIconKind('todo')).toBe('todo');
+      expect(getTaskStatusIconKind('in_progress')).toBe('in-progress');
+      expect(getTaskStatusIconKind('completed')).toBe('done');
+      expect(getTaskStatusIconKind('blocked')).toBe('cancelled');
+    });
+
+    it('falls back to "todo" glyph for an unknown status', () => {
+      expect(getTaskStatusIconKind('nonexistent')).toBe('todo');
     });
   });
 
@@ -60,6 +74,18 @@ describe('statusColors — U1.5 consolidated status maps', () => {
     it('falls back to default for an unknown status', () => {
       expect(getProjectStatusVariant('nonexistent')).toBe('default');
     });
+
+    it('maps every known status to a StatusIcon glyph kind (U3.2)', () => {
+      expect(getProjectStatusIconKind('planning')).toBe('not-started');
+      expect(getProjectStatusIconKind('active')).toBe('in-progress');
+      expect(getProjectStatusIconKind('on_hold')).toBe('cancelled');
+      expect(getProjectStatusIconKind('completed')).toBe('done');
+      expect(getProjectStatusIconKind('archived')).toBe('done');
+    });
+
+    it('falls back to "todo" glyph for an unknown status', () => {
+      expect(getProjectStatusIconKind('nonexistent')).toBe('todo');
+    });
   });
 
   describe('milestone status', () => {
@@ -83,6 +109,17 @@ describe('statusColors — U1.5 consolidated status maps', () => {
 
     it('falls back to the neutral dot colour for an unknown status', () => {
       expect(getMilestoneStatusDotColor('nonexistent')).toBe('bg-gray-300');
+    });
+
+    it('maps every known status to a StatusIcon glyph kind (U3.2)', () => {
+      expect(getMilestoneStatusIconKind('not_started')).toBe('not-started');
+      expect(getMilestoneStatusIconKind('in_progress')).toBe('in-progress');
+      expect(getMilestoneStatusIconKind('completed')).toBe('done');
+      expect(getMilestoneStatusIconKind('overdue')).toBe('cancelled');
+    });
+
+    it('falls back to "todo" glyph for an unknown status', () => {
+      expect(getMilestoneStatusIconKind('nonexistent')).toBe('todo');
     });
   });
 
