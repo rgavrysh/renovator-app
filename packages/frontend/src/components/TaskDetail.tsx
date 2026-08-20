@@ -5,6 +5,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Textarea } from './ui/Textarea';
 import { Divider } from './ui/Divider';
+import { Container } from './layout/Container';
 import { apiClient } from '../utils/api';
 import { Task, TaskStatus, TaskPriority } from './TaskList';
 import { formatCurrency } from '../utils/currency';
@@ -119,6 +120,34 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
     return null;
   }
 
+  const renderDescription = () => {
+    if (task.description) {
+      return (
+        <Container size="prose" padding={false}>
+          {task.description.split('\n').filter((p) => p.trim().length > 0).map((paragraph, index) => (
+            <p key={index} className="text-body text-gray-800 mb-3 last:mb-0">
+              {paragraph}
+            </p>
+          ))}
+        </Container>
+      );
+    }
+
+    if (onEdit) {
+      return (
+        <button
+          type="button"
+          onClick={() => onEdit(task)}
+          className="text-body text-gray-400 italic hover:text-gray-500 transition-colors text-left"
+        >
+          {t('taskDetail.addDescriptionPlaceholder')}
+        </button>
+      );
+    }
+
+    return <p className="text-body text-gray-400 italic">{t('taskDetail.addDescriptionPlaceholder')}</p>;
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -126,13 +155,77 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
       title={task.name}
       size="lg"
     >
-      <div className="space-y-6">
-        {/* Task Status and Priority */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              {t('common.status')}
-            </label>
+      <div className="flex flex-col sm:flex-row gap-6">
+        {/* Reading column — description and notes (U4.2, U4.3) */}
+        <div className="flex-1 min-w-0 space-y-6">
+          {/* Task Description */}
+          <div>
+            <h3 className="text-ui-xs font-medium uppercase tracking-wide text-gray-500 mb-2">
+              {t('common.description')}
+            </h3>
+            {renderDescription()}
+          </div>
+
+          <Divider />
+
+          {/* Notes Section */}
+          <div>
+            <h3 className="text-ui-xs font-medium uppercase tracking-wide text-gray-500 mb-3">
+              {t('common.notes')}
+            </h3>
+
+            {/* Add Note Form */}
+            <div className="mb-4">
+              <Textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder={t('taskDetail.addNotePlaceholder')}
+                rows={3}
+                fullWidth
+              />
+              {noteError && (
+                <p className="text-xs text-red-600 mt-1">{noteError}</p>
+              )}
+              <div className="mt-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleAddNote}
+                  disabled={!newNote.trim() || isAddingNote}
+                  loading={isAddingNote}
+                >
+                  {t('taskDetail.addNote')}
+                </Button>
+              </div>
+            </div>
+
+            {/* Notes History */}
+            {task.notes && task.notes.length > 0 ? (
+              <div className="space-y-3">
+                <h4 className="text-ui-xs font-medium text-gray-500 uppercase">{t('taskDetail.history')}</h4>
+                <div className="space-y-2">
+                  {task.notes.map((note, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-gray-50 rounded-linear border border-gray-200"
+                    >
+                      <p className="text-body text-gray-800">{note}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500">{t('taskDetail.noNotes')}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Properties rail (U4.3) */}
+        <div className="sm:w-48 flex-shrink-0 space-y-4">
+          <div>
+            <p className="text-ui-xs text-gray-500 mb-1">{t('common.status')}</p>
             {onStatusChange ? (
               <select
                 value={task.status}
@@ -150,46 +243,34 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
               </Badge>
             )}
           </div>
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              {t('common.priority')}
-            </label>
+
+          <div>
+            <p className="text-ui-xs text-gray-500 mb-1">{t('common.priority')}</p>
             <Badge variant={getTaskPriorityBadgeVariant(task.priority)}>
               {getTaskPriorityLabel(task.priority)}
             </Badge>
           </div>
-        </div>
 
-        {/* Task Description */}
-        {task.description && (
-          <div>
-            <h3 className="text-sm font-medium text-gray-900 mb-2">{t('common.description')}</h3>
-            <p className="text-sm text-gray-600">{task.description}</p>
-          </div>
-        )}
-
-        {/* Task Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {task.dueDate && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.dueDate')}</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-ui-xs text-gray-500 mb-1">{t('taskDetail.dueDate')}</p>
+              <p className="text-ui font-medium text-gray-900">
                 {formatDate(task.dueDate)}
               </p>
             </div>
           )}
           {task.completedDate && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.completedDate')}</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-ui-xs text-gray-500 mb-1">{t('taskDetail.completedDate')}</p>
+              <p className="text-ui font-medium text-gray-900">
                 {formatDate(task.completedDate)}
               </p>
             </div>
           )}
           {task.price !== undefined && task.price !== null && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.price')}</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-ui-xs text-gray-500 mb-1">{t('taskDetail.price')}</p>
+              <p className="text-ui font-medium text-gray-900">
                 {formatCurrency(Number(task.price), i18n.language)}
                 {task.unit && <span className="text-gray-500"> / {task.unit}</span>}
               </p>
@@ -197,71 +278,18 @@ export const TaskDetail: React.FC<TaskDetailProps> = ({
           )}
           {task.amount !== undefined && task.amount !== null && task.amount !== 1 && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.amount')}</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-ui-xs text-gray-500 mb-1">{t('taskDetail.amount')}</p>
+              <p className="text-ui font-medium text-gray-900">
                 {Number(task.amount).toFixed(2)}
               </p>
             </div>
           )}
           {task.actualPrice !== undefined && task.actualPrice !== null && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">{t('taskDetail.actualPrice')}</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-ui-xs text-gray-500 mb-1">{t('taskDetail.actualPrice')}</p>
+              <p className="text-ui font-medium text-gray-900">
                 {formatCurrency(Number(task.actualPrice), i18n.language)}
               </p>
-            </div>
-          )}
-        </div>
-
-        <Divider />
-
-        {/* Notes Section */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-900 mb-3">{t('common.notes')}</h3>
-          
-          {/* Add Note Form */}
-          <div className="mb-4">
-            <Textarea
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              placeholder={t('taskDetail.addNotePlaceholder')}
-              rows={3}
-              fullWidth
-            />
-            {noteError && (
-              <p className="text-xs text-red-600 mt-1">{noteError}</p>
-            )}
-            <div className="mt-2">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleAddNote}
-                disabled={!newNote.trim() || isAddingNote}
-                loading={isAddingNote}
-              >
-                {t('taskDetail.addNote')}
-              </Button>
-            </div>
-          </div>
-
-          {/* Notes History */}
-          {task.notes && task.notes.length > 0 ? (
-            <div className="space-y-3">
-              <h4 className="text-xs font-medium text-gray-500 uppercase">{t('taskDetail.history')}</h4>
-              <div className="space-y-2">
-                {task.notes.map((note, index) => (
-                  <div
-                    key={index}
-                    className="p-3 bg-gray-50 rounded-linear border border-gray-200"
-                  >
-                    <p className="text-sm text-gray-900">{note}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-sm text-gray-500">{t('taskDetail.noNotes')}</p>
             </div>
           )}
         </div>

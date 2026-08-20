@@ -56,12 +56,12 @@ export const Modal: React.FC<ModalProps> = ({
         
         {/* Modal */}
         <div
-          className={`relative bg-surface rounded-linear shadow-lg w-full ${sizeStyles[size]} animate-pop-in`}
+          className={`relative bg-surface rounded-linear shadow-lg w-full ${sizeStyles[size]} max-h-[calc(100vh-4rem)] flex flex-col animate-pop-in`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
               {title && <h2 className="text-title text-gray-900">{title}</h2>}
               {showCloseButton && (
                 <button
@@ -76,7 +76,7 @@ export const Modal: React.FC<ModalProps> = ({
           )}
           
           {/* Content */}
-          <div className="px-6 py-4">
+          <div className="px-6 py-4 flex-1 overflow-y-auto">
             {children}
           </div>
         </div>

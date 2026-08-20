@@ -64,4 +64,39 @@ describe('Modal', () => {
       expect(screen.getByText('Visible').closest('div[class*="shadow-lg"]')).not.toBeNull();
     });
   });
+
+  describe('U4.4 — capped modal height', () => {
+    it('caps the panel height and lets it shrink in a flex column', () => {
+      render(
+        <Modal isOpen onClose={() => {}} title="Visible">
+          Content
+        </Modal>
+      );
+      const panel = screen.getByText('Visible').closest('div[class*="shadow-lg"]');
+      expect(panel?.className).toContain('max-h-[calc(100vh-4rem)]');
+      expect(panel?.className).toContain('flex');
+      expect(panel?.className).toContain('flex-col');
+    });
+
+    it('makes the content area scroll instead of overflowing the viewport', () => {
+      render(
+        <Modal isOpen onClose={() => {}} title="Visible">
+          Content
+        </Modal>
+      );
+      const content = screen.getByText('Content').closest('div[class*="overflow-y-auto"]');
+      expect(content).not.toBeNull();
+      expect(content?.className).toContain('flex-1');
+    });
+
+    it('keeps the header from shrinking when the content scrolls', () => {
+      render(
+        <Modal isOpen onClose={() => {}} title="Visible">
+          Content
+        </Modal>
+      );
+      const header = screen.getByText('Visible').closest('div[class*="border-b"]');
+      expect(header?.className).toContain('flex-shrink-0');
+    });
+  });
 });

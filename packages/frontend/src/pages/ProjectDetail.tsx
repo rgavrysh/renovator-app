@@ -742,52 +742,82 @@ export const ProjectDetail: React.FC = () => {
             <Card>
               <CardHeader title={t('projectDetail.projectInformation')} />
               <CardContent>
-                <div className="space-y-4">
-                  {project.description && (
+                {/* Content column + properties rail — U4.3 */}
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-ui-xs font-medium uppercase tracking-wide text-gray-500 mb-2">
+                      {t('common.description')}
+                    </h3>
+                    {project.description ? (
+                      <Container size="prose" padding={false}>
+                        {project.description.split('\n').filter((p) => p.trim().length > 0).map((paragraph, index) => (
+                          <p key={index} className="text-body text-gray-800 mb-3 last:mb-0">
+                            {paragraph}
+                          </p>
+                        ))}
+                      </Container>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        className="text-body text-gray-400 italic hover:text-gray-500 transition-colors text-left"
+                      >
+                        {t('projectDetail.addDescriptionPlaceholder')}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="md:w-56 flex-shrink-0 space-y-4">
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">{t('common.description')}</p>
-                      <p className="text-sm text-gray-900">{project.description}</p>
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.startDate')}</p>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-ui-xs text-gray-500 mb-1">{t('projectDetail.startDate')}</p>
+                      <p className="text-ui font-medium text-gray-900">
                         {formatDate(project.startDate)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.estimatedEndDate')}</p>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-ui-xs text-gray-500 mb-1">{t('projectDetail.estimatedEndDate')}</p>
+                      <p className="text-ui font-medium text-gray-900">
                         {formatDate(project.estimatedEndDate)}
                       </p>
                     </div>
-                  </div>
-
-                  {project.actualEndDate && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.actualEndDate')}</p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {formatDate(project.actualEndDate)}
-                      </p>
-                    </div>
-                  )}
-
-                  <Divider />
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {project.clientEmail && (
+                    {project.actualEndDate && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">{t('projectDetail.clientEmail')}</p>
-                        <p className="text-sm text-gray-900 break-words">{project.clientEmail}</p>
+                        <p className="text-ui-xs text-gray-500 mb-1">{t('projectDetail.actualEndDate')}</p>
+                        <p className="text-ui font-medium text-gray-900">
+                          {formatDate(project.actualEndDate)}
+                        </p>
                       </div>
                     )}
-                    {project.clientPhone && (
+
+                    <Divider />
+
+                    {project.clientEmail ? (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">{t('projectDetail.clientPhone')}</p>
-                        <p className="text-sm text-gray-900">{project.clientPhone}</p>
+                        <p className="text-ui-xs text-gray-500 mb-1">{t('projectDetail.clientEmail')}</p>
+                        <p className="text-ui text-gray-900 break-words">{project.clientEmail}</p>
                       </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        className="block text-ui text-gray-400 italic hover:text-gray-500 transition-colors text-left"
+                      >
+                        {t('projectDetail.addClientEmailPlaceholder')}
+                      </button>
+                    )}
+                    {project.clientPhone ? (
+                      <div>
+                        <p className="text-ui-xs text-gray-500 mb-1">{t('projectDetail.clientPhone')}</p>
+                        <p className="text-ui text-gray-900">{project.clientPhone}</p>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleEdit}
+                        className="block text-ui text-gray-400 italic hover:text-gray-500 transition-colors text-left"
+                      >
+                        {t('projectDetail.addClientPhonePlaceholder')}
+                      </button>
                     )}
                   </div>
                 </div>

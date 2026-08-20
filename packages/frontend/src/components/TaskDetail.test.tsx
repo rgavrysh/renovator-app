@@ -345,4 +345,100 @@ describe('TaskDetail', () => {
     confirmSpy.mockRestore();
     alertSpy.mockRestore();
   });
+
+  describe('U4.1 / U4.2 — reading comfort', () => {
+    it('renders a multi-line description as separate paragraphs at reading size', () => {
+      const taskWithMultilineDescription = {
+        ...mockTask,
+        description: 'First paragraph.\nSecond paragraph.',
+      };
+
+      render(
+        <TaskDetail
+          isOpen={true}
+          onClose={mockOnClose}
+          task={taskWithMultilineDescription}
+          onTaskUpdate={mockOnTaskUpdate}
+        />
+      );
+
+      const first = screen.getByText('First paragraph.');
+      const second = screen.getByText('Second paragraph.');
+      expect(first.tagName).toBe('P');
+      expect(second.tagName).toBe('P');
+      expect(first.className).toContain('text-body');
+    });
+
+    it('shows a clickable "add a description" placeholder when there is none and onEdit is provided', async () => {
+      const user = userEvent.setup();
+      const mockOnEdit = vi.fn();
+      const taskWithoutDescription = { ...mockTask, description: undefined };
+
+      render(
+        <TaskDetail
+          isOpen={true}
+          onClose={mockOnClose}
+          task={taskWithoutDescription}
+          onTaskUpdate={mockOnTaskUpdate}
+          onEdit={mockOnEdit}
+        />
+      );
+
+      const placeholder = screen.getByRole('button', { name: /add a description/i });
+      await user.click(placeholder);
+
+      expect(mockOnEdit).toHaveBeenCalledWith(taskWithoutDescription);
+    });
+
+    it('shows a non-interactive "add a description" placeholder when there is none and onEdit is absent', () => {
+      const taskWithoutDescription = { ...mockTask, description: undefined };
+
+      render(
+        <TaskDetail
+          isOpen={true}
+          onClose={mockOnClose}
+          task={taskWithoutDescription}
+          onTaskUpdate={mockOnTaskUpdate}
+        />
+      );
+
+      expect(screen.getByText(/add a description/i).tagName).toBe('P');
+      expect(screen.queryByRole('button', { name: /add a description/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('U4.3 — properties rail', () => {
+    it('renders status and priority as label/value rows alongside the reading column', () => {
+      render(
+        <TaskDetail
+          isOpen={true}
+          onClose={mockOnClose}
+          task={mockTask}
+          onTaskUpdate={mockOnTaskUpdate}
+        />
+      );
+
+      expect(screen.getByText('Status')).toBeInTheDocument();
+      expect(screen.getByText('Priority')).toBeInTheDocument();
+      expect(screen.getByText('In Progress')).toBeInTheDocument();
+      expect(screen.getByText('High')).toBeInTheDocument();
+    });
+
+    it('still renders the status select in the rail when onStatusChange is provided', () => {
+      const mockOnStatusChange = vi.fn();
+
+      render(
+        <TaskDetail
+          isOpen={true}
+          onClose={mockOnClose}
+          task={mockTask}
+          onTaskUpdate={mockOnTaskUpdate}
+          onStatusChange={mockOnStatusChange}
+        />
+      );
+
+      const select = screen.getByDisplayValue('In Progress');
+      expect(select.tagName).toBe('SELECT');
+    });
+  });
 });

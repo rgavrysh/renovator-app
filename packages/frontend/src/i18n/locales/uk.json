@@ -111,11 +111,14 @@
     "archiveConfirm": "Ви впевнені, що хочете архівувати цей проєкт?",
     "projectNotFound": "Проєкт не знайдено",
     "projectInformation": "Інформація про проєкт",
+    "addDescriptionPlaceholder": "Додати опис…",
     "startDate": "Дата початку",
     "estimatedEndDate": "Орієнтовна дата завершення",
     "actualEndDate": "Фактична дата завершення",
     "clientEmail": "Ел. пошта клієнта",
     "clientPhone": "Телефон клієнта",
+    "addClientEmailPlaceholder": "Додати ел. пошту клієнта…",
+    "addClientPhonePlaceholder": "Додати телефон клієнта…",
     "client": "Клієнт",
     "timelineMilestones": "Графік та етапи",
     "addMilestone": "Додати етап",
@@ -210,6 +213,7 @@
     "actual": "Факт:"
   },
   "taskDetail": {
+    "addDescriptionPlaceholder": "Додати опис…",
     "addNote": "Додати нотатку",
     "addNotePlaceholder": "Додати нотатку...",
     "history": "Історія",

@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: 'prose' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
   padding?: boolean;
 }
 
@@ -13,6 +13,9 @@ export const Container: React.FC<ContainerProps> = ({
   ...props
 }) => {
   const sizeStyles = {
+    // Reading width for descriptions, notes and other prose — U4.1. ~68
+    // characters per line is the comfortable upper bound for body text.
+    prose: 'max-w-[68ch]',
     sm: 'max-w-2xl',
     md: 'max-w-4xl',
     lg: 'max-w-6xl',

@@ -16,7 +16,7 @@ The distinction matters, because the two plans pull in different directions and 
 
 So this is not a third parallel plan. It is the argument for un-parking those items, plus the visual layer that neither existing document covers at all: type scale, density, iconography, motion, and reading comfort.
 
-**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note), and Batch D (`U3.1`–`U3.3`) are implemented. Everything below is written against that baseline.
+**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note), Batch D (`U3.1`–`U3.3`), and Batch E (`U4.1`–`U4.4`) are implemented. Everything below is written against that baseline.
 
 ---
 
@@ -320,19 +320,23 @@ Icon-only actions currently appear as bare SVGs in buttons with three different 
 
 This is the part of your request that is most specific: *"section with important context (like task description) has comfortable size and font to read."*
 
-### U4.1 · Reading width
+### U4.1 · Reading width ✅ done
 
 `Container` currently offers `max-w-7xl` for everything. Add a `prose` size at `max-w-[68ch]` and use it for descriptions, notes and any long text. At 1440px a description currently runs the full content width, which is roughly 160 characters per line — about double what's comfortable.
 
 **Where:** `layout/Container.tsx`. **Effort:** S
 
-### U4.2 · Description and notes as first-class content
+**Implementation note:** added a `prose` option to `ContainerProps['size']` mapping to `max-w-[68ch]`, alongside the existing `sm`–`full` sizes. Used (with `padding={false}`, since it's nested inside existing card/modal padding rather than a page-level container) to wrap the description text in both `TaskDetail` and `ProjectDetail`'s Project Information card. Covered by `layout/Container.test.tsx`.
+
+### U4.2 · Description and notes as first-class content ✅ done
 
 Project description and task notes get `text-body` (15px/24px) rather than `text-sm`, `text-gray-800` rather than `text-gray-700`, real paragraph spacing, and a placeholder-style empty state (`Add a description…` in `text-gray-400`, clickable) instead of being hidden when absent.
 
 **Where:** `pages/ProjectDetail.tsx`, `components/TaskDetail.tsx`. **Effort:** S · 👁
 
-### U4.3 · Detail layout: content column plus properties rail
+**Implementation note:** task and project descriptions are split on newlines and rendered as separate `text-body text-gray-800` paragraphs (`mb-3 last:mb-0`) inside the new `prose` container, instead of one `text-sm text-gray-600` line. When a description is absent, a `text-gray-400 italic` placeholder (`taskDetail.addDescriptionPlaceholder` / `projectDetail.addDescriptionPlaceholder`) is shown; it's a clickable `<button>` calling `onEdit(task)` / navigating to the project edit route when an edit path exists, and a plain (non-interactive) `<p>` otherwise — `TaskDetail` doesn't always receive an `onEdit` prop. Notes history text was bumped from `text-sm` to `text-body text-gray-800` to match. Client email/phone in `ProjectDetail`'s rail got the same quiet "Add client email…" / "Add client phone…" placeholder treatment for consistency with `U4.3`'s rail. Covered by new cases in `TaskDetail.test.tsx` and `ProjectDetail.test.tsx`.
+
+### U4.3 · Detail layout: content column plus properties rail ✅ done
 
 Restructure `TaskDetail` and the `ProjectDetail` header to the two-column shape in your screenshots — title, description and activity in the reading column; a right rail of label/value property rows (status, assignee, dates, milestone) at `text-ui`, each row inline-editable, each empty value shown as a quiet "Add …" affordance.
 
@@ -340,11 +344,15 @@ This replaces the current pattern where the same information is a dense grid of 
 
 **Where:** `components/TaskDetail.tsx`, `pages/ProjectDetail.tsx`. **Effort:** M · 👁
 
-### U4.4 · Cap modal height
+**Implementation note:** `TaskDetail`'s modal body is now `flex flex-col sm:flex-row gap-6` — a flexible reading column (description + notes) plus a `sm:w-48` properties rail (status, priority, due date, completed date, price, amount, actual price) with `text-ui-xs` labels over `text-ui` values, matching the "label/value property row" pattern rather than the old two-column grid of `text-xs`/`text-sm` pairs. Status remains a `<select>` when `onStatusChange` is provided and a plain glyph+text row otherwise — inline editing beyond that (a real popover, per `U6.2`) is still open. `ProjectDetail`'s "Project Information" card got the same treatment: `flex flex-col md:flex-row gap-6`, description in the content column, a `md:w-56` rail with dates and client contact info, with empty client fields getting the quiet "Add …" affordance from `U4.2` (clicking navigates to the edit form, since there's no per-field inline editor yet). The rest of `ProjectDetail` (milestones, tasks, documents, budget) was left as-is — only the header/information card was in scope, as the step title says. Covered by new cases in `TaskDetail.test.tsx` and `ProjectDetail.test.tsx`.
+
+### U4.4 · Cap modal height ✅ done
 
 `Modal` has no max-height, so titles and Save buttons scroll off the four long forms. `max-h-[calc(100vh-4rem)] flex flex-col` on the panel and `flex-1 overflow-y-auto` on the content fixes all 11 modals at once. (This is `S22`; it belongs here because `U4.3` makes modals taller.)
 
 **Where:** `ui/Modal.tsx`. **Effort:** S
+
+**Implementation note:** the panel is `max-h-[calc(100vh-4rem)] flex flex-col`, the header got `flex-shrink-0` so it never scrolls out of view, and the content wrapper is `flex-1 overflow-y-auto`. `ModalFooter` is passed as part of `children`, so on a tall form it scrolls with the rest of the content rather than staying pinned — the same trade-off implied by the plan's own snippet, which only names the panel and content, not a fourth "sticky footer" layer. Covered by three new cases in `ui/Modal.test.tsx`.
 
 ---
 
@@ -460,7 +468,7 @@ Read this before scheduling either document, so nothing is built twice.
 | **B** ✅ done | `U1.5` + palette | ~2–3 days | Status colour is consistent; the accent stops fighting itself |
 | **C** ⚠️ mostly done | `U2.1`–`U2.4` | ~4–6 days | The app becomes navigable; Suppliers appears. Materials CRUD in `ResourceList` is the one piece left open |
 | **D** ✅ done | `U3.1`–`U3.3` | ~3–4 days | Uniform iconography; status glyphs replace the wall of pills |
-| **E** | `U4.1`–`U4.4` | ~2–3 days | Descriptions and notes become genuinely comfortable to read |
+| **E** ✅ done | `U4.1`–`U4.4` | ~2–3 days | Descriptions and notes become genuinely comfortable to read |
 | **F** | `U5.1`–`U5.3` | ~5–8 days | Six list patterns become one |
 | **G** | `U6.1`–`U6.5` | ~5–7 days | The app feels fast and rewards poking around |
 | **H** | `U7.1`–`U7.3` | ~2–3 days | First impression matches the rest |

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ProjectDetail } from './ProjectDetail';
 import { AuthProvider } from '../contexts/AuthContext';
@@ -134,10 +134,27 @@ const renderWithRouter = (route = '/projects/project-1') => {
       <AuthProvider>
         <Routes>
           <Route path="/projects/:id" element={<ProjectDetail />} />
+          <Route path="/projects/:id/edit" element={<div>Edit Project Page</div>} />
         </Routes>
       </AuthProvider>
     </MemoryRouter>
   );
+};
+
+const mockApiForProject = (project: typeof mockProject) => {
+  mockFetch.mockImplementation((url: string) => {
+    if (typeof url === 'string' && (url.includes('/photos') || url.includes('/documents'))) {
+      return Promise.resolve({ ok: true, json: async () => [] });
+    }
+    return Promise.resolve({ ok: true, json: async () => mockUser });
+  });
+
+  vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
+    if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
+    if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);
+    if (endpoint.includes('/budget')) return Promise.resolve(mockBudget);
+    return Promise.resolve(project);
+  });
 };
 
 describe('ProjectDetail', () => {
@@ -394,6 +411,55 @@ describe('ProjectDetail', () => {
     await waitFor(() => {
       // 1 out of 2 milestones completed = 50%
       expect(screen.getByText('Progress: 50%')).toBeInTheDocument();
+    });
+  });
+
+  describe('U4.2 / U4.3 — reading comfort and the properties rail', () => {
+    it('shows a clickable placeholder and routes to Edit when the description is missing', async () => {
+      mockApiForProject({ ...mockProject, description: undefined });
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText('Kitchen Renovation')).toBeInTheDocument();
+      });
+
+      const placeholder = screen.getByRole('button', { name: /add a description/i });
+      expect(placeholder).toBeInTheDocument();
+
+      fireEvent.click(placeholder);
+
+      expect(screen.getByText('Edit Project Page')).toBeInTheDocument();
+    });
+
+    it('shows quiet "add" placeholders when client email and phone are missing', async () => {
+      mockApiForProject({ ...mockProject, clientEmail: undefined, clientPhone: undefined });
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText('Kitchen Renovation')).toBeInTheDocument();
+      });
+
+      expect(screen.getByRole('button', { name: /add client email/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /add client phone/i })).toBeInTheDocument();
+      expect(screen.queryByText('john@example.com')).not.toBeInTheDocument();
+    });
+
+    it('renders multi-paragraph descriptions as separate paragraphs at reading size', async () => {
+      mockApiForProject({ ...mockProject, description: 'First paragraph.\nSecond paragraph.' });
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText('Kitchen Renovation')).toBeInTheDocument();
+      });
+
+      const first = screen.getByText('First paragraph.');
+      const second = screen.getByText('Second paragraph.');
+      expect(first.tagName).toBe('P');
+      expect(second.tagName).toBe('P');
+      expect(first.className).toContain('text-body');
     });
   });
 });

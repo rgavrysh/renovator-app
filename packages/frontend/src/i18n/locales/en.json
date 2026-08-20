@@ -111,11 +111,14 @@
     "archiveConfirm": "Are you sure you want to archive this project?",
     "projectNotFound": "Project not found",
     "projectInformation": "Project Information",
+    "addDescriptionPlaceholder": "Add a description…",
     "startDate": "Start Date",
     "estimatedEndDate": "Estimated End Date",
     "actualEndDate": "Actual End Date",
     "clientEmail": "Client Email",
     "clientPhone": "Client Phone",
+    "addClientEmailPlaceholder": "Add client email…",
+    "addClientPhonePlaceholder": "Add client phone…",
     "client": "Client",
     "timelineMilestones": "Timeline & Milestones",
     "addMilestone": "Add Milestone",
@@ -210,6 +213,7 @@
     "actual": "Actual:"
   },
   "taskDetail": {
+    "addDescriptionPlaceholder": "Add a description…",
     "addNote": "Add Note",
     "addNotePlaceholder": "Add a note...",
     "history": "History",
