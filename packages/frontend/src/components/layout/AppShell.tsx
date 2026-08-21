@@ -181,34 +181,46 @@ export const AppShell: React.FC = () => {
             isSidebarCollapsed ? 'lg:w-14' : 'lg:w-60'
           }`}
         >
-          <div className={`h-10 flex items-center flex-shrink-0 ${isSidebarCollapsed ? 'justify-center' : 'px-4'}`}>
+          <div
+            className={`h-10 flex items-center flex-shrink-0 ${
+              isSidebarCollapsed ? 'justify-center' : 'justify-between px-4'
+            }`}
+          >
             <Link to="/dashboard" className="flex items-center gap-2" title={isSidebarCollapsed ? t('app.name') : undefined}>
               <span className="w-5 h-5 bg-primary-600 rounded flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-[11px]">R</span>
               </span>
               {!isSidebarCollapsed && <span className="text-ui font-semibold text-gray-900">{t('app.name')}</span>}
             </Link>
-          </div>
-          <div className="flex-1 overflow-y-auto py-3">
-            <ShellNav collapsed={isSidebarCollapsed} />
-          </div>
-          <div className={`flex-shrink-0 border-t border-border py-2 ${isSidebarCollapsed ? 'px-0' : 'px-3'}`}>
-            <button
-              type="button"
-              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
-              aria-label={isSidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
-              title={isSidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
-              className={`flex items-center gap-2 h-7 rounded-linear text-gray-500 hover:text-gray-900 hover:bg-gray-200/40 transition-colors duration-150 ${
-                isSidebarCollapsed ? 'w-full justify-center' : 'px-2'
-              }`}
-            >
-              {isSidebarCollapsed ? (
-                <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
-              ) : (
+            {!isSidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed(true)}
+                aria-label={t('nav.collapseSidebar')}
+                title={t('nav.collapseSidebar')}
+                className="p-1 text-gray-400 hover:text-gray-900 rounded-linear hover:bg-gray-200/60 transition-colors duration-150"
+              >
                 <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
-              )}
-              {!isSidebarCollapsed && <span className="text-ui">{t('nav.collapseSidebar')}</span>}
-            </button>
+              </button>
+            )}
+          </div>
+
+          {isSidebarCollapsed && (
+            <div className="flex-shrink-0 flex justify-center pb-2">
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed(false)}
+                aria-label={t('nav.expandSidebar')}
+                title={t('nav.expandSidebar')}
+                className="p-1 text-gray-400 hover:text-gray-900 rounded-linear hover:bg-gray-200/60 transition-colors duration-150"
+              >
+                <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto py-3 border-t border-border">
+            <ShellNav collapsed={isSidebarCollapsed} />
           </div>
         </aside>
 
