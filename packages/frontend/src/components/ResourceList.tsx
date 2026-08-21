@@ -3,10 +3,11 @@ import { Card, CardHeader, CardContent } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { Alert } from './ui/Alert';
+import { ListRow, ListRowGroup } from './ui/ListRow';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/currency';
 import { getResourceStatusVariant } from '../utils/statusColors';
-import { Package, Wrench, Users, Box, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Package, Wrench, Users, Box, AlertTriangle } from 'lucide-react';
 
 export enum ResourceType {
   MATERIAL = 'material',
@@ -156,13 +157,13 @@ export const ResourceList: React.FC<ResourceListProps> = ({
   const getTypeIcon = (type: ResourceType): React.ReactNode => {
     switch (type) {
       case ResourceType.MATERIAL:
-        return <Package className="w-5 h-5" strokeWidth={1.5} />;
+        return <Package className="w-4 h-4" strokeWidth={1.5} />;
       case ResourceType.EQUIPMENT:
-        return <Wrench className="w-5 h-5" strokeWidth={1.5} />;
+        return <Wrench className="w-4 h-4" strokeWidth={1.5} />;
       case ResourceType.SUBCONTRACTOR:
-        return <Users className="w-5 h-5" strokeWidth={1.5} />;
+        return <Users className="w-4 h-4" strokeWidth={1.5} />;
       default:
-        return <Box className="w-5 h-5" strokeWidth={1.5} />;
+        return <Box className="w-4 h-4" strokeWidth={1.5} />;
     }
   };
 
@@ -248,106 +249,53 @@ export const ResourceList: React.FC<ResourceListProps> = ({
               </div>
 
               {/* Status Resources */}
-              <div className="space-y-2">
+              <ListRowGroup>
                 {statusResources.map((resource) => {
                   const isOverdue = overdueResources.has(resource.id);
 
                   return (
-                    <div
+                    <ListRow
                       key={resource.id}
-                      className={`border rounded-lg p-4 transition-all ${
-                        isOverdue
-                          ? 'border-red-300 bg-red-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-                      } ${onResourceClick ? 'cursor-pointer' : ''}`}
-                      onClick={() => onResourceClick?.(resource)}
-                    >
-                      {/* Overdue Banner */}
-                      {isOverdue && (
-                        <div className="flex items-center gap-2 mb-3 text-red-700">
-                          <AlertCircle className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                          <span className="text-xs font-medium">
-                            {t('resourceList.deliveryOverdue')}
+                      danger={isOverdue}
+                      onActivate={onResourceClick ? () => onResourceClick(resource) : undefined}
+                      contentClassName="py-1"
+                      icon={<div className="text-gray-400 mt-0.5">{getTypeIcon(resource.type)}</div>}
+                      meta={
+                        <>
+                          <span className="whitespace-nowrap">
+                            {resource.quantity} {resource.unit}
                           </span>
-                        </div>
-                      )}
-
-                      <div className="flex items-start gap-3">
-                        {/* Type Icon */}
-                        <div className="flex-shrink-0 text-gray-400 mt-0.5">
-                          {getTypeIcon(resource.type)}
-                        </div>
-
-                        {/* Resource Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-medium text-gray-900">
-                                {resource.name}
-                              </h4>
-                              <p className="text-xs text-gray-500 mt-0.5">
-                                {getTypeLabel(resource.type)}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Details Grid */}
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                            {/* Quantity */}
-                            <div>
-                              <p className="text-xs text-gray-500 mb-0.5">{t('resourceList.quantity')}</p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {resource.quantity} {resource.unit}
-                              </p>
-                            </div>
-
-                            {/* Cost */}
-                            <div>
-                              <p className="text-xs text-gray-500 mb-0.5">{t('resourceList.cost')}</p>
-                              <p className="text-sm font-medium text-gray-900">
-                                {fmtCurrency(resource.cost)}
-                              </p>
-                            </div>
-
-                            {/* Supplier */}
-                            {resource.supplier && (
-                              <div>
-                                <p className="text-xs text-gray-500 mb-0.5">{t('resourceList.supplier')}</p>
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  {resource.supplier.name}
-                                </p>
-                              </div>
-                            )}
-
-                            {/* Delivery Date */}
-                            {resource.expectedDeliveryDate && (
-                              <div>
-                                <p className="text-xs text-gray-500 mb-0.5">
-                                  {resource.status === ResourceStatus.RECEIVED
-                                    ? t('resourceList.delivered')
-                                    : t('resourceList.expectedDelivery')}
-                                </p>
-                                <p className={`text-sm font-medium ${isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
-                                  {formatDate(
-                                    resource.actualDeliveryDate || resource.expectedDeliveryDate
-                                  )}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Notes */}
-                          {resource.notes && (
-                            <p className="text-xs text-gray-600 mt-3 line-clamp-2">
-                              {resource.notes}
-                            </p>
+                          <span className="whitespace-nowrap font-medium text-gray-900">
+                            {fmtCurrency(resource.cost)}
+                          </span>
+                          {resource.expectedDeliveryDate && (
+                            <span className="whitespace-nowrap">
+                              {formatDate(resource.actualDeliveryDate || resource.expectedDeliveryDate)}
+                            </span>
                           )}
-                        </div>
+                        </>
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        <h4 className={`text-ui font-medium ${isOverdue ? 'text-danger-900' : 'text-gray-900'}`}>
+                          {resource.name}
+                        </h4>
+                        <span className="text-ui-xs text-gray-500">{getTypeLabel(resource.type)}</span>
+                        {isOverdue && (
+                          <span className="text-ui-xs font-medium text-danger-600">
+                            ⚠ {t('resourceList.deliveryOverdue')}
+                          </span>
+                        )}
                       </div>
-                    </div>
+                      {(resource.supplier || resource.notes) && (
+                        <p className="text-ui-xs text-gray-500 mt-0.5 truncate">
+                          {[resource.supplier?.name, resource.notes].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </ListRow>
                   );
                 })}
-              </div>
+              </ListRowGroup>
             </div>
           );
         })}

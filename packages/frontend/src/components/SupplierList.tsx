@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 import { EmptyState } from './ui/EmptyState';
 import { Alert } from './ui/Alert';
 import { IconButton } from './ui/IconButton';
+import { ListRow, ListRowGroup } from './ui/ListRow';
 import { SupplierForm, Supplier } from './SupplierForm';
 import { apiClient } from '../utils/api';
 import { useTranslation } from 'react-i18next';
@@ -119,63 +120,15 @@ export const SupplierList: React.FC<SupplierListProps> = ({
     }
 
     return (
-      <div className="space-y-2">
+      <ListRowGroup>
         {suppliers.map((supplier) => (
-          <div
+          <ListRow
             key={supplier.id}
-            className={`border border-gray-200 rounded-lg p-4 transition-all hover:border-gray-300 hover:shadow-sm ${
-              onSupplierSelect ? 'cursor-pointer' : ''
-            }`}
-            onClick={() => handleSupplierClick(supplier)}
-          >
-            <div className="flex items-start justify-between gap-3">
-              {/* Supplier Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <h4 className="text-sm font-medium text-gray-900">
-                    {supplier.name}
-                  </h4>
-                </div>
-
-                {/* Contact Info */}
-                {(supplier.contactName || supplier.email || supplier.phone) && (
-                  <div className="mt-2 space-y-1">
-                    {supplier.contactName && (
-                      <p className="text-xs text-gray-600">
-                        <span className="font-medium">{t('supplierList.contact')}</span> {supplier.contactName}
-                      </p>
-                    )}
-                    {supplier.email && (
-                      <p className="text-xs text-gray-600">
-                        <span className="font-medium">{t('supplierList.email')}</span> {supplier.email}
-                      </p>
-                    )}
-                    {supplier.phone && (
-                      <p className="text-xs text-gray-600">
-                        <span className="font-medium">{t('supplierList.phone')}</span> {supplier.phone}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Address */}
-                {supplier.address && (
-                  <p className="text-xs text-gray-600 mt-2">
-                    <span className="font-medium">{t('supplierList.address')}</span> {supplier.address}
-                  </p>
-                )}
-
-                {/* Notes */}
-                {supplier.notes && (
-                  <p className="text-xs text-gray-500 mt-2 line-clamp-2">
-                    {supplier.notes}
-                  </p>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+            onActivate={onSupplierSelect ? () => handleSupplierClick(supplier) : undefined}
+            contentClassName="py-1.5"
+            icon={<Building2 className="w-5 h-5 text-gray-400" strokeWidth={1.5} />}
+            actions={
+              <>
                 <IconButton
                   label={t('common.edit')}
                   icon={<Pencil className="w-4 h-4" strokeWidth={1.5} />}
@@ -197,11 +150,30 @@ export const SupplierList: React.FC<SupplierListProps> = ({
                   onClick={(e) => handleDeleteSupplier(supplier.id, e)}
                   disabled={deletingId === supplier.id}
                 />
-              </div>
-            </div>
-          </div>
+              </>
+            }
+          >
+            <h4 className="text-ui font-medium text-gray-900">{supplier.name}</h4>
+
+            {(supplier.contactName || supplier.email || supplier.phone) && (
+              <p className="text-ui-xs text-gray-600 mt-0.5 flex flex-wrap items-center gap-x-1.5">
+                {[supplier.contactName, supplier.email, supplier.phone]
+                  .filter((value): value is string => Boolean(value))
+                  .map((value, index) => (
+                    <React.Fragment key={value}>
+                      {index > 0 && <span className="text-gray-300">·</span>}
+                      <span>{value}</span>
+                    </React.Fragment>
+                  ))}
+              </p>
+            )}
+
+            {supplier.address && <p className="text-ui-xs text-gray-600 mt-0.5">{supplier.address}</p>}
+
+            {supplier.notes && <p className="text-ui-xs text-gray-500 mt-0.5 line-clamp-2">{supplier.notes}</p>}
+          </ListRow>
         ))}
-      </div>
+      </ListRowGroup>
     );
   };
 

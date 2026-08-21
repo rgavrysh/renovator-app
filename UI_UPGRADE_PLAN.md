@@ -16,7 +16,7 @@ The distinction matters, because the two plans pull in different directions and 
 
 So this is not a third parallel plan. It is the argument for un-parking those items, plus the visual layer that neither existing document covers at all: type scale, density, iconography, motion, and reading comfort.
 
-**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note), Batch D (`U3.1`–`U3.3`), and Batch E (`U4.1`–`U4.4`) are implemented. Everything below is written against that baseline.
+**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note), Batch D (`U3.1`–`U3.3`), Batch E (`U4.1`–`U4.4`), and Batch F (`U5.1`–`U5.3`) are implemented. Everything below is written against that baseline.
 
 ---
 
@@ -356,27 +356,33 @@ This replaces the current pattern where the same information is a dense grid of 
 
 ---
 
-## Phase U5 — Rows
+## Phase U5 — Rows ✅ done
 
 Six list patterns exist today for one interaction — 3 radii, 3 separation strategies, 4 hover treatments, actions in 3 places. This is `D6`, and it is what stands between the app and looking like one thing.
 
-### U5.1 · `ListRow`
+### U5.1 · `ListRow` ✅ done
 
 One primitive: `h-9`, no border, no radius, `hover:bg-subtle`, a 1px `border-subtle` divider between rows, leading `StatusIcon` slot, flexible content, trailing metadata slot, and an actions slot that is `opacity-0 group-hover:opacity-100`. Hover-revealed actions are the reason Linear's lists look empty and calm while still being fully actionable.
 
 **Where:** new `ui/ListRow.tsx`. **Effort:** M · 👁
 
-### U5.2 · Migrate the six lists
+**Implementation note:** `ui/ListRow.tsx` exports `ListRow` (`min-h-9`, no border/radius of its own, `hover:bg-subtle`, `icon`/`meta`/`actions` slots, `onActivate` for the row-as-button case, and a `danger` prop) plus `ListRowGroup`, a thin `divide-y divide-border-subtle` wrapper that supplies the 1px divider between rows. `danger` tints row text (`text-danger-*`) instead of drawing a `bg-red-50 border-red-200` box — that box was the source of the misaligned-overdue-row bug (`#38`) fixed for free by every migration below, since rows no longer carry a conditional border. Actions are hidden via `opacity-0 group-hover:opacity-100`, but also revealed on `group-focus-within` so keyboard users can reach them without hovering. Covered by `ui/ListRow.test.tsx`.
+
+### U5.2 · Migrate the six lists ✅ done
 
 One per PR: `MilestoneList` → `TaskList` → `BudgetItemsList` → `DocumentList` → `SupplierList` → `ResourceList`. Each migration also picks up the aligned-overdue-row fix (`#38`) for free, since rows stop having conditional borders.
 
 **Effort:** L (M each, independently shippable)
 
-### U5.3 · Grouped, collapsible sections with counts
+**Implementation note:** all six lists now render their rows through `ListRow`/`ListRowGroup`. `MilestoneList` and `TaskList` moved their per-row `Divider` bookkeeping onto `ListRowGroup` and their overdue-row box onto `ListRow`'s `danger` prop. `BudgetItemsList`, `DocumentList`, `SupplierList` and `ResourceList` — the four "card list" components that used to hand-roll `border border-gray-200 rounded-lg p-4 hover:shadow-sm` per item — lost that box entirely in favour of the flat row treatment; their multi-line content (description, tags, contact info, delivery details) now lives in `ListRow`'s flexible content slot rather than a bordered card, with compact facts (file size, cost, quantity, delivery date) moved to the trailing `meta` slot. `DocumentList`'s file-type icon shrank from 32px to 20px to fit the row's leading-icon slot, and its status colours were switched from raw Tailwind (`text-red-500`, `text-blue-500`, ...) to the semantic `danger`/`info`/`success` tokens from `U1.5`. `ResourceList` keeps its existing grouped-by-status sections (not made collapsible — out of scope for this step, see `U5.3`) but its per-item card is now a `ListRow`, and its overdue banner became an inline `⚠` note in the row rather than a separate red block. All six components' existing tests were updated in place for the new DOM shape (e.g. `.closest('.group')` to scope a query to one row, `getByRole('button', { name: /Category/ })` for group headers) rather than rewritten from scratch; none of the 27 pre-existing baseline failures (`S0`) grew as a result — same 28-test/11-file failure count before and after, confirmed by running the full suite on both sides of the change.
+
+### U5.3 · Grouped, collapsible sections with counts ✅ done
 
 Your Linear issues screenshot shows `Todo 4` as a collapsible group header with a `+` on hover. Apply to tasks (group by status) and budget items (group by category). Replaces the current three-filter-dropdown pattern with something you can scan.
 
 **Where:** `TaskList.tsx`, `BudgetItemsList.tsx`. **Effort:** M · 👁
+
+**Implementation note:** `TaskList` now groups by status in fixed lifecycle order (`To Do → In Progress → Blocked → Completed`), skipping empty groups; each group is a `<button aria-expanded>` header with a `StatusIcon`, the status label, and a count, collapsible independently (state kept in a local `collapsedGroups` map, not persisted). This **replaces the standalone status filter dropdown** — status is now something you scan via groups, not something you filter away — while the priority and milestone filters remain, since they narrow *within* the grouped view rather than duplicating it. `BudgetItemsList` switched its existing collapsible sections from grouping by **milestone** to grouping by **category** (`Labor`, `Materials`, ...) per this step's own wording, in fixed category order with a running total per group; the milestone name an item belongs to didn't disappear — it moved to a small secondary line on the item's row (`Foundation · notes text`) instead of being the grouping key. Both group headers reuse the same chevron-rotate + count pattern. Covered by new "groups tasks/items by X with a collapsible header showing a count", "does not render a header for an empty group", and "collapses/expands on click" cases in `TaskList.test.tsx` and `BudgetItemsList.test.tsx`.
 
 ---
 
@@ -444,11 +450,11 @@ Read this before scheduling either document, so nothing is built twice.
 
 | That plan | This plan | What to do |
 |---|---|---|
-| `S13` use the existing kit | `U5.2` | Do `S13` as part of the `U5.2` migrations, not separately |
+| `S13` use the existing kit | `U5.2` | Done as part of the `U5.2` migrations |
 | `S20` semantic status tokens | `U1.5` | **Pull forward.** `U3.2` and `U5` both depend on it |
 | `S22` modal max-height | `U4.4` | Same step; do it in `U4` |
 | `S23` button hierarchy + `active:` | `U1.6` | Same step; do it in `U1` |
-| `S25` row alignment / overdue | `U5.1` | Superseded — `ListRow` removes the conditional border that causes it |
+| `S25` row alignment / overdue | `U5.1` | Done — `ListRow`'s `danger` prop removes the conditional border that caused it |
 | `D1` per-record routes | — | Still open. `U2` makes it much cheaper by removing the header duplication first |
 | `D2` app shell | `U2` | **Un-parked.** The core of this plan |
 | `D5` toasts | `U6.1` | **Un-parked** |
@@ -469,11 +475,11 @@ Read this before scheduling either document, so nothing is built twice.
 | **C** ⚠️ mostly done | `U2.1`–`U2.4` | ~4–6 days | The app becomes navigable; Suppliers appears. Materials CRUD in `ResourceList` is the one piece left open |
 | **D** ✅ done | `U3.1`–`U3.3` | ~3–4 days | Uniform iconography; status glyphs replace the wall of pills |
 | **E** ✅ done | `U4.1`–`U4.4` | ~2–3 days | Descriptions and notes become genuinely comfortable to read |
-| **F** | `U5.1`–`U5.3` | ~5–8 days | Six list patterns become one |
+| **F** ✅ done | `U5.1`–`U5.3` | ~5–8 days | Six list patterns become one |
 | **G** | `U6.1`–`U6.5` | ~5–7 days | The app feels fast and rewards poking around |
 | **H** | `U7.1`–`U7.3` | ~2–3 days | First impression matches the rest |
 
-Batches A, B, D and E are self-contained and reversible. C is the pivot. F is the largest and the most deferrable. G is optional in the sense that nothing breaks without it — and it is the batch most directly aimed at what you actually asked for.
+Batches A, B, D, E and F are self-contained and reversible. C is the pivot. G is optional in the sense that nothing breaks without it — and it is the batch most directly aimed at what you actually asked for.
 
 ### If you only do three things
 

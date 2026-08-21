@@ -6,6 +6,7 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import { IconButton } from './ui/IconButton';
+import { ListRow, ListRowGroup } from './ui/ListRow';
 import { GoogleDriveIcon } from './icons/GoogleDriveIcon';
 import { useTranslation } from 'react-i18next';
 import { FileText, Image as ImageIcon, FileSpreadsheet, File, FolderOpen, RotateCcw, Download, Trash2 } from 'lucide-react';
@@ -313,22 +314,22 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     const type = fileType.toLowerCase();
 
     if (type.includes('pdf')) {
-      return <FileText className="w-8 h-8 text-red-500" strokeWidth={1.5} />;
+      return <FileText className="w-5 h-5 text-danger-500" strokeWidth={1.5} />;
     }
 
     if (type.includes('image') || type.includes('jpg') || type.includes('png') || type.includes('heic')) {
-      return <ImageIcon className="w-8 h-8 text-blue-500" strokeWidth={1.5} />;
+      return <ImageIcon className="w-5 h-5 text-info-500" strokeWidth={1.5} />;
     }
 
     if (type.includes('word') || type.includes('doc')) {
-      return <FileText className="w-8 h-8 text-blue-600" strokeWidth={1.5} />;
+      return <FileText className="w-5 h-5 text-info-600" strokeWidth={1.5} />;
     }
 
     if (type.includes('excel') || type.includes('xls') || type.includes('spreadsheet')) {
-      return <FileSpreadsheet className="w-8 h-8 text-green-600" strokeWidth={1.5} />;
+      return <FileSpreadsheet className="w-5 h-5 text-success-600" strokeWidth={1.5} />;
     }
 
-    return <File className="w-8 h-8 text-gray-400" strokeWidth={1.5} />;
+    return <File className="w-5 h-5 text-gray-400" strokeWidth={1.5} />;
   };
 
   const typeOptions = [
@@ -398,97 +399,80 @@ export const DocumentList: React.FC<DocumentListProps> = ({
     }
 
     return (
-      <div className="space-y-3">
+      <ListRowGroup>
         {filteredDocuments.map((document) => (
-          <div
+          <ListRow
             key={document.id}
-            className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer"
-            onClick={() => handlePreview(document)}
-          >
-            <div className="flex items-start gap-4">
-              {/* File Icon */}
-              <div className="flex-shrink-0">
-                {getFileIcon(document.fileType)}
-              </div>
-
-              {/* Document Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-medium text-gray-900 truncate">
-                      {document.name}
-                    </h4>
-                    {document.metadata?.description && (
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">
-                        {document.metadata.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {document.storageProvider === 'google_drive' && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs bg-blue-50 text-blue-600" title={t('googleDrive.storedInDrive')}>
-                        <GoogleDriveIcon className="w-3 h-3" />
-                      </span>
-                    )}
-                    <Badge variant={getDocumentTypeColor(document.type)} size="sm">
-                      {getDocumentTypeLabel(document.type)}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Tags */}
-                {document.metadata?.tags && document.metadata.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {document.metadata.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {/* Metadata */}
-                <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                  <span>{formatFileSize(document.fileSize)}</span>
-                  <span>•</span>
-                  <span>{formatDate(document.uploadedAt)}</span>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex-shrink-0 flex items-center gap-2">
-                {viewingTrash ? (
+            onActivate={() => handlePreview(document)}
+            icon={<div className="mt-0.5">{getFileIcon(document.fileType)}</div>}
+            contentClassName="py-1"
+            meta={
+              <>
+                <span className="whitespace-nowrap">{formatFileSize(document.fileSize)}</span>
+                <span className="whitespace-nowrap">{formatDate(document.uploadedAt)}</span>
+              </>
+            }
+            actions={
+              viewingTrash ? (
+                <IconButton
+                  label={t('common.retry')}
+                  icon={<RotateCcw className="w-4 h-4" strokeWidth={1.5} />}
+                  onClick={(e) => handleRestore(document, e)}
+                />
+              ) : (
+                <>
                   <IconButton
-                    label={t('common.retry')}
-                    icon={<RotateCcw className="w-4 h-4" strokeWidth={1.5} />}
-                    onClick={(e) => handleRestore(document, e)}
+                    label={t('common.view')}
+                    icon={<Download className="w-4 h-4" strokeWidth={1.5} />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(document);
+                    }}
                   />
-                ) : (
-                  <>
-                    <IconButton
-                      label={t('common.view')}
-                      icon={<Download className="w-4 h-4" strokeWidth={1.5} />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownload(document);
-                      }}
-                    />
-                    <IconButton
-                      label={t('common.delete')}
-                      icon={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
-                      variant="danger"
-                      onClick={(e) => handleDelete(document, e)}
-                    />
-                  </>
-                )}
-              </div>
+                  <IconButton
+                    label={t('common.delete')}
+                    icon={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
+                    variant="danger"
+                    onClick={(e) => handleDelete(document, e)}
+                  />
+                </>
+              )
+            }
+          >
+            <div className="flex items-center gap-2">
+              <h4 className="text-ui font-medium text-gray-900 truncate">{document.name}</h4>
+              {document.storageProvider === 'google_drive' && (
+                <span
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-ui-xs bg-info-50 text-info-600 flex-shrink-0"
+                  title={t('googleDrive.storedInDrive')}
+                >
+                  <GoogleDriveIcon className="w-3 h-3" />
+                </span>
+              )}
+              <Badge variant={getDocumentTypeColor(document.type)} size="sm" className="flex-shrink-0">
+                {getDocumentTypeLabel(document.type)}
+              </Badge>
             </div>
-          </div>
+
+            {document.metadata?.description && (
+              <p className="text-ui-sm text-gray-500 mt-0.5 line-clamp-2">{document.metadata.description}</p>
+            )}
+
+            {document.metadata?.tags && document.metadata.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {document.metadata.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-ui-xs bg-gray-100 text-gray-600"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </ListRow>
         ))}
-      </div>
+      </ListRowGroup>
     );
   };
 

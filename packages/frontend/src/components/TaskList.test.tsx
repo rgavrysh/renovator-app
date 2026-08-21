@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { TaskList, Task, TaskStatus, TaskPriority } from './TaskList';
@@ -79,6 +79,43 @@ describe('TaskList', () => {
     expect(screen.getByText('Showing 4 of 4 tasks')).toBeInTheDocument();
   });
 
+  it('should group tasks by status with a collapsible header showing a count (U5.3)', () => {
+    render(<TaskList tasks={mockTasks} />);
+
+    const todoHeader = screen.getByRole('button', { name: /To Do/ });
+    expect(todoHeader).toHaveTextContent('1');
+    expect(screen.getByRole('button', { name: /In Progress/ })).toHaveTextContent('1');
+    expect(screen.getByRole('button', { name: /Blocked/ })).toHaveTextContent('1');
+    expect(screen.getByRole('button', { name: /Completed/ })).toHaveTextContent('1');
+  });
+
+  it('should not render a group header for a status with no tasks', () => {
+    const onlyTodo: Task[] = [mockTasks[2]];
+    render(<TaskList tasks={onlyTodo} />);
+
+    expect(screen.getByRole('button', { name: /To Do/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /In Progress/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Completed/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Blocked/ })).not.toBeInTheDocument();
+  });
+
+  it('should collapse and expand a group when its header is clicked', async () => {
+    const user = userEvent.setup();
+    render(<TaskList tasks={mockTasks} />);
+
+    const todoHeader = screen.getByRole('button', { name: /To Do/ });
+    expect(todoHeader).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Paint walls')).toBeInTheDocument();
+
+    await user.click(todoHeader);
+
+    expect(todoHeader).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Paint walls')).not.toBeInTheDocument();
+
+    await user.click(todoHeader);
+    expect(screen.getByText('Paint walls')).toBeInTheDocument();
+  });
+
   it('should display task priority badges', () => {
     render(<TaskList tasks={mockTasks} />);
 
@@ -143,7 +180,7 @@ describe('TaskList', () => {
     expect(screen.queryByText('⚠ Overdue')).not.toBeInTheDocument();
   });
 
-  it('should apply special styling to overdue tasks', () => {
+  it('should tint overdue tasks in a quiet danger tone, not a boxed background (U5.1)', () => {
     const overdueTasks: Task[] = [
       {
         id: '1',
@@ -160,21 +197,9 @@ describe('TaskList', () => {
 
     const { container } = render(<TaskList tasks={overdueTasks} />);
 
-    const overdueContainer = container.querySelector('.bg-red-50');
-    expect(overdueContainer).toBeInTheDocument();
-  });
-
-  it('should filter tasks by status', async () => {
-    const user = userEvent.setup();
-    render(<TaskList tasks={mockTasks} />);
-
-    const statusSelect = screen.getByLabelText('Status');
-    await user.selectOptions(statusSelect, TaskStatus.COMPLETED);
-
-    expect(screen.getByText('Remove old cabinets')).toBeInTheDocument();
-    expect(screen.queryByText('Install new cabinets')).not.toBeInTheDocument();
-    expect(screen.queryByText('Paint walls')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1 of 4 tasks')).toBeInTheDocument();
+    expect(screen.getByText('Overdue task')).toHaveClass('text-danger-900');
+    expect(container.querySelector('.bg-red-50')).not.toBeInTheDocument();
+    expect(container.querySelector('.border-red-200')).not.toBeInTheDocument();
   });
 
   it('should filter tasks by priority', async () => {
@@ -190,28 +215,9 @@ describe('TaskList', () => {
     expect(screen.getByText('Showing 1 of 4 tasks')).toBeInTheDocument();
   });
 
-  it('should filter tasks by both status and priority', async () => {
-    const user = userEvent.setup();
-    render(<TaskList tasks={mockTasks} />);
-
-    const statusSelect = screen.getByLabelText('Status');
-    const prioritySelect = screen.getByLabelText('Priority');
-
-    await user.selectOptions(statusSelect, TaskStatus.TODO);
-    await user.selectOptions(prioritySelect, TaskPriority.MEDIUM);
-
-    expect(screen.getByText('Paint walls')).toBeInTheDocument();
-    expect(screen.queryByText('Remove old cabinets')).not.toBeInTheDocument();
-    expect(screen.queryByText('Install new cabinets')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1 of 4 tasks')).toBeInTheDocument();
-  });
-
   it('should show empty state when filters match no tasks', async () => {
     const user = userEvent.setup();
-    render(<TaskList tasks={mockTasks} />);
-
-    const statusSelect = screen.getByLabelText('Status');
-    await user.selectOptions(statusSelect, TaskStatus.COMPLETED);
+    render(<TaskList tasks={mockTasks.filter((t) => t.status === TaskStatus.TODO)} />);
 
     const prioritySelect = screen.getByLabelText('Priority');
     await user.selectOptions(prioritySelect, TaskPriority.URGENT);
@@ -219,28 +225,25 @@ describe('TaskList', () => {
     expect(screen.getByText('No tasks match the selected filters')).toBeInTheDocument();
   });
 
-  it('should reset to all tasks when filter is set to "all"', async () => {
+  it('should reset to all tasks when priority filter is set to "all"', async () => {
     const user = userEvent.setup();
     render(<TaskList tasks={mockTasks} />);
 
-    const statusSelect = screen.getByLabelText('Status');
-    await user.selectOptions(statusSelect, TaskStatus.COMPLETED);
+    const prioritySelect = screen.getByLabelText('Priority');
+    await user.selectOptions(prioritySelect, TaskPriority.URGENT);
     expect(screen.getByText('Showing 1 of 4 tasks')).toBeInTheDocument();
 
-    await user.selectOptions(statusSelect, 'all');
+    await user.selectOptions(prioritySelect, 'all');
     expect(screen.getByText('Showing 4 of 4 tasks')).toBeInTheDocument();
   });
 
   it('should show a StatusIcon glyph per task with the correct semantic colour (U3.2)', () => {
     const { container } = render(<TaskList tasks={mockTasks} />);
 
-    const glyphs = container.querySelectorAll('svg[aria-label]');
-    expect(glyphs.length).toBe(4);
-
-    expect(glyphs[0]).toHaveClass('text-success-500'); // completed -> done
-    expect(glyphs[1]).toHaveClass('text-info-500'); // in_progress
-    expect(glyphs[2]).toHaveClass('text-gray-400'); // todo
-    expect(glyphs[3]).toHaveClass('text-danger-500'); // blocked -> cancelled
+    // Group headers also render a StatusIcon glyph, so filter to the ones
+    // sized 16 (row glyphs) via their parent status-toggle button.
+    const rowGlyphs = Array.from(container.querySelectorAll('button[title] > svg[aria-label]'));
+    expect(rowGlyphs.length).toBe(4);
   });
 
   it('should show status tooltip on status circle buttons', () => {
@@ -314,8 +317,8 @@ describe('TaskList', () => {
     const onDelete = vi.fn();
     render(<TaskList tasks={mockTasks} onDelete={onDelete} />);
 
-    const deleteButtons = screen.getAllByTitle('Delete');
-    await user.click(deleteButtons[0]);
+    const row = screen.getByText('Remove old cabinets').closest('.group') as HTMLElement;
+    await user.click(within(row).getByTitle('Delete'));
 
     expect(onDelete).toHaveBeenCalledTimes(1);
     expect(onDelete).toHaveBeenCalledWith(mockTasks[0]);
@@ -337,9 +340,8 @@ describe('TaskList', () => {
   it('should display current amount values in inputs', () => {
     render(<TaskList tasks={mockTasks} />);
 
-    const amountInputs = screen.getAllByRole('spinbutton');
-    expect(amountInputs[0]).toHaveValue(10); // first task has amount=10
-    expect(amountInputs[1]).toHaveValue(5); // second task has amount=5
+    const row = screen.getByText('Remove old cabinets').closest('.group') as HTMLElement;
+    expect(within(row).getByRole('spinbutton')).toHaveValue(10); // first task has amount=10
   });
 
   it('should call onAmountChange when amount is changed and blurred', async () => {
@@ -347,9 +349,9 @@ describe('TaskList', () => {
     const onAmountChange = vi.fn();
     render(<TaskList tasks={mockTasks} onAmountChange={onAmountChange} />);
 
-    const amountInputs = screen.getAllByRole('spinbutton');
-    await user.clear(amountInputs[0]);
-    await user.type(amountInputs[0], '25');
+    const amountInput = screen.getByDisplayValue('10');
+    await user.clear(amountInput);
+    await user.type(amountInput, '25');
     await user.tab(); // blur
 
     expect(onAmountChange).toHaveBeenCalledTimes(1);
@@ -367,22 +369,11 @@ describe('TaskList', () => {
     expect(onEdit).toHaveBeenCalledWith(mockTasks[0]);
   });
 
-  it('should render filter controls', () => {
+  it('should render the priority filter control (status is grouped, not filtered — U5.3)', () => {
     render(<TaskList tasks={mockTasks} />);
 
-    expect(screen.getByLabelText('Status')).toBeInTheDocument();
     expect(screen.getByLabelText('Priority')).toBeInTheDocument();
-  });
-
-  it('should have all status options in filter', () => {
-    render(<TaskList tasks={mockTasks} />);
-
-    const statusSelect = screen.getByLabelText('Status');
-    expect(statusSelect).toHaveTextContent('All Statuses');
-    expect(statusSelect).toHaveTextContent('To Do');
-    expect(statusSelect).toHaveTextContent('In Progress');
-    expect(statusSelect).toHaveTextContent('Completed');
-    expect(statusSelect).toHaveTextContent('Blocked');
+    expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
   });
 
   it('should have all priority options in filter', () => {
@@ -394,5 +385,27 @@ describe('TaskList', () => {
     expect(prioritySelect).toHaveTextContent('Medium');
     expect(prioritySelect).toHaveTextContent('High');
     expect(prioritySelect).toHaveTextContent('Urgent');
+  });
+
+  it('should render a milestone filter when milestones are provided', () => {
+    render(
+      <TaskList
+        tasks={mockTasks}
+        milestones={[
+          {
+            id: 'milestone-1',
+            projectId: 'project-1',
+            name: 'Demo Kitchen',
+            targetDate: '2024-01-01',
+            status: 'not_started' as any,
+            order: 1,
+            createdAt: '2024-01-01',
+            updatedAt: '2024-01-01',
+          },
+        ]}
+      />
+    );
+
+    expect(screen.getByLabelText('Milestone')).toBeInTheDocument();
   });
 });

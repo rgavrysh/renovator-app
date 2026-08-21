@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BudgetItemsList, BudgetItem, BudgetCategory } from './BudgetItemsList';
 
 describe('BudgetItemsList', () => {
@@ -41,12 +42,46 @@ describe('BudgetItemsList', () => {
     expect(screen.getByText('Add budget items to track actual costs')).toBeInTheDocument();
   });
 
-  it('should display budget items with category labels', () => {
+  it('should group items by category with a collapsible header showing a count (U5.3)', () => {
     render(<BudgetItemsList items={mockItems} />);
-    
-    // Check category labels appear on badges (Labor appears on 2 items)
-    expect(screen.getAllByText('Labor').length).toBeGreaterThan(0);
-    expect(screen.getByText('Materials')).toBeInTheDocument();
+
+    // Labor has 2 items, grouped under one header rather than two badges
+    const laborHeader = screen.getByRole('button', { name: /Labor/ });
+    expect(laborHeader).toHaveTextContent('2');
+    const materialsHeader = screen.getByRole('button', { name: /Materials/ });
+    expect(materialsHeader).toHaveTextContent('1');
+  });
+
+  it('should not render a group header for a category with no items', () => {
+    render(<BudgetItemsList items={mockItems} />);
+
+    expect(screen.queryByRole('button', { name: /Equipment/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Permits/ })).not.toBeInTheDocument();
+  });
+
+  it('should collapse and expand a category group when its header is clicked', async () => {
+    const user = userEvent.setup();
+    render(<BudgetItemsList items={mockItems} />);
+
+    const laborHeader = screen.getByRole('button', { name: /Labor/ });
+    expect(laborHeader).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('Framing Labor')).toBeInTheDocument();
+
+    await user.click(laborHeader);
+
+    expect(laborHeader).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Framing Labor')).not.toBeInTheDocument();
+
+    await user.click(laborHeader);
+    expect(screen.getByText('Framing Labor')).toBeInTheDocument();
+  });
+
+  it('should show the category group total next to its header', () => {
+    render(<BudgetItemsList items={mockItems} />);
+
+    const laborHeader = screen.getByRole('button', { name: /Labor/ });
+    // 4800 + 2000
+    expect(within(laborHeader).getByText('$6,800.00')).toBeInTheDocument();
   });
 
   it('should display item names', () => {
@@ -63,11 +98,27 @@ describe('BudgetItemsList', () => {
     expect(screen.getByText('Main structure framing')).toBeInTheDocument();
   });
 
+  it('should show the associated milestone name on an item row when provided', () => {
+    const itemsWithMilestone: BudgetItem[] = [
+      { ...mockItems[0], milestoneId: 'milestone-1' },
+    ];
+
+    render(
+      <BudgetItemsList
+        items={itemsWithMilestone}
+        milestones={[{ id: 'milestone-1', name: 'Foundation' }]}
+      />
+    );
+
+    expect(screen.getByText(/Foundation/)).toBeInTheDocument();
+  });
+
   it('should display actual costs', () => {
     render(<BudgetItemsList items={mockItems} />);
     
     expect(screen.getByText('$4,800.00')).toBeInTheDocument();
-    expect(screen.getByText('$3,500.00')).toBeInTheDocument();
+    // Materials has a single item, so its group total and row amount both read $3,500.00
+    expect(screen.getAllByText('$3,500.00').length).toBe(2);
   });
 
   it('should render all budget categories with correct labels', () => {
@@ -139,13 +190,13 @@ describe('BudgetItemsList', () => {
 
     render(<BudgetItemsList items={allCategoryItems} />);
     
-    expect(screen.getByText('Labor')).toBeInTheDocument();
-    expect(screen.getByText('Materials')).toBeInTheDocument();
-    expect(screen.getByText('Equipment')).toBeInTheDocument();
-    expect(screen.getByText('Subcontractors')).toBeInTheDocument();
-    expect(screen.getByText('Permits')).toBeInTheDocument();
-    expect(screen.getByText('Contingency')).toBeInTheDocument();
-    expect(screen.getByText('Other')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Labor/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Materials/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Equipment/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Subcontractors/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Permits/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Contingency/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Other/ })).toBeInTheDocument();
   });
 
   it('should render without card wrapper when showCard is false', () => {
@@ -181,7 +232,7 @@ describe('BudgetItemsList', () => {
 
     render(<BudgetItemsList items={largeAmountItem} />);
     
-    // Actual cost should appear once
-    expect(screen.getByText('$123,456.78')).toBeInTheDocument();
+    // Actual cost appears both on the group header total and the row itself
+    expect(screen.getAllByText('$123,456.78').length).toBe(2);
   });
 });

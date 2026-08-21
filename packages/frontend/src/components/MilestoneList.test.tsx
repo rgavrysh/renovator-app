@@ -135,7 +135,7 @@ describe('MilestoneList', () => {
     expect(glyphs.length).toBe(3);
   });
 
-  it('should apply special styling to overdue milestones', () => {
+  it('should tint overdue milestones in a quiet danger tone, not a boxed background (U5.1)', () => {
     const overdueMilestones: Milestone[] = [
       {
         ...mockMilestones[0],
@@ -145,10 +145,12 @@ describe('MilestoneList', () => {
     ];
 
     const { container } = render(<MilestoneList milestones={overdueMilestones} />);
-    
-    // Check for red background styling on overdue milestone
-    const overdueContainer = container.querySelector('.bg-red-50');
-    expect(overdueContainer).toBeInTheDocument();
+
+    // Overdue rows use text-danger-* tinting (ListRow's `danger` prop), not a
+    // per-row bg/border box — that box was the alignment bug fixed by U5.1/#38.
+    expect(screen.getByText('Foundation Complete')).toHaveClass('text-danger-900');
+    expect(container.querySelector('.bg-red-50')).not.toBeInTheDocument();
+    expect(container.querySelector('.border-red-200')).not.toBeInTheDocument();
   });
 
   it('should show complete button for non-completed milestones when onComplete is provided', () => {

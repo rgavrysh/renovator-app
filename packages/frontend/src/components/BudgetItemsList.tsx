@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
-import { Badge } from './ui/Badge';
 import { EmptyState } from './ui/EmptyState';
 import { IconButton } from './ui/IconButton';
+import { ListRow, ListRowGroup } from './ui/ListRow';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/currency';
-import { getBudgetCategoryVariant } from '../utils/statusColors';
-import { Pencil, Trash2, ChevronRight } from 'lucide-react';
+import { ChevronRight, Pencil, Trash2 } from 'lucide-react';
 
 export enum BudgetCategory {
   LABOR = 'labor',
@@ -17,6 +16,17 @@ export enum BudgetCategory {
   CONTINGENCY = 'contingency',
   OTHER = 'other',
 }
+
+// Display order for grouped sections (U5.3) — fixed, not arrival order.
+const CATEGORY_ORDER: BudgetCategory[] = [
+  BudgetCategory.LABOR,
+  BudgetCategory.MATERIALS,
+  BudgetCategory.EQUIPMENT,
+  BudgetCategory.SUBCONTRACTORS,
+  BudgetCategory.PERMITS,
+  BudgetCategory.CONTINGENCY,
+  BudgetCategory.OTHER,
+];
 
 export interface BudgetItem {
   id: string;
@@ -54,7 +64,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
   onDeleteItem,
 }) => {
   const { t, i18n } = useTranslation();
-  const [collapsedMilestones, setCollapsedMilestones] = useState<Record<string, boolean>>({});
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
   const fmtCurrency = (amount: number): string => formatCurrency(amount, i18n.language);
 
@@ -65,97 +75,96 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
     return t(`budgetCategory.${category}`);
   };
 
-  const getCategoryColor = (category: BudgetCategory) => getBudgetCategoryVariant(category);
+  const milestoneMap = useMemo(() => new Map(milestones.map((m) => [m.id, m.name])), [milestones]);
 
-  const toggleMilestone = (key: string) => {
-    setCollapsedMilestones((prev) => ({
+  const toggleCategory = (key: string) => {
+    setCollapsedCategories((prev) => ({
       ...prev,
       [key]: !prev[key],
     }));
   };
 
-  const getMilestoneTotal = (milestoneItems: BudgetItem[]): number => {
-    return milestoneItems.reduce((sum, item) => sum + Number(item.actualCost), 0);
+  const getGroupTotal = (groupItems: BudgetItem[]): number => {
+    return groupItems.reduce((sum, item) => sum + Number(item.actualCost), 0);
   };
 
-  const renderItemCard = (item: BudgetItem) => {
+  // Grouped by category (U5.3), in fixed display order, skipping empty groups.
+  const groupedItems = useMemo(() => {
+    const groups = new Map<BudgetCategory, BudgetItem[]>();
+    for (const category of CATEGORY_ORDER) {
+      groups.set(category, []);
+    }
+    for (const item of items) {
+      groups.get(item.category)?.push(item);
+    }
+    return CATEGORY_ORDER.map((category) => ({ category, items: groups.get(category) ?? [] })).filter(
+      (group) => group.items.length > 0
+    );
+  }, [items]);
+
+  const renderItemRow = (item: BudgetItem) => {
+    const milestoneName = item.milestoneId ? milestoneMap.get(item.milestoneId) : undefined;
+
     return (
-      <div
+      <ListRow
         key={item.id}
-        className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+        meta={<span className="font-medium text-gray-900">{fmtCurrency(item.actualCost)}</span>}
+        actions={
+          <>
+            {onEditItem && (
+              <IconButton
+                label={t('common.edit')}
+                icon={<Pencil className="h-4 w-4" strokeWidth={1.5} />}
+                size="sm"
+                onClick={() => onEditItem(item)}
+              />
+            )}
+            {onDeleteItem && (
+              <IconButton
+                label={t('common.delete')}
+                icon={<Trash2 className="h-4 w-4" strokeWidth={1.5} />}
+                size="sm"
+                variant="danger"
+                onClick={() => onDeleteItem(item)}
+              />
+            )}
+          </>
+        }
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h4 className="text-sm font-medium text-gray-900">{item.name}</h4>
-              <Badge variant={getCategoryColor(item.category)} size="sm">
-                {getCategoryLabel(item.category, item.customCategory)}
-              </Badge>
-            </div>
-            {item.notes && (
-              <p className="text-xs text-gray-500 mt-1">{item.notes}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-2 ml-2">
-            <span className="text-sm font-medium text-gray-900">
-              {fmtCurrency(item.actualCost)}
-            </span>
-            {(onEditItem || onDeleteItem) && (
-              <div className="flex items-center gap-1">
-                {onEditItem && (
-                  <IconButton
-                    label={t('common.edit')}
-                    icon={<Pencil className="h-4 w-4" strokeWidth={1.5} />}
-                    size="sm"
-                    onClick={() => onEditItem(item)}
-                  />
-                )}
-                {onDeleteItem && (
-                  <IconButton
-                    label={t('common.delete')}
-                    icon={<Trash2 className="h-4 w-4" strokeWidth={1.5} />}
-                    size="sm"
-                    variant="danger"
-                    onClick={() => onDeleteItem(item)}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+        <h4 className="text-ui font-medium text-gray-900 truncate">{item.name}</h4>
+        {(item.notes || milestoneName) && (
+          <p className="text-ui-xs text-gray-500 mt-0.5 truncate">
+            {[milestoneName, item.notes].filter(Boolean).join(' · ')}
+          </p>
+        )}
+      </ListRow>
     );
   };
 
-  const renderMilestoneSection = (key: string, label: string, sectionItems: BudgetItem[]) => {
-    const isCollapsed = collapsedMilestones[key] ?? false;
-    const total = getMilestoneTotal(sectionItems);
+  const renderCategorySection = (category: BudgetCategory, categoryItems: BudgetItem[]) => {
+    const isCollapsed = collapsedCategories[category] ?? false;
+    const total = getGroupTotal(categoryItems);
+    const label = getCategoryLabel(category, categoryItems.find((i) => i.customCategory)?.customCategory);
 
     return (
-      <div key={key} className="border border-gray-200 rounded-lg overflow-hidden">
+      <div key={category}>
         <button
-          onClick={() => toggleMilestone(key)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+          type="button"
+          onClick={() => toggleCategory(category)}
+          className="w-full flex items-center justify-between gap-1.5 px-1 py-1.5 text-left hover:bg-subtle rounded transition-colors"
+          aria-expanded={!isCollapsed}
         >
-          <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5">
             <ChevronRight
-              className={`w-4 h-4 text-gray-500 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+              className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
               strokeWidth={1.5}
             />
-            <span className="text-sm font-semibold text-gray-900">{label}</span>
-            <span className="text-xs text-gray-500">
-              ({sectionItems.length} {sectionItems.length === 1 ? t('common.item') : t('common.items')})
-            </span>
-          </div>
-          <span className="text-sm font-semibold text-gray-700">
-            {fmtCurrency(total)}
+            <span className="text-ui-sm font-medium text-gray-700">{label}</span>
+            <span className="text-ui-xs text-gray-400">{categoryItems.length}</span>
           </span>
+          <span className="text-ui-sm font-medium text-gray-700">{fmtCurrency(total)}</span>
         </button>
-        {!isCollapsed && (
-          <div className="p-3 space-y-2">
-            {sectionItems.map(renderItemCard)}
-          </div>
-        )}
+        {!isCollapsed && <ListRowGroup>{categoryItems.map(renderItemRow)}</ListRowGroup>}
       </div>
     );
   };
@@ -170,46 +179,7 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
       );
     }
 
-    const hasMilestones = milestones.length > 0;
-
-    if (!hasMilestones) {
-      return (
-        <div className="space-y-2">
-          {items.map(renderItemCard)}
-        </div>
-      );
-    }
-
-    // Group items by milestone
-    const milestoneMap = new Map(milestones.map((m) => [m.id, m.name]));
-    const grouped: Record<string, BudgetItem[]> = {};
-    const generalItems: BudgetItem[] = [];
-
-    for (const item of items) {
-      if (item.milestoneId && milestoneMap.has(item.milestoneId)) {
-        if (!grouped[item.milestoneId]) {
-          grouped[item.milestoneId] = [];
-        }
-        grouped[item.milestoneId].push(item);
-      } else {
-        generalItems.push(item);
-      }
-    }
-
-    // Render milestone sections in the same order as milestones prop
-    const sections: React.ReactNode[] = [];
-    for (const milestone of milestones) {
-      const milestoneItems = grouped[milestone.id];
-      if (milestoneItems && milestoneItems.length > 0) {
-        sections.push(renderMilestoneSection(milestone.id, milestone.name, milestoneItems));
-      }
-    }
-
-    if (generalItems.length > 0) {
-      sections.push(renderMilestoneSection('__general__', t('budgetItemsList.general'), generalItems));
-    }
-
-    return <div className="space-y-4">{sections}</div>;
+    return <div className="space-y-1">{groupedItems.map(({ category, items }) => renderCategorySection(category, items))}</div>;
   };
 
   if (showCard) {

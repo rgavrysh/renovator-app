@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from './ui/Badge';
-import { Divider } from './ui/Divider';
 import { Select } from './ui/Select';
 import { StatusIcon } from './ui/StatusIcon';
 import { IconButton } from './ui/IconButton';
+import { ListRow, ListRowGroup } from './ui/ListRow';
 import { formatCurrency } from '../utils/currency';
 import { getTaskStatusIconKind } from '../utils/statusColors';
-import { Trash2 } from 'lucide-react';
+import { ChevronRight, Trash2 } from 'lucide-react';
 import type { Milestone } from './MilestoneList';
 
 export interface Task {
@@ -50,6 +50,15 @@ const STATUS_CYCLE: TaskStatus[] = [
   TaskStatus.BLOCKED,
 ];
 
+// Display order for grouped sections (U5.3) — matches the status lifecycle,
+// not alphabetical or arrival order.
+const STATUS_GROUP_ORDER: TaskStatus[] = [
+  TaskStatus.TODO,
+  TaskStatus.IN_PROGRESS,
+  TaskStatus.BLOCKED,
+  TaskStatus.COMPLETED,
+];
+
 const PRIORITY_CYCLE: TaskPriority[] = [
   TaskPriority.LOW,
   TaskPriority.MEDIUM,
@@ -81,10 +90,10 @@ export const TaskList: React.FC<TaskListProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const activateRow = onSelect ?? onEdit;
-  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [milestoneFilter, setMilestoneFilter] = useState<string>('all');
   const [editingAmounts, setEditingAmounts] = useState<Record<string, string>>({});
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -156,12 +165,12 @@ export const TaskList: React.FC<TaskListProps> = ({
     }
   };
 
+  const toggleGroup = (status: TaskStatus) => {
+    setCollapsedGroups((prev) => ({ ...prev, [status]: !prev[status] }));
+  };
+
   const filteredTasks = useMemo(() => {
     let filtered = [...tasks];
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((task) => task.status === statusFilter);
-    }
 
     if (priorityFilter !== 'all') {
       filtered = filtered.filter((task) => task.priority === priorityFilter);
@@ -176,15 +185,21 @@ export const TaskList: React.FC<TaskListProps> = ({
     }
 
     return filtered;
-  }, [tasks, statusFilter, priorityFilter, milestoneFilter]);
+  }, [tasks, priorityFilter, milestoneFilter]);
 
-  const statusOptions = [
-    { value: 'all', label: t('taskList.allStatuses') },
-    { value: TaskStatus.TODO, label: t('taskStatus.todo') },
-    { value: TaskStatus.IN_PROGRESS, label: t('taskStatus.in_progress') },
-    { value: TaskStatus.COMPLETED, label: t('taskStatus.completed') },
-    { value: TaskStatus.BLOCKED, label: t('taskStatus.blocked') },
-  ];
+  // Grouped by status (U5.3), in lifecycle order, skipping empty groups.
+  const groupedTasks = useMemo(() => {
+    const groups = new Map<TaskStatus, Task[]>();
+    for (const status of STATUS_GROUP_ORDER) {
+      groups.set(status, []);
+    }
+    for (const task of filteredTasks) {
+      groups.get(task.status)?.push(task);
+    }
+    return STATUS_GROUP_ORDER.map((status) => ({ status, tasks: groups.get(status) ?? [] })).filter(
+      (group) => group.tasks.length > 0
+    );
+  }, [filteredTasks]);
 
   const priorityOptions = [
     { value: 'all', label: t('taskList.allPriorities') },
@@ -203,24 +218,114 @@ export const TaskList: React.FC<TaskListProps> = ({
   if (tasks.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-gray-500">{t('taskList.noTasks')}</p>
+        <p className="text-ui text-gray-500">{t('taskList.noTasks')}</p>
       </div>
     );
   }
 
+  const renderTaskRow = (task: Task) => {
+    const taskIsOverdue = isOverdue(task);
+    const amountValue = editingAmounts[task.id] ?? String(task.amount ?? '');
+
+    return (
+      <ListRow
+        key={task.id}
+        danger={taskIsOverdue}
+        onActivate={activateRow ? () => activateRow(task) : undefined}
+        icon={
+          <button
+            type="button"
+            className="relative group/status flex-shrink-0 p-0 border-0 bg-transparent"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStatusChange?.(task, getNextStatus(task.status));
+            }}
+            title={getStatusLabel(task.status)}
+          >
+            <StatusIcon
+              status={getStatusIconKind(task.status)}
+              size={16}
+              className="cursor-pointer transition-transform hover:scale-125"
+            />
+          </button>
+        }
+        meta={
+          <>
+            {task.dueDate && (
+              <span className={taskIsOverdue ? 'font-medium' : ''}>
+                {t('taskList.due')} {formatDate(task.dueDate)}
+              </span>
+            )}
+            {task.actualPrice !== undefined && task.actualPrice !== null && (
+              <span>
+                {t('taskList.actual')} {formatCurrency(Number(task.actualPrice), i18n.language)}
+                {task.unit && ` (${Number(task.amount || 1)} ${task.unit})`}
+              </span>
+            )}
+            {taskIsOverdue && <span className="font-medium">⚠ {t('common.overdue')}</span>}
+          </>
+        }
+        actions={
+          <>
+            <div className="flex items-center gap-1.5">
+              <label className="text-ui-xs text-gray-500 whitespace-nowrap">{t('taskForm.amount')}:</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={amountValue}
+                onChange={(e) =>
+                  setEditingAmounts((prev) => ({
+                    ...prev,
+                    [task.id]: e.target.value,
+                  }))
+                }
+                onBlur={() => handleAmountBlur(task)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
+                className="w-20 h-7 px-2 text-ui border border-gray-300 rounded focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-center"
+              />
+            </div>
+            {onDelete && (
+              <IconButton
+                label={t('common.delete')}
+                icon={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
+                variant="danger"
+                onClick={() => onDelete(task)}
+              />
+            )}
+          </>
+        }
+      >
+        <div className="flex items-center gap-2">
+          <h4 className={`text-ui font-medium truncate ${taskIsOverdue ? 'text-danger-900' : 'text-gray-900'}`}>
+            {task.name}
+          </h4>
+          <button
+            type="button"
+            className="cursor-pointer flex-shrink-0 p-0 border-0 bg-transparent"
+            title={getPriorityLabel(task.priority)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPriorityChange?.(task, getNextPriority(task.priority));
+            }}
+          >
+            <Badge variant={getPriorityBadgeVariant(task.priority)} size="sm">
+              {getPriorityLabel(task.priority)}
+            </Badge>
+          </button>
+        </div>
+      </ListRow>
+    );
+  };
+
   return (
     <div className="space-y-4">
-      {/* Filter Controls */}
+      {/* Filter Controls — status is handled by the grouped sections below (U5.3) */}
       <div className="flex gap-4 items-end">
-        <div className="flex-1">
-          <Select
-            label={t('common.status')}
-            options={statusOptions}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            fullWidth
-          />
-        </div>
         <div className="flex-1">
           <Select
             label={t('common.priority')}
@@ -244,162 +349,36 @@ export const TaskList: React.FC<TaskListProps> = ({
       </div>
 
       {/* Task Count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-ui text-gray-600">
         {t('taskList.showingTasks', { filtered: filteredTasks.length, total: tasks.length })}
       </div>
 
-      {/* Task List */}
+      {/* Grouped, collapsible task sections (U5.3) */}
       {filteredTasks.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-sm text-gray-500">{t('taskList.noTasksMatch')}</p>
+          <p className="text-ui text-gray-500">{t('taskList.noTasksMatch')}</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredTasks.map((task, index) => {
-            const taskIsOverdue = isOverdue(task);
-            const amountValue =
-              editingAmounts[task.id] ?? String(task.amount ?? '');
-
+        <div className="space-y-1">
+          {groupedTasks.map(({ status, tasks: groupTasks }) => {
+            const isCollapsed = collapsedGroups[status] ?? false;
             return (
-              <div key={task.id}>
-                {index > 0 && <Divider />}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={`flex items-center p-3 rounded-linear transition-colors cursor-pointer ${
-                    taskIsOverdue
-                      ? 'bg-red-50 border border-red-200'
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => activateRow?.(task)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      activateRow?.(task);
-                    }
-                  }}
+              <div key={status}>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(status)}
+                  className="w-full flex items-center gap-1.5 px-1 py-1.5 text-left hover:bg-subtle rounded transition-colors"
+                  aria-expanded={!isCollapsed}
                 >
-                  {/* Status circle indicator */}
-                  <button
-                    type="button"
-                    className="relative group flex-shrink-0 p-0 border-0 bg-transparent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onStatusChange?.(task, getNextStatus(task.status));
-                    }}
-                    title={getStatusLabel(task.status)}
-                  >
-                    <StatusIcon
-                      status={getStatusIconKind(task.status)}
-                      size={16}
-                      className="cursor-pointer transition-transform hover:scale-125"
-                    />
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 text-xs text-white bg-gray-800 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                      {getStatusLabel(task.status)}
-                    </div>
-                  </button>
-
-                  {/* Task info */}
-                  <div className="flex-1 ml-3 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4
-                        className={`text-sm font-medium truncate ${
-                          taskIsOverdue ? 'text-red-900' : 'text-gray-900'
-                        }`}
-                      >
-                        {task.name}
-                      </h4>
-
-                      {/* Priority badge — clickable to cycle */}
-                      <button
-                        type="button"
-                        className="cursor-pointer flex-shrink-0 p-0 border-0 bg-transparent"
-                        title={getPriorityLabel(task.priority)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPriorityChange?.(task, getNextPriority(task.priority));
-                        }}
-                      >
-                        <Badge
-                          variant={getPriorityBadgeVariant(task.priority)}
-                          size="sm"
-                        >
-                          {getPriorityLabel(task.priority)}
-                        </Badge>
-                      </button>
-                    </div>
-
-                    {/* Meta info */}
-                    <div
-                      className={`flex items-center gap-4 text-xs mt-0.5 ${
-                        taskIsOverdue ? 'text-red-600' : 'text-gray-500'
-                      }`}
-                    >
-                      {task.dueDate && (
-                        <span className={taskIsOverdue ? 'font-medium' : ''}>
-                          {t('taskList.due')} {formatDate(task.dueDate)}
-                        </span>
-                      )}
-                      {task.actualPrice !== undefined && task.actualPrice !== null && (
-                        <span>
-                          {t('taskList.actual')}{' '}
-                          {formatCurrency(Number(task.actualPrice), i18n.language)}
-                          {task.unit && ` (${Number(task.amount || 1)} ${task.unit})`}
-                        </span>
-                      )}
-                      {taskIsOverdue && (
-                        <span className="font-medium text-red-600">
-                          ⚠ {t('common.overdue')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Amount input */}
-                  {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-                  <div
-                    className="flex items-center gap-1.5 ml-4 flex-shrink-0"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
-                    <label className="text-xs text-gray-500 whitespace-nowrap">
-                      {t('taskForm.amount')}:
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={amountValue}
-                      onChange={(e) =>
-                        setEditingAmounts((prev) => ({
-                          ...prev,
-                          [task.id]: e.target.value,
-                        }))
-                      }
-                      onBlur={() => handleAmountBlur(task)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          (e.target as HTMLInputElement).blur();
-                        }
-                      }}
-                      className="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-center"
-                    />
-                  </div>
-
-                  {/* Delete button */}
-                  {onDelete && (
-                    <IconButton
-                      label={t('common.delete')}
-                      icon={<Trash2 className="w-4 h-4" strokeWidth={1.5} />}
-                      variant="danger"
-                      className="ml-3 flex-shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(task);
-                      }}
-                    />
-                  )}
-                </div>
+                  <ChevronRight
+                    className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+                    strokeWidth={1.5}
+                  />
+                  <StatusIcon status={getStatusIconKind(status)} size={13} />
+                  <span className="text-ui-sm font-medium text-gray-700">{getStatusLabel(status)}</span>
+                  <span className="text-ui-xs text-gray-400">{groupTasks.length}</span>
+                </button>
+                {!isCollapsed && <ListRowGroup>{groupTasks.map(renderTaskRow)}</ListRowGroup>}
               </div>
             );
           })}
