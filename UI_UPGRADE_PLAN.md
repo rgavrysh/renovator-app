@@ -16,7 +16,7 @@ The distinction matters, because the two plans pull in different directions and 
 
 So this is not a third parallel plan. It is the argument for un-parking those items, plus the visual layer that neither existing document covers at all: type scale, density, iconography, motion, and reading comfort.
 
-**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note), Batch D (`U3.1`–`U3.3`), Batch E (`U4.1`–`U4.4`), and Batch F (`U5.1`–`U5.3`) are implemented. Everything below is written against that baseline.
+**Current state:** `S0`–`S12` are committed (through `3cf87df`). Batch A (`U1.1`–`U1.4`, `U1.6`, `U1.7`), `U1.5` (Batch B), Batch C (`U2.1`, `U2.2`, `U2.4` done; `U2.3` partially done — see its implementation note), Batch D (`U3.1`–`U3.3`), Batch E (`U4.1`–`U4.4`), Batch F (`U5.1`–`U5.3`), and `U7.1`/`U7.3` (Batch H, partially — see `U7.2`'s note) are implemented. Everything below is written against that baseline.
 
 ---
 
@@ -424,23 +424,29 @@ Replace centred spinners with layout-shaped skeleton rows (`animate-pulse`, `bg-
 
 ## Phase U7 — First impressions
 
-### U7.1 · Login
+### U7.1 · Login ✅ done
 
 Currently a centred card on an empty field, no brand mark, no product explanation, and a button reading "Sign in with OAuth" — the protocol name. Give it the brand tile, one line of product copy, "Continue with Google" with the glyph, a loading state, and the `linear` tokens the rest of the app uses.
 
-**Effort:** S · 👁
+**Where:** `pages/Login.tsx`, new `components/icons/GoogleIcon.tsx`. **Effort:** S · 👁
 
-### U7.2 · Dashboard as a dashboard
+**Implementation note:** the card-in-a-card look is gone — the page is now `bg-canvas` with a single `border-border`/`bg-surface` panel, no nested `Card`. Above it sits a brand tile (`bg-primary-600` square with a `lucide-react` `Hammer` glyph, standing in for a real logo asset, which doesn't exist yet), the `title-lg` wordmark and `text-gray-500` tagline. The button text changed from the protocol name ("Sign in with OAuth") to `t('login.signInButton')` = "Continue with Google", since the backend (`AuthService`) is Google OAuth specifically; a new hand-drawn `components/icons/GoogleIcon.tsx` (the four-colour "G" mark) sits next to the label, following the same "brand logo, not a `lucide` glyph" precedent as `GoogleDriveIcon` from `U3.1`. Clicking it sets a local `isSigningIn` state, swapping the label to `t('login.signingIn')` ("Signing in…") and disabling the button via `Button`'s existing `loading` prop — `AuthContext.login()` itself is synchronous (it fires a redirect after a background fetch), so this loading state is purely about not leaving the button clickable and mute during that gap. Covered by `pages/Login.test.tsx`.
+
+### U7.2 · Dashboard as a dashboard — deferred
 
 `D7`. Three or four stat tiles (active projects, spend vs budget, overdue tasks, next milestone due) above the list, plus progress and overdue chips on the cards. Needs your product judgement about what a renovator checks daily, and possibly one backend field for overdue counts.
 
+**Decision (21 Aug 2026):** deferred, not implemented. Discussed and explicitly parked for a future, larger dashboards-and-reporting milestone rather than done piecemeal here — the cross-project aggregation this needs (overdue tasks, spend vs budget, next milestone, all currently only available per-project) deserves a proper backend design, not a step bolted onto the batch that also shipped `U7.1`/`U7.3`.
+
 **Effort:** M (+ possible backend S)
 
-### U7.3 · Empty states everywhere
+### U7.3 · Empty states everywhere ✅ done
 
 Every empty region becomes a quiet invitation: 16px muted icon, one sentence, one action. `EmptyState` exists and is used on exactly one page.
 
-**Effort:** S
+**Where:** `TaskList.tsx`, `MilestoneList.tsx`, `BudgetOverview.tsx`, `pages/WorkItemsLibrary.tsx`, `WorkItemsLibraryModal.tsx`. **Effort:** S
+
+**Implementation note:** most list components (`SupplierList`, `ResourceList`, `DocumentList`, `BudgetItemsList`, `PhotoGallery`) already adopted `EmptyState` as part of the `U5.2` migrations, so the gap this step actually closed was five remaining bare `<div className="text-center py-8"><p>…</p></div>` regions that predated `U5`: no-tasks and no-tasks-match-filters in `TaskList`, no-milestones in `MilestoneList`, no-budget-set in `BudgetOverview`, and no-work-items-found in the `WorkItemsLibraryModal` picker — all converted to `EmptyState` with a `lucide-react` icon (`ClipboardList`, `SearchX`, `Flag`, `Wallet` respectively). `pages/WorkItemsLibrary.tsx`'s custom-templates-empty region was also converted from a bordered `p-12` box to a flat `EmptyState`, and — since it's the one case among these with an obvious next action — gained a "Create Template" button wired to the same handler as the page's header button, rather than staying a dead-end sentence. Milestones and the modal's no-results case have no create-from-here action available (creation happens elsewhere / there's nothing to create in a read-only picker), so they're icon + sentence only, per the plan's own "one sentence, one action" — where there is one. Covered by new cases in `TaskList.test.tsx`, `MilestoneList.test.tsx`, `BudgetOverview.test.tsx`, `pages/WorkItemsLibrary.test.tsx`, and `WorkItemsLibraryModal.test.tsx`.
 
 ---
 
@@ -477,7 +483,7 @@ Read this before scheduling either document, so nothing is built twice.
 | **E** ✅ done | `U4.1`–`U4.4` | ~2–3 days | Descriptions and notes become genuinely comfortable to read |
 | **F** ✅ done | `U5.1`–`U5.3` | ~5–8 days | Six list patterns become one |
 | **G** | `U6.1`–`U6.5` | ~5–7 days | The app feels fast and rewards poking around |
-| **H** | `U7.1`–`U7.3` | ~2–3 days | First impression matches the rest |
+| **H** ⚠️ mostly done | `U7.1`, `U7.3` | ~2–3 days | Login and empty states match the rest; `U7.2` deferred to a future dashboards/reporting milestone |
 
 Batches A, B, D, E and F are self-contained and reversible. C is the pivot. G is optional in the sense that nothing breaks without it — and it is the batch most directly aimed at what you actually asked for.
 

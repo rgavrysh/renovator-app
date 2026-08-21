@@ -14,9 +14,11 @@ describe('BudgetOverview', () => {
     updatedAt: '2024-01-01T00:00:00Z',
   };
 
-  it('should render "No budget set" when budget is null', () => {
+  it('should render a quiet EmptyState invitation when budget is null (U7.3)', () => {
     render(<BudgetOverview budget={null} />);
-    expect(screen.getByText('No budget set')).toBeInTheDocument();
+    const title = screen.getByText('No budget set');
+    expect(title).toBeInTheDocument();
+    expect(title.parentElement?.querySelector('svg')).toBeInTheDocument();
   });
 
   it('should display budget totals', () => {

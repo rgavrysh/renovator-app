@@ -5,6 +5,8 @@ import { Button } from '../components/ui/Button';
 import { Spinner } from '../components/ui/Spinner';
 import { Alert } from '../components/ui/Alert';
 import { Badge } from '../components/ui/Badge';
+import { EmptyState } from '../components/ui/EmptyState';
+import { ListChecks } from 'lucide-react';
 import { apiClient } from '../utils/api';
 import { WorkItemTemplate, WorkItemCategory } from '../components/WorkItemsLibraryModal';
 import { WorkItemTemplateForm } from '../components/WorkItemTemplateForm';
@@ -178,12 +180,22 @@ export const WorkItemsLibrary: React.FC = () => {
             {/* Work Items Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {customWorkItems.length === 0 ? (
-                <div className="col-span-full bg-white rounded-linear border border-gray-200 p-12 text-center">
-                  <p className="text-gray-500 mb-4">
-                    {selectedCategory === 'all'
-                      ? t('workItemsLibrary.noCustomItems')
-                      : t('workItemsLibrary.noCustomItemsCategory')}
-                  </p>
+                <div className="col-span-full">
+                  <EmptyState
+                    icon={<ListChecks className="w-12 h-12" strokeWidth={1.5} />}
+                    title={
+                      selectedCategory === 'all'
+                        ? t('workItemsLibrary.noCustomItems')
+                        : t('workItemsLibrary.noCustomItemsCategory')
+                    }
+                    action={
+                      selectedCategory === 'all' && (
+                        <Button variant="primary" onClick={handleCreateTemplate}>
+                          {t('workItemsLibrary.createTemplate')}
+                        </Button>
+                      )
+                    }
+                  />
                 </div>
               ) : (
                 customWorkItems.map(item => (

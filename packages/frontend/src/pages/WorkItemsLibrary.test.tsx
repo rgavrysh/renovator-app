@@ -72,6 +72,29 @@ describe('WorkItemsLibrary', () => {
     expect(spinner).toBeInTheDocument();
   });
 
+  it('should render a quiet EmptyState invitation with a create action when there are no custom items (U7.3)', async () => {
+    (apiModule.apiClient.get as any).mockResolvedValue([]);
+
+    render(
+      <BrowserRouter>
+        <WorkItemsLibrary />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('No custom work items found. Create your first custom template to get started.')
+      ).toBeInTheDocument();
+    });
+
+    const title = screen.getByText(
+      'No custom work items found. Create your first custom template to get started.'
+    );
+    expect(title.parentElement?.querySelector('svg')).toBeInTheDocument();
+    // The invitation includes an action, not just a bare sentence.
+    expect(screen.getAllByRole('button', { name: 'Create Template' }).length).toBeGreaterThan(0);
+  });
+
   it('should display custom work items', async () => {
     const mockWorkItems = [
       {

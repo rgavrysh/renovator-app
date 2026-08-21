@@ -4,7 +4,8 @@ import { StatusIcon } from './ui/StatusIcon';
 import { IconButton } from './ui/IconButton';
 import { useTranslation } from 'react-i18next';
 import { getMilestoneStatusIconKind } from '../utils/statusColors';
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Trash2, Flag } from 'lucide-react';
+import { EmptyState } from './ui/EmptyState';
 
 export interface Milestone {
   id: string;
@@ -111,9 +112,10 @@ export const MilestoneList: React.FC<MilestoneListProps> = ({
 
   if (sortedMilestones.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-ui text-gray-500">{t('milestoneList.noMilestones')}</p>
-      </div>
+      <EmptyState
+        icon={<Flag className="w-12 h-12" strokeWidth={1.5} />}
+        title={t('milestoneList.noMilestones')}
+      />
     );
   }
 

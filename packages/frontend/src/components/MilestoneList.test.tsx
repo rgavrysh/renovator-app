@@ -41,9 +41,11 @@ describe('MilestoneList', () => {
     },
   ];
 
-  it('should render empty state when no milestones', () => {
+  it('should render a quiet EmptyState invitation when no milestones (U7.3)', () => {
     render(<MilestoneList milestones={[]} />);
-    expect(screen.getByText('No milestones yet')).toBeInTheDocument();
+    const title = screen.getByText('No milestones yet');
+    expect(title).toBeInTheDocument();
+    expect(title.parentElement?.querySelector('svg')).toBeInTheDocument();
   });
 
   it('should display milestones in chronological order by target date', () => {

@@ -7,7 +7,8 @@ import { IconButton } from './ui/IconButton';
 import { ListRow, ListRowGroup } from './ui/ListRow';
 import { formatCurrency } from '../utils/currency';
 import { getTaskStatusIconKind } from '../utils/statusColors';
-import { ChevronRight, Trash2 } from 'lucide-react';
+import { ChevronRight, Trash2, ClipboardList, SearchX } from 'lucide-react';
+import { EmptyState } from './ui/EmptyState';
 import type { Milestone } from './MilestoneList';
 
 export interface Task {
@@ -217,9 +218,10 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   if (tasks.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-ui text-gray-500">{t('taskList.noTasks')}</p>
-      </div>
+      <EmptyState
+        icon={<ClipboardList className="w-12 h-12" strokeWidth={1.5} />}
+        title={t('taskList.noTasks')}
+      />
     );
   }
 
@@ -355,9 +357,10 @@ export const TaskList: React.FC<TaskListProps> = ({
 
       {/* Grouped, collapsible task sections (U5.3) */}
       {filteredTasks.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-ui text-gray-500">{t('taskList.noTasksMatch')}</p>
-        </div>
+        <EmptyState
+          icon={<SearchX className="w-12 h-12" strokeWidth={1.5} />}
+          title={t('taskList.noTasksMatch')}
+        />
       ) : (
         <div className="space-y-1">
           {groupedTasks.map(({ status, tasks: groupTasks }) => {

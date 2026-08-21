@@ -5,9 +5,10 @@ import { Button } from './ui/Button';
 import { Spinner } from './ui/Spinner';
 import { Alert } from './ui/Alert';
 import { Badge } from './ui/Badge';
+import { EmptyState } from './ui/EmptyState';
 import { apiClient } from '../utils/api';
 import { formatCurrency } from '../utils/currency';
-import { Check } from 'lucide-react';
+import { Check, SearchX } from 'lucide-react';
 
 export enum WorkItemCategory {
   DEMOLITION = 'demolition',
@@ -244,11 +245,10 @@ export const WorkItemsLibraryModal: React.FC<WorkItemsLibraryModalProps> = ({
             {/* Work Items List */}
             <div className="max-h-96 overflow-y-auto space-y-2">
               {filteredWorkItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">
-                    {t('workItemsModal.noItemsFound')}
-                  </p>
-                </div>
+                <EmptyState
+                  icon={<SearchX className="w-10 h-10" strokeWidth={1.5} />}
+                  title={t('workItemsModal.noItemsFound')}
+                />
               ) : (
                 filteredWorkItems.map(item => {
                   const isSelected = selectedItems.has(item.id);

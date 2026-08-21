@@ -85,6 +85,26 @@ describe('WorkItemsLibraryModal', () => {
     });
   });
 
+  it('should render a quiet EmptyState invitation when there are no work items to select (U7.3)', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue([]);
+
+    render(
+      <WorkItemsLibraryModal
+        isOpen={true}
+        onClose={mockOnClose}
+        onSuccess={mockOnSuccess}
+        projectId={projectId}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('No work items found in this category')).toBeInTheDocument();
+    });
+
+    const title = screen.getByText('No work items found in this category');
+    expect(title.parentElement?.querySelector('svg')).toBeInTheDocument();
+  });
+
   it('should display work items grouped by category', async () => {
     vi.mocked(apiClient.get).mockResolvedValue(mockWorkItems);
 

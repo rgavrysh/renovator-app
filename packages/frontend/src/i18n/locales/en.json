@@ -64,7 +64,8 @@
     "title": "Renovator",
     "subtitle": "Project Management Platform",
     "signInPrompt": "Sign in to manage your renovation projects",
-    "signInButton": "Sign in with OAuth",
+    "signInButton": "Continue with Google",
+    "signingIn": "Signing in…",
     "termsNotice": "By signing in, you agree to our Terms of Service and Privacy Policy"
   },
   "authCallback": {

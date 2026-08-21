@@ -2,8 +2,10 @@ import React from 'react';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { Alert } from './ui/Alert';
 import { Divider } from './ui/Divider';
+import { EmptyState } from './ui/EmptyState';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/currency';
+import { Wallet } from 'lucide-react';
 
 export interface Budget {
   id: string;
@@ -73,9 +75,10 @@ export const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   const renderContent = () => {
     if (!budget) {
       return (
-        <div className="text-center py-8">
-          <p className="text-sm text-gray-500">{t('budgetOverview.noBudgetSet')}</p>
-        </div>
+        <EmptyState
+          icon={<Wallet className="w-12 h-12" strokeWidth={1.5} />}
+          title={t('budgetOverview.noBudgetSet')}
+        />
       );
     }
 

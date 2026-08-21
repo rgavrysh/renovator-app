@@ -60,9 +60,12 @@ describe('TaskList', () => {
     },
   ];
 
-  it('should render empty state when no tasks', () => {
+  it('should render a quiet EmptyState invitation when no tasks (U7.3)', () => {
     render(<TaskList tasks={[]} />);
-    expect(screen.getByText('No tasks yet')).toBeInTheDocument();
+    const title = screen.getByText('No tasks yet');
+    expect(title).toBeInTheDocument();
+    // EmptyState renders a leading icon, not a bare sentence.
+    expect(title.parentElement?.querySelector('svg')).toBeInTheDocument();
   });
 
   it('should display all tasks by default', () => {
