@@ -6,6 +6,7 @@ import { ListRow, ListRowGroup } from './ui/ListRow';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/currency';
 import { ChevronRight, Pencil, Trash2 } from 'lucide-react';
+import { MILESTONE_FILTER_ALL, MilestoneFilterValue, matchesMilestoneFilter } from './MilestoneFilter';
 
 export enum BudgetCategory {
   LABOR = 'labor',
@@ -49,6 +50,7 @@ interface MilestoneInfo {
 export interface BudgetItemsListProps {
   items: BudgetItem[];
   milestones?: MilestoneInfo[];
+  milestoneFilter?: MilestoneFilterValue;
   showCard?: boolean;
   className?: string;
   onEditItem?: (item: BudgetItem) => void;
@@ -58,6 +60,7 @@ export interface BudgetItemsListProps {
 export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
   items,
   milestones = [],
+  milestoneFilter = MILESTONE_FILTER_ALL,
   showCard = true,
   className = '',
   onEditItem,
@@ -88,19 +91,24 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
     return groupItems.reduce((sum, item) => sum + Number(item.actualCost), 0);
   };
 
+  const filteredItems = useMemo(
+    () => items.filter((item) => matchesMilestoneFilter(item.milestoneId, milestoneFilter)),
+    [items, milestoneFilter]
+  );
+
   // Grouped by category (U5.3), in fixed display order, skipping empty groups.
   const groupedItems = useMemo(() => {
     const groups = new Map<BudgetCategory, BudgetItem[]>();
     for (const category of CATEGORY_ORDER) {
       groups.set(category, []);
     }
-    for (const item of items) {
+    for (const item of filteredItems) {
       groups.get(item.category)?.push(item);
     }
     return CATEGORY_ORDER.map((category) => ({ category, items: groups.get(category) ?? [] })).filter(
       (group) => group.items.length > 0
     );
-  }, [items]);
+  }, [filteredItems]);
 
   const renderItemRow = (item: BudgetItem) => {
     const milestoneName = item.milestoneId ? milestoneMap.get(item.milestoneId) : undefined;
@@ -176,6 +184,12 @@ export const BudgetItemsList: React.FC<BudgetItemsListProps> = ({
           title={t('budgetItemsList.noBudgetItems')}
           description={t('budgetItemsList.addBudgetItems')}
         />
+      );
+    }
+
+    if (filteredItems.length === 0) {
+      return (
+        <p className="py-6 text-center text-ui text-gray-500">{t('budgetItemsList.noItemsMatch')}</p>
       );
     }
 

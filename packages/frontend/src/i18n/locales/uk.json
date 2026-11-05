@@ -133,7 +133,7 @@
     "uploadPhotos": "Завантажити фото",
     "budgetSummary": "Бюджет",
     "exportToPdf": "Експорт у PDF",
-    "addItem": "Додати елемент",
+    "addItem": "Додати бюджетну статтю",
     "noBudgetSet": "Бюджет не встановлено",
     "createBudget": "Створити бюджет",
     "estimatedBudget": "Кошторис бюджету",
@@ -156,6 +156,8 @@
     "exportMilestone": "Етап",
     "exportMilestoneHint": "Оберіть етап для експорту лише його елементів, або експортуйте весь бюджет проєкту.",
     "allProject": "Весь проєкт",
+    "entireProject": "весь проєкт",
+    "shareOfProjectTotal": "Частка від загальних витрат",
     "deleteMilestoneConfirm": "Ви впевнені, що хочете видалити \"{{name}}\"? Завдання, прив'язані до цього етапу, стануть непризначеними. Цю дію неможливо скасувати."
   },
   "projectForm": {
@@ -340,8 +342,16 @@
     "title": "Бюджетні статті",
     "noBudgetItems": "Бюджетних статей немає",
     "addBudgetItems": "Додайте бюджетні статті для відстеження фактичних витрат",
+    "noItemsMatch": "Немає бюджетних статей для цього етапу",
     "actual": "Факт",
     "general": "Загальні"
+  },
+  "milestoneFilter": {
+    "filterByMilestone": "Фільтр за етапом",
+    "milestone": "Етап",
+    "allMilestones": "Всі етапи",
+    "noMilestone": "Без етапу",
+    "clear": "Скинути фільтр"
   },
   "workItemCategory": {
     "demolition": "Демонтаж",
