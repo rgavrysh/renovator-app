@@ -123,10 +123,12 @@ const renderWithRouter = (route = '/projects/project-1') => {
   localStorage.setItem('auth_tokens', JSON.stringify(mockTokens));
   localStorage.setItem('auth_user', JSON.stringify(mockUser));
 
-  // Mock the /me endpoint to verify token
-  mockFetch.mockResolvedValue({
-    ok: true,
-    json: async () => mockUser,
+  // Mock the /me endpoint to verify token; photo/document lists must stay arrays.
+  mockFetch.mockImplementation((url: string) => {
+    if (typeof url === 'string' && (url.includes('/photos') || url.includes('/documents'))) {
+      return Promise.resolve({ ok: true, json: async () => [] });
+    }
+    return Promise.resolve({ ok: true, json: async () => mockUser });
   });
 
   return render(
@@ -244,10 +246,10 @@ describe('ProjectDetail', () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByText('Demolition')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Demolition' })).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Installation')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Installation' })).toBeInTheDocument();
     expect(screen.getByText('Remove old cabinets')).toBeInTheDocument();
   });
 
@@ -411,6 +413,88 @@ describe('ProjectDetail', () => {
     await waitFor(() => {
       // 1 out of 2 milestones completed = 50%
       expect(screen.getByText('Progress: 50%')).toBeInTheDocument();
+    });
+  });
+
+  describe('budget milestone filter', () => {
+    const budgetWithItems = {
+      ...mockBudget,
+      totalActual: 3750,
+      totalActualFromItems: 3300,
+      totalActualFromTasks: 450,
+      items: [
+        { id: 'item-a', budgetId: 'budget-1', milestoneId: 'milestone-1', name: 'Dumpster', category: 'equipment', actualCost: 1000, createdAt: '', updatedAt: '' },
+        { id: 'item-b', budgetId: 'budget-1', milestoneId: 'milestone-2', name: 'Cabinets', category: 'materials', actualCost: 2000, createdAt: '', updatedAt: '' },
+        { id: 'item-c', budgetId: 'budget-1', name: 'Building permit fee', category: 'permits', actualCost: 300, createdAt: '', updatedAt: '' },
+      ],
+    };
+
+    const renderWithBudgetItems = async () => {
+      mockApiForProject(mockProject);
+      vi.mocked(apiModule.apiClient.get).mockImplementation((endpoint: string) => {
+        if (endpoint.includes('/milestones')) return Promise.resolve(mockMilestones);
+        if (endpoint.includes('/tasks')) return Promise.resolve(mockTasks);
+        if (endpoint.includes('/budget')) return Promise.resolve(budgetWithItems);
+        return Promise.resolve(mockProject);
+      });
+
+      renderWithRouter();
+
+      await waitFor(() => {
+        expect(screen.getByText('$3,750.00')).toBeInTheDocument();
+      });
+
+      // Budget Summary's trigger comes before Budget Items' in document order.
+      const [summaryFilter, itemsFilter] = screen.getAllByRole('button', { name: 'Filter by milestone' });
+      return { summaryFilter, itemsFilter };
+    };
+
+    it('renders the summary header actions as labelled icon buttons', async () => {
+      await renderWithBudgetItems();
+
+      expect(screen.getByRole('button', { name: 'Export to PDF' })).toHaveAttribute('title', 'Export to PDF');
+      expect(screen.getByRole('button', { name: 'Add budget item' })).toHaveAttribute('title', 'Add budget item');
+    });
+
+    it('recalculates the summary for the selected milestone and swaps variance for share of total', async () => {
+      const { summaryFilter } = await renderWithBudgetItems();
+      expect(screen.getByText('Variance')).toBeInTheDocument();
+
+      fireEvent.click(summaryFilter);
+      fireEvent.click(screen.getByRole('menuitemradio', { name: 'Demolition' }));
+
+      // 1000 from items + 450 from task-1
+      expect(screen.getByText('$1,450.00')).toBeInTheDocument();
+      expect(screen.queryByText('$3,750.00')).not.toBeInTheDocument();
+      expect(screen.queryByText('Variance')).not.toBeInTheDocument();
+      expect(screen.getByText('Share of project total')).toBeInTheDocument();
+      expect(screen.getByText('39%')).toBeInTheDocument();
+    });
+
+    it('supports the "No milestone" option and clearing via the chip', async () => {
+      const { summaryFilter } = await renderWithBudgetItems();
+
+      fireEvent.click(summaryFilter);
+      fireEvent.click(screen.getByRole('menuitemradio', { name: 'No milestone' }));
+
+      expect(screen.getByText('8%')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Clear filter' }));
+      expect(screen.getByText('$3,750.00')).toBeInTheDocument();
+      expect(screen.getByText('Variance')).toBeInTheDocument();
+    });
+
+    it('filters the Budget Items panel independently of the summary', async () => {
+      const { itemsFilter } = await renderWithBudgetItems();
+      expect(screen.getByText('Cabinets')).toBeInTheDocument();
+
+      fireEvent.click(itemsFilter);
+      fireEvent.click(screen.getByRole('menuitemradio', { name: 'Installation' }));
+
+      expect(screen.getByText('Cabinets')).toBeInTheDocument();
+      expect(screen.queryByText('Dumpster')).not.toBeInTheDocument();
+      expect(screen.queryByText('Building permit fee')).not.toBeInTheDocument();
+      expect(screen.getByText('$3,750.00')).toBeInTheDocument();
     });
   });
 

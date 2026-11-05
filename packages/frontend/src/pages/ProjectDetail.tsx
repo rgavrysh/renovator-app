@@ -10,7 +10,7 @@ import { Alert } from '../components/ui/Alert';
 import { Divider } from '../components/ui/Divider';
 import { StatusIcon } from '../components/ui/StatusIcon';
 import { IconButton } from '../components/ui/IconButton';
-import { Pencil, Check, X, RefreshCw } from 'lucide-react';
+import { Pencil, Check, X, RefreshCw, FileDown, Loader2, Plus } from 'lucide-react';
 import { formatCurrency } from '../utils/currency';
 import { MilestoneList, type Milestone, MilestoneStatus } from '../components/MilestoneList';
 import { MilestoneForm } from '../components/MilestoneForm';
@@ -24,6 +24,15 @@ import { PhotoUpload } from '../components/PhotoUpload';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { BudgetItemsList, BudgetItem } from '../components/BudgetItemsList';
 import { BudgetItemForm } from '../components/BudgetItemForm';
+import {
+  MilestoneFilter,
+  MilestoneFilterChip,
+  MilestoneFilterValue,
+  MILESTONE_FILTER_ALL,
+  MILESTONE_FILTER_NONE,
+  matchesMilestoneFilter,
+  isValidMilestoneFilter,
+} from '../components/MilestoneFilter';
 import { getProjectStatusIconKind } from '../utils/statusColors';
 import { Modal, ModalFooter } from '../components/ui/Modal';
 import { Select } from '../components/ui/Select';
@@ -137,6 +146,19 @@ export const ProjectDetail: React.FC = () => {
   const [estimatedBudgetInput, setEstimatedBudgetInput] = useState<string>('');
   const [isSavingEstimatedBudget, setIsSavingEstimatedBudget] = useState(false);
   const [createBudgetEstimated, setCreateBudgetEstimated] = useState<string>('');
+  const [budgetMilestoneFilter, setBudgetMilestoneFilter] = useState<MilestoneFilterValue>(MILESTONE_FILTER_ALL);
+  const [budgetItemsMilestoneFilter, setBudgetItemsMilestoneFilter] =
+    useState<MilestoneFilterValue>(MILESTONE_FILTER_ALL);
+
+  // A filter pointing at a deleted milestone would silently show nothing.
+  useEffect(() => {
+    if (!isValidMilestoneFilter(budgetMilestoneFilter, milestones)) {
+      setBudgetMilestoneFilter(MILESTONE_FILTER_ALL);
+    }
+    if (!isValidMilestoneFilter(budgetItemsMilestoneFilter, milestones)) {
+      setBudgetItemsMilestoneFilter(MILESTONE_FILTER_ALL);
+    }
+  }, [milestones, budgetMilestoneFilter, budgetItemsMilestoneFilter]);
 
   useEffect(() => {
     if (id) {
@@ -445,14 +467,6 @@ export const ProjectDetail: React.FC = () => {
     setPhotosKey(prev => prev + 1);
   };
 
-  const handleScrollToTasks = () => {
-    // Scroll to tasks section
-    const tasksSection = document.getElementById('tasks-section');
-    if (tasksSection) {
-      tasksSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   const handleCreateBudget = async () => {
     if (!id) return;
     
@@ -581,7 +595,9 @@ export const ProjectDetail: React.FC = () => {
   const handleExportBudgetClick = () => {
     if (!id || !budget) return;
     if (milestones.length > 0) {
-      setExportMilestoneId('');
+      const isSpecificMilestone =
+        budgetMilestoneFilter !== MILESTONE_FILTER_ALL && budgetMilestoneFilter !== MILESTONE_FILTER_NONE;
+      setExportMilestoneId(isSpecificMilestone ? budgetMilestoneFilter : '');
       setIsExportMilestoneSelectOpen(true);
     } else {
       doExportBudget();
@@ -698,6 +714,36 @@ export const ProjectDetail: React.FC = () => {
   }
 
   const progress = calculateProgress();
+
+  // Unfiltered figures come from the server-side totals; filtered ones are
+  // derived from the loaded items and tasks, since milestones carry no budget.
+  const isBudgetFiltered = budgetMilestoneFilter !== MILESTONE_FILTER_ALL;
+  const sumItemCosts = (items: BudgetItem[]) => items.reduce((sum, item) => sum + Number(item.actualCost || 0), 0);
+  const sumTaskCosts = (list: Task[]) => list.reduce((sum, task) => sum + Number(task.actualPrice || 0), 0);
+  const budgetFigures = (() => {
+    if (!budget || !isBudgetFiltered) {
+      return {
+        fromItems: Number(budget?.totalActualFromItems || 0),
+        fromTasks: Number(budget?.totalActualFromTasks || 0),
+        total: Number(budget?.totalActual || 0),
+        shareOfProject: 100,
+      };
+    }
+    const fromItems = sumItemCosts(
+      budgetItems.filter((item) => matchesMilestoneFilter(item.milestoneId, budgetMilestoneFilter))
+    );
+    const fromTasks = sumTaskCosts(
+      tasks.filter((task) => matchesMilestoneFilter(task.milestoneId, budgetMilestoneFilter))
+    );
+    const total = fromItems + fromTasks;
+    const projectTotal = sumItemCosts(budgetItems) + sumTaskCosts(tasks);
+    return {
+      fromItems,
+      fromTasks,
+      total,
+      shareOfProject: projectTotal > 0 ? Math.round((total / projectTotal) * 100) : 0,
+    };
+  })();
 
   return (
     <Container>
@@ -947,23 +993,31 @@ export const ProjectDetail: React.FC = () => {
                 title={t('projectDetail.budgetSummary')}
                 action={
                   budget ? (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
+                    <div className="flex items-center gap-0.5 -my-1">
+                      {milestones.length > 0 && (
+                        <MilestoneFilter
+                          milestones={milestones}
+                          value={budgetMilestoneFilter}
+                          onChange={setBudgetMilestoneFilter}
+                        />
+                      )}
+                      <IconButton
+                        label={t('projectDetail.exportToPdf')}
+                        icon={
+                          isExportingBudget ? (
+                            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                          ) : (
+                            <FileDown className="h-4 w-4" strokeWidth={1.5} />
+                          )
+                        }
                         onClick={handleExportBudgetClick}
-                        loading={isExportingBudget}
                         disabled={isExportingBudget}
-                      >
-                        {t('projectDetail.exportToPdf')}
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
+                      />
+                      <IconButton
+                        label={t('projectDetail.addItem')}
+                        icon={<Plus className="h-4 w-4" strokeWidth={1.5} />}
                         onClick={handleAddBudgetItem}
-                      >
-                        {t('projectDetail.addItem')}
-                      </Button>
+                      />
                     </div>
                   ) : null
                 }
@@ -1005,9 +1059,19 @@ export const ProjectDetail: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    <MilestoneFilterChip
+                      milestones={milestones}
+                      value={budgetMilestoneFilter}
+                      onClear={() => setBudgetMilestoneFilter(MILESTONE_FILTER_ALL)}
+                    />
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-xs text-gray-500">{t('projectDetail.totalEstimated')}</p>
+                        <p className="text-xs text-gray-500">
+                          {t('projectDetail.totalEstimated')}
+                          {isBudgetFiltered && (
+                            <span className="text-gray-400"> · {t('projectDetail.entireProject')}</span>
+                          )}
+                        </p>
                         {!isEditingEstimatedBudget && (
                           <IconButton
                             label={t('common.edit')}
@@ -1055,65 +1119,70 @@ export const ProjectDetail: React.FC = () => {
                     <div>
                       <p className="text-xs text-gray-500 mb-1">{t('projectDetail.totalActual')}</p>
                       <p className="text-xl font-bold text-gray-900">
-                        {fmtCurrency(budget.totalActual)}
+                        {fmtCurrency(budgetFigures.total)}
                       </p>
                       
                       {/* Breakdown of actual costs */}
                       <div className="mt-2 space-y-1">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-gray-500">{t('projectDetail.fromBudgetItems')}</span>
-                          <span className="font-medium text-gray-700">
-                            {fmtCurrency(budget.totalActualFromItems || 0)}
+                          <span className="font-medium text-gray-700 tabular-nums">
+                            {fmtCurrency(budgetFigures.fromItems)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <div className="flex items-center gap-1">
                             <span className="text-gray-500">{t('projectDetail.fromTasks')}</span>
-                            <button
-                              onClick={handleRecalculateTasksCosts}
-                              disabled={isRecalculatingTasks}
-                              className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
-                              title={t('projectDetail.recalculateTasksCosts')}
-                            >
-                              <RefreshCw
-                                className={`w-3.5 h-3.5 ${isRecalculatingTasks ? 'animate-spin' : ''}`}
-                                strokeWidth={2}
-                              />
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-700">
-                              {fmtCurrency(budget.totalActualFromTasks || 0)}
-                            </span>
-                            {budget.totalActualFromTasks > 0 && (
+                            {!isBudgetFiltered && (
                               <button
-                                onClick={handleScrollToTasks}
-                                className="text-primary-600 hover:text-primary-700 underline text-xs"
+                                onClick={handleRecalculateTasksCosts}
+                                disabled={isRecalculatingTasks}
+                                className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                title={t('projectDetail.recalculateTasksCosts')}
                               >
-                                {t('common.view')}
+                                <RefreshCw
+                                  className={`w-3.5 h-3.5 ${isRecalculatingTasks ? 'animate-spin' : ''}`}
+                                  strokeWidth={2}
+                                />
                               </button>
                             )}
                           </div>
+                          <span className="font-medium text-gray-700 tabular-nums">
+                            {fmtCurrency(budgetFigures.fromTasks)}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <Divider />
 
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">{t('projectDetail.variance')}</p>
-                      <p
-                        className={`text-lg font-bold ${
-                          budget.totalActual > budget.totalEstimated
-                            ? 'text-red-600'
-                            : 'text-green-600'
-                        }`}
-                      >
-                        {fmtCurrency(budget.totalActual - budget.totalEstimated)}
-                      </p>
-                    </div>
+                    {isBudgetFiltered ? (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">{t('projectDetail.shareOfProjectTotal')}</p>
+                        <p className="text-lg font-bold text-gray-900">{budgetFigures.shareOfProject}%</p>
+                        <div className="mt-2 h-1 w-full rounded-full bg-subtle overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-primary-500 transition-[width]"
+                            style={{ width: `${Math.min(budgetFigures.shareOfProject, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">{t('projectDetail.variance')}</p>
+                        <p
+                          className={`text-lg font-bold ${
+                            budget.totalActual > budget.totalEstimated
+                              ? 'text-red-600'
+                              : 'text-green-600'
+                          }`}
+                        >
+                          {fmtCurrency(budget.totalActual - budget.totalEstimated)}
+                        </p>
+                      </div>
+                    )}
 
-                    {budget.totalEstimated > 0 && (
+                    {!isBudgetFiltered && budget.totalEstimated > 0 && (
                       <div>
                         <p className="text-xs text-gray-500 mb-1">{t('projectDetail.spent')}</p>
                         <p className="text-lg font-bold text-gray-900">
@@ -1141,11 +1210,31 @@ export const ProjectDetail: React.FC = () => {
             {/* Budget Items */}
             {budget && budgetItems.length > 0 && (
               <Card>
-                <CardHeader title={t('projectDetail.budgetItems')} />
+                <CardHeader
+                  title={t('projectDetail.budgetItems')}
+                  action={
+                    milestones.length > 0 ? (
+                      <div className="-my-1">
+                        <MilestoneFilter
+                          milestones={milestones}
+                          value={budgetItemsMilestoneFilter}
+                          onChange={setBudgetItemsMilestoneFilter}
+                        />
+                      </div>
+                    ) : null
+                  }
+                />
                 <CardContent>
+                  <MilestoneFilterChip
+                    className="mb-3"
+                    milestones={milestones}
+                    value={budgetItemsMilestoneFilter}
+                    onClear={() => setBudgetItemsMilestoneFilter(MILESTONE_FILTER_ALL)}
+                  />
                   <BudgetItemsList 
                     items={budgetItems}
                     milestones={milestones}
+                    milestoneFilter={budgetItemsMilestoneFilter}
                     showCard={false}
                     onEditItem={handleEditBudgetItem}
                     onDeleteItem={handleDeleteBudgetItem}

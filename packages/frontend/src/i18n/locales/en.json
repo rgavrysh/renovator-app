@@ -133,7 +133,7 @@
     "uploadPhotos": "Upload Photos",
     "budgetSummary": "Budget Summary",
     "exportToPdf": "Export to PDF",
-    "addItem": "Add Item",
+    "addItem": "Add budget item",
     "noBudgetSet": "No budget set",
     "createBudget": "Create Budget",
     "estimatedBudget": "Estimated Budget",
@@ -156,6 +156,8 @@
     "exportMilestone": "Milestone",
     "exportMilestoneHint": "Select a milestone to export only its items, or export the entire project budget.",
     "allProject": "Entire Project",
+    "entireProject": "entire project",
+    "shareOfProjectTotal": "Share of project total",
     "deleteMilestoneConfirm": "Are you sure you want to delete \"{{name}}\"? Tasks assigned to this milestone will become unassigned. This action cannot be undone."
   },
   "projectForm": {
@@ -336,8 +338,16 @@
     "title": "Budget Items",
     "noBudgetItems": "No budget items",
     "addBudgetItems": "Add budget items to track actual costs",
+    "noItemsMatch": "No budget items for this milestone",
     "actual": "Actual",
     "general": "General"
+  },
+  "milestoneFilter": {
+    "filterByMilestone": "Filter by milestone",
+    "milestone": "Milestone",
+    "allMilestones": "All milestones",
+    "noMilestone": "No milestone",
+    "clear": "Clear filter"
   },
   "workItemCategory": {
     "demolition": "Demolition",

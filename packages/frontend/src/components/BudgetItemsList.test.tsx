@@ -113,6 +113,54 @@ describe('BudgetItemsList', () => {
     expect(screen.getByText(/Foundation/)).toBeInTheDocument();
   });
 
+  describe('milestone filter', () => {
+    const itemsAcrossMilestones: BudgetItem[] = [
+      { ...mockItems[0], milestoneId: 'milestone-1' },
+      { ...mockItems[1], milestoneId: 'milestone-2' },
+      { ...mockItems[2] },
+    ];
+    const milestones = [
+      { id: 'milestone-1', name: 'Foundation' },
+      { id: 'milestone-2', name: 'Finishing' },
+    ];
+
+    it('shows only items linked to the selected milestone, with group totals recalculated', () => {
+      render(
+        <BudgetItemsList items={itemsAcrossMilestones} milestones={milestones} milestoneFilter="milestone-1" />
+      );
+
+      expect(screen.getByText('Framing Labor')).toBeInTheDocument();
+      expect(screen.queryByText('Lumber')).not.toBeInTheDocument();
+      expect(screen.queryByText('Drywall Installation')).not.toBeInTheDocument();
+
+      const laborHeader = screen.getByRole('button', { name: /Labor/ });
+      expect(laborHeader).toHaveTextContent('1');
+      expect(within(laborHeader).getByText('$4,800.00')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Materials/ })).not.toBeInTheDocument();
+    });
+
+    it('shows only unassigned items for the "none" filter', () => {
+      render(<BudgetItemsList items={itemsAcrossMilestones} milestones={milestones} milestoneFilter="none" />);
+
+      expect(screen.getByText('Drywall Installation')).toBeInTheDocument();
+      expect(screen.queryByText('Framing Labor')).not.toBeInTheDocument();
+      expect(screen.queryByText('Lumber')).not.toBeInTheDocument();
+    });
+
+    it('shows a no-match message when the filter excludes every item', () => {
+      render(
+        <BudgetItemsList
+          items={[{ ...mockItems[0], milestoneId: 'milestone-1' }]}
+          milestones={milestones}
+          milestoneFilter="milestone-2"
+        />
+      );
+
+      expect(screen.getByText('No budget items for this milestone')).toBeInTheDocument();
+      expect(screen.queryByText('No budget items')).not.toBeInTheDocument();
+    });
+  });
+
   it('should display actual costs', () => {
     render(<BudgetItemsList items={mockItems} />);
     

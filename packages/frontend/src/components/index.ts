@@ -7,5 +7,6 @@ export * from './WorkItemsLibraryModal';
 export * from './BudgetOverview';
 export * from './BudgetItemsList';
 export * from './BudgetItemForm';
+export * from './MilestoneFilter';
 export * from './DocumentUpload';
 export * from './UserDropdown';
